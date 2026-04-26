@@ -1,0 +1,88 @@
+# Benchmark test cases for the semiconductor RCA causal reasoning query.
+#
+# Each case poses a statistical correlation observed (or constructed). The
+# system should produce an assessment whose reasoning surfaces specific
+# physical mechanisms and confounders. `expected_reasoning_contains` is a
+# keyword recall check — strings should appear (case-insensitive) somewhere
+# in the assessment's reasoning, mechanisms, confounders, or investigations.
+#
+# `domain_expert_score` is optional: a fab process engineer's manual rating
+# of the assessment quality after a dry-run, used as a sanity bar.
+cases:
+  - id: "tc001-cmp-via-resistance"
+    correlation: "CMP downforce correlates with via resistance at r=0.68"
+    process_context: "Cu damascene, M2 layer, 28nm node, post-CMP via chain test"
+    expected_reasoning_contains:
+      - "Cu dishing"
+      - "barrier"
+      - "mechanical stress"
+    expected_verdict: "plausible"
+    domain_expert_score: 0.85
+    notes: |
+      Classic Cu damascene RCA. Higher downforce drives Cu dishing and
+      excessive barrier (Ta/TaN) thinning, increasing via resistance via
+      both reduced cross-section and barrier integrity issues.
+
+  - id: "tc002-pecvd-pressure-particle"
+    correlation: "PECVD chamber pressure correlates with particle adders at r=-0.55"
+    process_context: "Inter-layer dielectric SiO2 deposition, 200mm tool, particle map at >0.12um"
+    expected_reasoning_contains:
+      - "gas-phase nucleation"
+      - "plasma"
+      - "chamber condition"
+      - "flake"
+    expected_verdict: "plausible"
+    domain_expert_score: 0.75
+    notes: |
+      Lower pressure can shift the residence-time/plasma chemistry balance,
+      increasing gas-phase nucleation and chamber wall flaking. Confounder:
+      the chamber clean cycle, which often co-varies with pressure setpoint
+      drift between PMs.
+
+  - id: "tc003-anneal-temp-vt-shift"
+    correlation: "Spike anneal peak temperature correlates with NMOS Vt shift at r=0.81"
+    process_context: "FEOL, 14nm node, HKMG NMOS, post-S/D activation anneal"
+    expected_reasoning_contains:
+      - "dopant activation"
+      - "diffusion"
+      - "Arrhenius"
+      - "junction"
+    expected_verdict: "plausible"
+    domain_expert_score: 0.9
+    notes: |
+      Dopant activation efficiency follows an Arrhenius dependence on peak
+      anneal temperature; activation level and diffusion redistribution
+      both shift Vt directly via channel doping and SDE profile.
+
+  - id: "tc004-spurious-humidity-yield"
+    correlation: "Cleanroom relative humidity correlates with overall die yield at r=0.42"
+    process_context: "Class-1 fab, multiple modules, weekly aggregated data over 6 months"
+    expected_reasoning_contains:
+      - "confounder"
+      - "seasonal"
+      - "production volume"
+      - "ecological fallacy"
+    expected_verdict: "uncertain"
+    domain_expert_score: 0.7
+    notes: |
+      Likely confounded. Humidity tracks season; many other things track
+      season too (incoming wafer source mix, maintenance schedules, work
+      shift patterns). Aggregated weekly data also invites Simpson-style
+      reversals. Reasoner should flag confounding rather than endorse a
+      direct mechanism.
+
+  - id: "tc005-litho-dose-cd-overlay"
+    correlation: "Litho exposure dose correlates with overlay error at r=0.38"
+    process_context: "193i immersion, contact layer, ASML scanner, after PEB and develop"
+    expected_reasoning_contains:
+      - "CD"
+      - "alignment mark"
+      - "dose"
+      - "scanner"
+    expected_verdict: "uncertain"
+    domain_expert_score: 0.65
+    notes: |
+      Direct dose→overlay causality is weak; but dose can indirectly
+      affect alignment mark contrast / asymmetry, so the correlation is
+      not zero. Confounders include scanner stage drift and reticle
+      heating which independently affect both CD and overlay.

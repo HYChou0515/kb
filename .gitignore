@@ -1,0 +1,39 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.env
+.env.local
+
+# Cognee local stores
+.cognee_data/
+.cognee_system/
+*.lance/
+lancedb/
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Build artifacts
+dist/
+build/
+.uv-cache/
+
+# Generated mock data (regenerable from generate.py)
+# (we DO commit small sample CSVs; comment this out if you want fully ignored)
+# data/mock-fab-data/wafer_history.csv
+# data/mock-fab-data/defect_counts.csv
+
+# uvicorn / FastAPI
+*.log
+
+# Local embedding model checkpoints — too big to commit
+models/
+*.safetensors
+*.bin
+
