@@ -33,7 +33,6 @@ build/
 *.log
 
 # Local embedding model checkpoints — too big to commit
-models/
 *.safetensors
 *.bin
 
