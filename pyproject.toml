@@ -37,6 +37,7 @@ dependencies = [
     # Dev / CLI
     "rich>=13.7.0",
     "typer>=0.12.0",
+    "dependency-injector>=4.49.0",
 ]
 
 [project.optional-dependencies]
