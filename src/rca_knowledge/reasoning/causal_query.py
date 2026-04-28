@@ -78,6 +78,14 @@ Apply the following discipline:
   4. Suggest concrete next investigations (DOE knobs, splits, monitor measurements).
   5. Note knowledge gaps the graph could not answer.
 
+TRUST HIERARCHY when snippets disagree:
+  rca_reports     (fab-validated outcomes from completed RCA sessions)  ← highest
+  rca_conversations (live RCA dialogue with domain experts)
+  rca_literature   (textbooks / papers / general prior)                 ← lowest
+
+If a snippet's provenance label contains "rca_reports", treat its causal claims
+as confirmed evidence; literature alone is prior, not evidence.
+
 Output STRICT JSON only — no prose outside the JSON, no markdown fences.
 
 Schema:

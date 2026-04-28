@@ -10,7 +10,7 @@ from rca_knowledge.ingestion.extractor import ExtractionResult
 from rca_knowledge.reasoning.causal_query import CausalAssessment
 
 RecallMode = Literal["snippets", "assessment", "synthesis"]
-SourceFilter = Literal["literature", "conversations", "all"]
+SourceFilter = Literal["literature", "conversations", "rca_reports", "all"]
 
 
 # ---- retain ----------------------------------------------------------------
@@ -20,7 +20,7 @@ class RetainTextRequest(BaseModel):
     label: str = Field("inline-text", description="Source provenance label")
     dataset: str = "rca"
     cognify: bool = True
-    source_kind: Literal["literature", "conversation"] = "literature"
+    source_kind: Literal["literature", "conversation", "rca_report"] = "literature"
 
 
 class RetainConversationRequest(BaseModel):
@@ -40,7 +40,7 @@ class RetainExtractionRequest(BaseModel):
     source_label: str
     dataset: str = "rca"
     cognify: bool = True
-    source_kind: Literal["literature", "conversation"] = "literature"
+    source_kind: Literal["literature", "conversation", "rca_report"] = "literature"
 
 
 class RetainResponse(BaseModel):

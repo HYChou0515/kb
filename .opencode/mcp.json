@@ -1,0 +1,32 @@
+{
+  "mcpServers": {
+    "kb-mcp": {
+      "command": "uv",
+      "args": ["run", "kb-mcp"],
+      "cwd": "/ABSOLUTE/PATH/TO/rca-knowledge-poc",
+      "env": {
+        "KB_API_BASE_URL": "http://127.0.0.1:8765",
+        "LOG_LEVEL": "INFO"
+      }
+    },
+    "wafer-data-mcp": {
+      "command": "uv",
+      "args": ["run", "wafer-data-mcp"],
+      "cwd": "/ABSOLUTE/PATH/TO/rca-knowledge-poc",
+      "env": {
+        "MOCK_FAB_DATA_DIR": "./data/mock-fab-data",
+        "LOG_LEVEL": "INFO"
+      }
+    },
+    "stats-algo-mcp": {
+      "command": "uv",
+      "args": ["run", "stats-algo-mcp"],
+      "cwd": "/ABSOLUTE/PATH/TO/rca-knowledge-poc",
+      "env": {
+        "MOCK_FAB_DATA_DIR": "./data/mock-fab-data",
+        "STATS_NOISE_SEED": "1234",
+        "LOG_LEVEL": "INFO"
+      }
+    }
+  }
+}

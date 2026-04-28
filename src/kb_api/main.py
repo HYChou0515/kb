@@ -17,11 +17,25 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated, AsyncIterator, Literal
 
+from autocrud import crud
+from autocrud.crud.route_templates.basic import DependencyProvider
+from autocrud.message_queue.simple import SimpleMessageQueueFactory
+from autocrud.resource_manager.storage_factory import DiskStorageFactory
 from cognee.api.v1.search import SearchType
 from cognee.api.v1.visualize import visualize_graph
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 
+from kb_api.cognee_mirror import CogneeMirrorHandler, configure_mirror
+from kb_api.models import (
+    ALL_MODELS,
+    AgentFeedback,
+    CaseStudy,
+    DocumentSource,
+    GlossaryEntry,
+    RCAReport,
+    Session,
+)
 from kb_api.schemas import (
     CognifyRequest,
     RecallAssessmentResponse,
@@ -46,6 +60,58 @@ from rca_knowledge.reasoning.causal_query import CausalReasoner
 logger = logging.getLogger(__name__)
 
 
+# ─── AutoCRUD configuration (must run at module import, before app creation) ─
+
+_AUTOCRUD_DATA_ROOT = Path("./data/autocrud").resolve()
+_AUTOCRUD_DATA_ROOT.mkdir(parents=True, exist_ok=True)
+
+
+def _configure_autocrud() -> None:
+    """One-shot at module import. Registers all 6 models + cognee mirror handler."""
+    crud.configure(
+        storage_factory=DiskStorageFactory(str(_AUTOCRUD_DATA_ROOT)),
+        message_queue_factory=SimpleMessageQueueFactory(),
+        dependency_provider=DependencyProvider(
+            get_user=lambda: "poc-admin",
+            get_now=lambda: __import__("datetime").datetime.utcnow(),
+        ),
+        model_naming="kebab",
+        encoding="json",
+        event_handlers=[CogneeMirrorHandler()],
+    )
+    # Indexed fields chosen for QB filtering needs (status, owner, etc.).
+    crud.add_model(CaseStudy, indexed_fields=[
+        ("status", str), ("owner", str), ("defect_type", str),
+        ("process_module", str),
+    ])
+    crud.add_model(Session, indexed_fields=[
+        ("status", str), ("case_study_id", str), ("rca_completed", bool),
+    ])
+    crud.add_model(RCAReport, indexed_fields=[
+        ("case_study_id", str), ("session_id", str), ("agreed", bool),
+    ])
+    crud.add_model(GlossaryEntry, indexed_fields=[
+        ("term", str), ("source_session_id", str), ("source_case_study_id", str),
+        ("confidence", str),
+    ])
+    crud.add_model(AgentFeedback, indexed_fields=[
+        ("type", str), ("topic", str), ("source_session_id", str),
+        ("source_case_study_id", str),
+    ])
+    crud.add_model(DocumentSource, indexed_fields=[
+        ("source_kind", str), ("case_study_id", str), ("session_id", str),
+    ])
+
+
+_configure_autocrud()
+
+# Side-effect import: registers Session open/close/abandon custom actions
+# into the global `crud` instance via decorators. Must be after
+# _configure_autocrud() (which calls add_model for Session) and before
+# crud.apply(app) lower in this file.
+from kb_api import session_actions  # noqa: E402,F401
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = load_settings()
@@ -55,16 +121,26 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.reasoner = CausalReasoner(settings, cognee_client=app.state.cognee)
     app.state.extractor = SemiconductorExtractor(settings)
     await app.state.cognee.setup()
-    logger.info("KB API ready")
+    # Bind the cognee mirror — AutoCRUD events from now on push to cognee.
+    configure_mirror(app.state.cognee, dataset="rca")
+    logger.info("KB API ready (AutoCRUD + cognee mirror live)")
     yield
 
 
 app = FastAPI(
     title="RCA Knowledge Base API",
-    version="0.2.0",
-    description="retain (write) + recall (read) for the semiconductor RCA knowledge graph.",
+    version="0.3.0",
+    description=(
+        "AutoCRUD = source of truth for typed records "
+        "(CaseStudy / Session / RCAReport / GlossaryEntry / AgentFeedback / DocumentSource). "
+        "Cognee = derived retrieval engine; receives mirrored text via event handler. "
+        "Plus retain/recall endpoints for direct cognee access."
+    ),
     lifespan=lifespan,
 )
+
+# Mount AutoCRUD's auto-generated routes (CRUD + search + revisions for all 6 models)
+crud.apply(app)
 
 
 @app.exception_handler(Exception)
@@ -108,8 +184,19 @@ async def health() -> StatusResponse:
 
 # ---- retain ----------------------------------------------------------------
 
-def _node_set_for(source_kind: Literal["literature", "conversation"]) -> list[str]:
-    return ["rca_literature"] if source_kind == "literature" else ["rca_conversations"]
+def _node_set_for(source_kind: Literal["literature", "conversation", "rca_report"]) -> list[str]:
+    """Map a source_kind to the cognee node_set used as a provenance marker.
+
+    Trust hierarchy applied at recall time:
+      rca_reports  > rca_conversations > rca_literature
+    Reports are fab-validated outcomes; literature is textbook prior;
+    conversations sit in between.
+    """
+    if source_kind == "rca_report":
+        return ["rca_reports"]
+    if source_kind == "conversation":
+        return ["rca_conversations"]
+    return ["rca_literature"]
 
 
 def _summarize_results(results) -> RetainResponse:
@@ -243,14 +330,20 @@ async def recall(req: RecallRequest):
 def _filter_by_source(snippets: list[str], source_filter: str) -> list[str]:
     """Best-effort filter by node_set marker baked into the rendered text.
 
-    POC heuristic — conversation chunks carry the literal `rca_conversations`
-    string in their rendered provenance; everything else is literature.
+    POC heuristic — each chunk carries its node_set name in the rendered text
+    ("rca_literature", "rca_conversations", "rca_reports").
     """
     if source_filter == "all":
         return snippets
+    if source_filter == "rca_reports":
+        return [s for s in snippets if "rca_reports" in s]
     if source_filter == "conversations":
         return [s for s in snippets if "rca_conversations" in s]
-    return [s for s in snippets if "rca_conversations" not in s]
+    # literature: anything that isn't conversation or report
+    return [
+        s for s in snippets
+        if "rca_conversations" not in s and "rca_reports" not in s
+    ]
 
 
 # ---- admin -----------------------------------------------------------------

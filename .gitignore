@@ -36,3 +36,9 @@ build/
 *.safetensors
 *.bin
 
+# v2 architecture simulation (lifecycle state, not source)
+active_sessions/         # ephemeral; recreated per session-open
+workspaces/              # per-CaseStudy committed state
+transcripts/             # OpenCode session logs (audit, not in KB)
+data/autocrud/           # AutoCRUD's DiskStorageFactory state
+

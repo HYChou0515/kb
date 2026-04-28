@@ -38,8 +38,15 @@ async def retain_text(
 ) -> dict[str, Any]:
     """Push raw text into the KB. KB will run LLM extraction internally.
 
-    Use for: pasted excerpts from textbooks, papers, or process docs.
-    Set source_kind="conversation" if the text is a transcript.
+    `source_kind` controls the provenance / trust tier:
+      - "literature"   — textbooks, papers, process docs (lowest trust)
+      - "conversation" — live RCA discussion transcript
+      - "rca_report"   — agreed-and-finalized RCA report markdown (HIGHEST trust;
+                          fab-validated outcome)
+
+    The reasoner gives rca_report-sourced snippets higher weight when synthesizing
+    causal assessments. Use rca_report when ingesting the markdown produced at
+    step 9 of the RCA agent flow.
     """
     async with _client() as c:
         r = await c.post(
