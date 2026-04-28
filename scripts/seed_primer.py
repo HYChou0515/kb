@@ -21,7 +21,7 @@ import httpx
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from rca_knowledge.config import load_settings  # noqa: E402
+from rca.config import load_settings  # noqa: E402
 
 PRIMER_DIR = Path(__file__).resolve().parents[1] / "data" / "primers"
 PRIMER_EXTS = {".md", ".txt"}

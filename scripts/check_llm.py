@@ -11,8 +11,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from rca_knowledge.config import load_settings  # noqa: E402
-from rca_knowledge.llm import make_llm_client  # noqa: E402
+from rca.config import load_settings  # noqa: E402
+from rca.container import Container  # noqa: E402
 
 
 def main() -> int:
@@ -26,7 +26,7 @@ def main() -> int:
     print(f"  model:    {settings.llm_model}")
 
     try:
-        client = make_llm_client(settings, role="reasoning")
+        client = Container().reasoning_llm()
         out = client.complete(system="Reply with the single word OK.", user="ping", max_tokens=10)
     except Exception as exc:
         cls = exc.__class__.__name__

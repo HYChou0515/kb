@@ -23,8 +23,7 @@ from rich.table import Table
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from rca_knowledge.config import load_settings  # noqa: E402
-from rca_knowledge.reasoning.causal_query import CausalReasoner  # noqa: E402
+from rca.container import Container  # noqa: E402
 
 app = typer.Typer(add_completion=False)
 console = Console()
@@ -85,8 +84,7 @@ def main(
     log_level: str = typer.Option("INFO", "--log-level"),
 ) -> None:
     logging.basicConfig(level=log_level, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-    settings = load_settings()
-    reasoner = CausalReasoner(settings)
+    reasoner = Container().reasoning()
 
     async def run() -> None:
         assessment = await reasoner.assess(correlation, process_context=process_context, top_k=top_k)

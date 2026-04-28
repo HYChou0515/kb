@@ -36,7 +36,7 @@ from rich.table import Table
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from rca_knowledge.config import load_settings  # noqa: E402
+from rca.config import load_settings  # noqa: E402
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 console = Console()

@@ -29,7 +29,7 @@ from rich.table import Table
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from mcp_servers.stats_algo_mcp import compute_factor_scores  # noqa: E402
-from rca_knowledge.config import load_settings  # noqa: E402
+from rca.config import load_settings  # noqa: E402
 
 app = typer.Typer(add_completion=False)
 console = Console()

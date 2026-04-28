@@ -18,8 +18,8 @@ from rich.table import Table
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from rca_knowledge.config import load_settings  # noqa: E402
-from rca_knowledge.evaluation.benchmark import (  # noqa: E402
+from rca.container import Container  # noqa: E402
+from rca.evaluation.benchmark import (  # noqa: E402
     report_to_json,
     run_benchmark,
 )
@@ -40,10 +40,10 @@ def main(
     log_level: str = typer.Option("INFO", "--log-level"),
 ) -> None:
     logging.basicConfig(level=log_level, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-    settings = load_settings()
+    reasoning = Container().reasoning()
 
     async def run() -> None:
-        report = await run_benchmark(settings, cases)
+        report = await run_benchmark(reasoning, cases)
 
         t = Table(title="Benchmark results")
         t.add_column("Case")

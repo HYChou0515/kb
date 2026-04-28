@@ -28,8 +28,7 @@ from rich.console import Console
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from rca_knowledge.config import load_settings  # noqa: E402
-from rca_knowledge.ingestion.pipeline import IngestionPipeline  # noqa: E402
+from rca.container import Container  # noqa: E402
 
 app = typer.Typer(add_completion=False)
 console = Console()
@@ -50,8 +49,7 @@ def main(
     log_level: str = typer.Option("INFO", "--log-level"),
 ) -> None:
     logging.basicConfig(level=log_level, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-    settings = load_settings()
-    pipeline = IngestionPipeline(settings)
+    pipeline = Container().ingestion()
     payload = _load(file)
     messages = payload.get("messages", [])
     if not messages:
