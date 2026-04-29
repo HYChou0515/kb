@@ -71,6 +71,9 @@ package = true
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+markers = [
+    "integration: hits real cognee + embedding server + LLM (slow, costs tokens). Skipped by default; run with `make test-integration`.",
+]
 
 [tool.coverage.run]
 source = ["src/rca"]

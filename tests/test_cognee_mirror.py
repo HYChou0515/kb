@@ -1,20 +1,34 @@
-"""Cognee mirror — RCAReport status-aware rendering.
+"""Cognee mirror — pure-renderer + dispatcher contract.
 
 Mirror behavior is the bridge between AutoCRUD writes and the graph.
-The renderer's contract:
-  - Drafts (agreed=False) are skipped — author signoff gates KB entry
-  - Agreed reports get tagged with their verification_status as a node_set
-    suffix, so the reasoner can weight by manager-signoff trust
+The renderer's contract per knowledge-bearing record type:
+  - Drafts (agreed=False on RCAReport) are skipped — author signoff
+    gates KB entry
+  - Agreed reports get tagged with their verification_status as a
+    node_set suffix, so the reasoner can weight by manager-signoff trust
+  - Glossary, AgentFeedback, DocumentSource each get a stable
+    type-specific node_set tag pair
 
-We test the renderer directly (it's a pure function), not the AutoCRUD
-event dispatch — that's library-tested.
+We test the renderer functions directly (they're pure) and the
+render_for_cognee dispatcher's type-routing. The async event handler
+plumbing (loop scheduling, error swallow) is exercised by the
+integration suite end-to-end — not duplicated here.
 """
 
 from __future__ import annotations
 
 import pytest
 
-from rca.adapter.out.autocrud.cognee_mirror import _render_rca_report
+from rca.adapter.out.autocrud.cognee_mirror import (
+    _render_document,
+    _render_feedback,
+    _render_glossary,
+    _render_rca_report,
+    render_for_cognee,
+)
+from rca.domain.agent_feedback import AgentFeedback
+from rca.domain.document import DocumentSource
+from rca.domain.glossary import GlossaryEntry
 from rca.domain.rca_report import RCAReport
 from rca.domain.types import VerificationStatus
 

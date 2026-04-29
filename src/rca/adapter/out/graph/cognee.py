@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, Literal
 
 import cognee
 
@@ -73,14 +73,24 @@ class CogneeGraphAdapter(IGraphAdapter):
         *,
         search_type: Any = None,
         top_k: int = 10,
+        node_set: list[str] | None = None,
+        node_set_operator: Literal["AND", "OR"] = "OR",
     ) -> list[Any]:
         await self.setup()
         # cognee.recall() auto-routes when query_type is None; pass
         # explicit type when caller needs deterministic behavior.
+        # node_set passes through cognee's RecallKwargs as node_name +
+        # node_name_filter_operator — the SDK routes those into the
+        # NodeSet filter on the retriever.
+        kwargs: dict[str, Any] = {}
+        if node_set:
+            kwargs["node_name"] = node_set
+            kwargs["node_name_filter_operator"] = node_set_operator
         return await cognee.recall(
             query_text=query,
             query_type=search_type,
             top_k=top_k,
+            **kwargs,
         )
 
     async def forget(self) -> None:

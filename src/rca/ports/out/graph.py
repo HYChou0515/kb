@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, Literal
 
 
 class IGraphAdapter(ABC):
@@ -52,9 +52,18 @@ class IGraphAdapter(ABC):
         *,
         search_type: Any = None,
         top_k: int = 10,
+        node_set: list[str] | None = None,
+        node_set_operator: Literal["AND", "OR"] = "OR",
     ) -> list[Any]:
         """Retrieve from the graph. With search_type=None the underlying
-        engine auto-routes by query intent."""
+        engine auto-routes by query intent.
+
+        When `node_set` is provided, results are filtered to chunks tagged
+        with at least one (OR) or all (AND) of the listed node_set names —
+        matches the tags written via remember_text(node_set=...). This is
+        the load-bearing knob for status-aware retrieval (the reasoner
+        passes node_set=["rca_reports_verified"] to weight by manager
+        signoff trust)."""
         ...
 
     @abstractmethod
