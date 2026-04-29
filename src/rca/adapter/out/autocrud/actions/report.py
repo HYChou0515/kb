@@ -47,11 +47,15 @@ async def sign_report(existing: RCAReport, payload: SignReportRequest) -> RCARep
     if payload.status == "refuted" and not (payload.comment and payload.comment.strip()):
         raise ValueError("refuted status requires a non-empty comment")
 
-    now = dt.datetime.utcnow()
+    now = dt.datetime.now(dt.UTC)
     turnaround: int | None = None
     if existing.agreed_at:
         try:
-            agreed_dt = dt.datetime.fromisoformat(existing.agreed_at.rstrip("Z"))
+            # fromisoformat() in Python 3.11+ accepts a trailing 'Z'.
+            # Force UTC if the parsed value happened to be naive.
+            agreed_dt = dt.datetime.fromisoformat(existing.agreed_at)
+            if agreed_dt.tzinfo is None:
+                agreed_dt = agreed_dt.replace(tzinfo=dt.UTC)
             turnaround = int((now - agreed_dt).total_seconds())
         except ValueError:
             pass
@@ -59,7 +63,7 @@ async def sign_report(existing: RCAReport, payload: SignReportRequest) -> RCARep
     existing.verification_status = payload.status
     existing.verifier_role = payload.role
     existing.verified_by = payload.signed_by
-    existing.verified_at = now.isoformat(timespec="seconds") + "Z"
+    existing.verified_at = now.strftime("%Y-%m-%dT%H:%M:%SZ")
     existing.signoff_turnaround_seconds = turnaround
     existing.signoff_comment = payload.comment
     return existing

@@ -21,8 +21,8 @@ from cognee.api.v1.search import SearchType
 from pydantic import ValidationError
 
 from rca.ports.in_.recall import CausalAssessment
-from rca.ports.out.graph import GraphClient
-from rca.ports.out.llm import LLMClient
+from rca.ports.out.graph import IGraphAdapter
+from rca.ports.out.llm import ILLMAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +142,7 @@ class IReasoningService(ABC):
 
 
 class CausalReasoningService(IReasoningService):
-    def __init__(self, llm: LLMClient, graph: GraphClient) -> None:
+    def __init__(self, llm: ILLMAdapter, graph: IGraphAdapter) -> None:
         self.llm = llm
         self.graph = graph
 

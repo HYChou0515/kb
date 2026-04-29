@@ -6,7 +6,7 @@ import logging
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 
@@ -16,7 +16,7 @@ from rca.ports.in_.retain import (
     RetainResponse,
     RetainTextRequest,
 )
-from rca.services.kb import IKBService
+from rca.services.kb import IKBService, SourceKind
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,9 @@ async def retain_file(
     label: Annotated[str | None, Form()] = None,
     dataset: Annotated[str, Form()] = "rca",
     cognify: Annotated[bool, Form()] = True,
-    source_kind: Annotated[str, Form()] = "literature",
+    source_kind: Annotated[
+        Literal["literature", "conversation", "rca_report"], Form()
+    ] = "literature",
 ) -> RetainResponse:
     if file.filename is None:
         raise HTTPException(400, "file has no name")
@@ -50,13 +52,14 @@ async def retain_file(
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
         shutil.copyfileobj(file.file, tmp)
         tmp_path = Path(tmp.name)
+    sk: SourceKind = source_kind
     try:
         return await kb.retain_file(
             tmp_path,
             label=label,
             dataset=dataset,
             cognify=cognify,
-            source_kind=source_kind,
+            source_kind=sk,
         )
     finally:
         tmp_path.unlink(missing_ok=True)

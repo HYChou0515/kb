@@ -7,10 +7,11 @@ adapter.out.autocrud.wrapper.AutoCrudWrapper.
 
 from __future__ import annotations
 
-from typing import Any, Protocol
+from abc import ABC, abstractmethod
+from typing import Any
 
 
-class IAutoCrudWrapper(Protocol):
+class IAutoCrudWrapper(ABC):
     """Typed accessors for the underlying AutoCRUD instance.
 
     Each `*_mgr()` returns a ResourceManager bound to the corresponding
@@ -21,12 +22,26 @@ class IAutoCrudWrapper(Protocol):
     stable across autocrud versions.
     """
 
+    @abstractmethod
     def session_mgr(self) -> Any: ...
+
+    @abstractmethod
     def case_study_mgr(self) -> Any: ...
+
+    @abstractmethod
     def rca_report_mgr(self) -> Any: ...
+
+    @abstractmethod
     def glossary_mgr(self) -> Any: ...
+
+    @abstractmethod
     def agent_feedback_mgr(self) -> Any: ...
+
+    @abstractmethod
     def document_mgr(self) -> Any: ...
 
+    @abstractmethod
     def register_actions(self) -> None: ...
+
+    @abstractmethod
     def apply(self, app: Any) -> None: ...

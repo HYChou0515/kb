@@ -35,7 +35,7 @@ from rca.domain.agent_feedback import AgentFeedback
 from rca.domain.document import DocumentSource
 from rca.domain.glossary import GlossaryEntry
 from rca.domain.rca_report import RCAReport
-from rca.ports.out.graph import GraphClient
+from rca.ports.out.graph import IGraphAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -129,7 +129,7 @@ class CogneeMirrorHandler(IEventHandler):
     """AutoCRUD event handler that mirrors knowledge-bearing writes to the graph.
 
     Drops the legacy module globals (`_cognee` / `_dataset`); takes the
-    GraphClient and dataset name in `__init__`. Multiple instances per
+    IGraphAdapter and dataset name in `__init__`. Multiple instances per
     process are now valid (e.g. one per dataset).
 
     `is_supported()` filters down to only After* contexts on knowledge-
@@ -142,11 +142,11 @@ class CogneeMirrorHandler(IEventHandler):
     until v2 implements proper chunk lifecycle tracking.
     """
 
-    def __init__(self, graph: GraphClient, *, dataset: str = "rca") -> None:
+    def __init__(self, graph: IGraphAdapter, *, dataset: str = "rca") -> None:
         self._graph = graph
         self._dataset = dataset
 
-    def is_supported(self, context: EventContext) -> bool:
+    def is_supported(self, context: EventContext) -> bool:  # ty: ignore[invalid-type-form]
         if not isinstance(context, _MIRROR_CONTEXTS):
             return False
         record = getattr(context, "data", None)
@@ -154,7 +154,7 @@ class CogneeMirrorHandler(IEventHandler):
             return False
         return type(record) in _RENDERERS
 
-    def handle_event(self, context: EventContext) -> None:
+    def handle_event(self, context: EventContext) -> None:  # ty: ignore[invalid-type-form]
         record = getattr(context, "data", None)
         if record is None:
             return

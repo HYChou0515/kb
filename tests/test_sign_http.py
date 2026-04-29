@@ -18,7 +18,7 @@ from fastapi.testclient import TestClient
 
 
 class _RecordingGraph:
-    """GraphClient fake that records every add_text() call so we can assert
+    """IGraphAdapter fake that records every add_text() call so we can assert
     the cognee mirror mirrored the right node_set tags after /sign."""
 
     def __init__(self) -> None:
@@ -131,7 +131,7 @@ def test_sign_report_persists_verification_status(app_client) -> None:
 
 # NOTE: The HTTP-level mirror integration test was intentionally dropped.
 # CogneeMirrorHandler.handle_event uses `loop.create_task(...)` (fire-and-
-# forget) so the mirror's GraphClient.add_text call may not have completed
+# forget) so the mirror's IGraphAdapter.add_text call may not have completed
 # by the time the sync test thread checks fake_graph.adds. The renderer's
 # 4-tier node_set behavior is covered deterministically at unit level by
 # tests/test_cognee_mirror.py::test_mirror_status_aware_node_set.

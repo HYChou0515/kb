@@ -2,7 +2,7 @@
 
 FastAPI routes and the in-process MCP adapter both delegate here. Holds the
 wired services (ingestion, reasoning, extraction) plus the AutoCRUD
-wrapper for typed AutoCRUD-backed report ops, and the GraphClient for
+wrapper for typed AutoCRUD-backed report ops, and the IGraphAdapter for
 direct-to-graph operations like cognify / prune.
 """
 
@@ -27,7 +27,7 @@ from rca.ports.in_.retain import (
     RetainTextRequest,
 )
 from rca.ports.out.autocrud import IAutoCrudWrapper
-from rca.ports.out.graph import GraphClient
+from rca.ports.out.graph import IGraphAdapter
 from rca.services.extraction import IExtractionService, render_extraction_for_cognee
 from rca.services.ingestion import IIngestionService, IngestedChunk
 from rca.services.reasoning import IReasoningService
@@ -95,7 +95,7 @@ class IKBService(ABC):
         label: str | None,
         dataset: str,
         cognify: bool,
-        source_kind: str,
+        source_kind: SourceKind,
     ) -> RetainResponse: ...
 
     @abstractmethod
@@ -109,6 +109,9 @@ class IKBService(ABC):
     @abstractmethod
     async def admin_prune(self) -> StatusResponse: ...
 
+    @abstractmethod
+    async def visualize_graph(self) -> str: ...
+
 
 class KBService(IKBService):
     def __init__(
@@ -117,7 +120,7 @@ class KBService(IKBService):
         reasoning: IReasoningService,
         extraction: IExtractionService,
         autocrud: IAutoCrudWrapper,
-        graph: GraphClient,
+        graph: IGraphAdapter,
     ) -> None:
         self.ingestion = ingestion
         self.reasoning = reasoning
@@ -167,12 +170,12 @@ class KBService(IKBService):
         label: str | None,
         dataset: str,
         cognify: bool,
-        source_kind: str,
+        source_kind: SourceKind,
     ) -> RetainResponse:
         chunks = await self.ingestion.ingest_file(
             path,
             dataset=dataset,
-            node_set=_node_set_for(source_kind),  # type: ignore[arg-type]
+            node_set=_node_set_for(source_kind),
             run_cognify=cognify,
         )
         resp = _summarize_chunks(chunks)
@@ -221,3 +224,12 @@ class KBService(IKBService):
     async def admin_prune(self) -> StatusResponse:
         await self.graph.prune()
         return StatusResponse(ok=True, detail="cognee stores pruned")
+
+    async def visualize_graph(self) -> str:
+        """Render the entire knowledge graph as standalone HTML. Cognee-
+        specific helper isolated here so the admin router stays thin and
+        the IKBService contract owns this capability."""
+        from cognee.api.v1.visualize import visualize_graph as _viz
+
+        await self.graph.setup()
+        return await _viz()

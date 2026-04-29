@@ -14,12 +14,12 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any
+from typing import Any, Literal
 
 from mcp.server.fastmcp import FastMCP
 
 from rca.container import Container
-from rca.ports.in_.recall import RecallRequest
+from rca.ports.in_.recall import RecallRequest, SourceFilter
 from rca.ports.in_.retain import (
     ExtractionResult,
     RetainConversationRequest,
@@ -28,6 +28,10 @@ from rca.ports.in_.retain import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+SourceKind = Literal["literature", "conversation", "rca_report"]
+
 
 mcp = FastMCP("kb-mcp")
 
@@ -45,7 +49,7 @@ def _kb():
 async def retain_text(
     text: str,
     label: str = "inline",
-    source_kind: str = "literature",
+    source_kind: SourceKind = "literature",
     cognify: bool = True,
 ) -> dict[str, Any]:
     """Push raw text into the KB. KB will run LLM extraction internally.
@@ -60,7 +64,7 @@ async def retain_text(
     on the resulting RCAReport to elevate trust.
     """
     req = RetainTextRequest(
-        text=text, label=label, source_kind=source_kind, cognify=cognify  # type: ignore[arg-type]
+        text=text, label=label, source_kind=source_kind, cognify=cognify
     )
     resp = await _kb().retain_text(req)
     return resp.model_dump()
@@ -84,14 +88,14 @@ async def retain_conversation(
 async def retain_extraction(
     extraction: dict[str, Any],
     source_label: str,
-    source_kind: str = "literature",
+    source_kind: SourceKind = "literature",
     cognify: bool = True,
 ) -> dict[str, Any]:
     """Push pre-extracted structured knowledge directly into the KB."""
     req = RetainExtractionRequest(
         extraction=ExtractionResult.model_validate(extraction),
         source_label=source_label,
-        source_kind=source_kind,  # type: ignore[arg-type]
+        source_kind=source_kind,
         cognify=cognify,
     )
     resp = await _kb().retain_extraction(req)
@@ -102,7 +106,7 @@ async def retain_extraction(
 async def recall_assessment(
     query: str,
     process_context: str | None = None,
-    source_filter: str = "all",
+    source_filter: SourceFilter = "all",
     top_k: int = 12,
 ) -> dict[str, Any]:
     """★ Primary tool for step 8 of the RCA flow. Structured causal assessment."""
@@ -110,7 +114,7 @@ async def recall_assessment(
         query=query,
         mode="assessment",
         process_context=process_context,
-        source_filter=source_filter,  # type: ignore[arg-type]
+        source_filter=source_filter,
         top_k=top_k,
     )
     resp = await _kb().recall(req)
@@ -120,7 +124,7 @@ async def recall_assessment(
 @mcp.tool()
 async def recall_snippets(
     query: str,
-    source_filter: str = "all",
+    source_filter: SourceFilter = "all",
     top_k: int = 8,
     exclude_refuted: bool = False,
 ) -> dict[str, Any]:
@@ -133,7 +137,7 @@ async def recall_snippets(
     req = RecallRequest(
         query=query,
         mode="snippets",
-        source_filter=source_filter,  # type: ignore[arg-type]
+        source_filter=source_filter,
         top_k=top_k,
         exclude_refuted=exclude_refuted,
     )

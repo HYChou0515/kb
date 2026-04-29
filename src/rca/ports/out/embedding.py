@@ -8,7 +8,7 @@ embedding backends without touching consumers.
 
 from __future__ import annotations
 
-from typing import Protocol
+from abc import ABC, abstractmethod
 
 import msgspec
 
@@ -24,7 +24,9 @@ class EmbedResponse(msgspec.Struct):
     dim: int
 
 
-class EmbeddingClient(Protocol):
+class IEmbeddingAdapter(ABC):
+    @abstractmethod
     async def embed(self, req: EmbedRequest) -> EmbedResponse: ...
 
+    @abstractmethod
     async def health(self) -> dict: ...

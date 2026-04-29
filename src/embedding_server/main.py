@@ -116,7 +116,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     if max_seq_len is not None:
         model.max_seq_length = max_seq_len
 
-    dim = model.get_sentence_embedding_dimension()
+    # sentence-transformers >=3.4 renamed get_sentence_embedding_dimension
+    # to get_embedding_dimension. Use the new name with a runtime fallback
+    # so this works on either version.
+    if hasattr(model, "get_embedding_dimension"):
+        dim = model.get_embedding_dimension()
+    else:
+        dim = model.get_sentence_embedding_dimension()
     app.state.model = model
     app.state.model_path = path
     app.state.dim = dim

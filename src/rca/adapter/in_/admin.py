@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 from typing import Annotated
 
-from cognee.api.v1.visualize import visualize_graph
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 
@@ -46,11 +45,7 @@ async def admin_graph(
     kb: Annotated[IKBService, Depends(get_kb)],
 ) -> HTMLResponse:
     """Render the entire knowledge graph as an interactive HTML page.
-
-    Calls cognee's visualize_graph directly — kept as a thin admin endpoint
-    rather than a KBService method since the only caller is this debug
-    page and the return type is HTML, not a structured DTO.
+    The HTML rendering is owned by IKBService.visualize_graph() so cognee
+    coupling stays inside the service layer.
     """
-    await kb.graph.setup()
-    html = await visualize_graph()
-    return HTMLResponse(content=html)
+    return HTMLResponse(content=await kb.visualize_graph())

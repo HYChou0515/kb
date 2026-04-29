@@ -1,6 +1,6 @@
 """Local-HTTP embedding adapter — calls the in-process embedding-server.
 
-Implements ports.out.embedding.EmbeddingClient. Currently no service in
+Implements ports.out.embedding.IEmbeddingAdapter. Currently no service in
 this codebase consumes embeddings directly (cognee handles its own via
 EMBEDDING_PROVIDER=openai_compatible env vars). This adapter exists as
 the swap point for future code that wants embeddings without going
@@ -14,12 +14,12 @@ import logging
 import httpx
 
 from rca.config import Settings
-from rca.ports.out.embedding import EmbedRequest, EmbedResponse
+from rca.ports.out.embedding import EmbedRequest, EmbedResponse, IEmbeddingAdapter
 
 logger = logging.getLogger(__name__)
 
 
-class LocalHTTPEmbeddingAdapter:
+class LocalHTTPEmbeddingAdapter(IEmbeddingAdapter):
     def __init__(self, settings: Settings) -> None:
         self.endpoint = settings.embedding_endpoint.rstrip("/")
         self.default_model = settings.embedding_model

@@ -1,4 +1,4 @@
-"""Cognee graph adapter — implements ports.out.graph.GraphClient."""
+"""Cognee graph adapter — implements ports.out.graph.IGraphAdapter."""
 
 from __future__ import annotations
 
@@ -10,11 +10,12 @@ import cognee
 from cognee.api.v1.search import SearchType
 
 from rca.config import Settings
+from rca.ports.out.graph import IGraphAdapter
 
 logger = logging.getLogger(__name__)
 
 
-class CogneeGraphAdapter:
+class CogneeGraphAdapter(IGraphAdapter):
     """Lazy initializer for cognee — call `setup()` once before use."""
 
     def __init__(self, settings: Settings) -> None:

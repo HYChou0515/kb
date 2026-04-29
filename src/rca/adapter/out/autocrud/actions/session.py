@@ -126,7 +126,7 @@ def make_session_actions(case_study_mgr_factory: Callable[[], Any]):
         # CURRENT resource's manager. When the Session action updates a
         # different resource (CaseStudy), that resource's ContextVars aren't
         # set. Bridge them explicitly with autocrud's Ctx.ctx() helper.
-        with rm.user_ctx.ctx("system"), rm.now_ctx.ctx(dt.datetime.utcnow()):
+        with rm.user_ctx.ctx("system"), rm.now_ctx.ctx(dt.datetime.now(dt.UTC)):
             rm.update(case_id, new_case)
         logger.info(
             "CaseStudy %s workspace_archive updated (%d bytes, session=%s)",
@@ -157,7 +157,7 @@ def make_session_actions(case_study_mgr_factory: Callable[[], Any]):
         return Session(
             case_study_id=case_id,
             status="active",
-            opened_at=dt.datetime.utcnow().isoformat(timespec="seconds") + "Z",
+            opened_at=dt.datetime.now(dt.UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
             workspace_path=str(active_dir),
             rca_completed=False,
             notes=f"hydrated {n_loaded} files from CaseStudy.workspace_archive"
@@ -197,7 +197,7 @@ def make_session_actions(case_study_mgr_factory: Callable[[], Any]):
         logger.info("active dir removed: %s", active_dir)
 
         existing.status = "closed"
-        existing.closed_at = dt.datetime.utcnow().isoformat(timespec="seconds") + "Z"
+        existing.closed_at = dt.datetime.now(dt.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
         if transcript_path:
             existing.transcript_path = transcript_path
         return existing
@@ -214,7 +214,7 @@ def make_session_actions(case_study_mgr_factory: Callable[[], Any]):
             logger.info("session abandoned, active dir removed: %s", active_dir)
 
         existing.status = "abandoned"
-        existing.closed_at = dt.datetime.utcnow().isoformat(timespec="seconds") + "Z"
+        existing.closed_at = dt.datetime.now(dt.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
         return existing
 
     return open_session, close_session, abandon_session

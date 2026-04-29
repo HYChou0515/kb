@@ -30,7 +30,7 @@ from rca.ports.in_.retain import RetainResponse
 
 
 class _FakeGraph:
-    """No-op GraphClient — avoids real cognee setup during tests."""
+    """No-op IGraphAdapter — avoids real cognee setup during tests."""
 
     async def setup(self) -> None:
         pass

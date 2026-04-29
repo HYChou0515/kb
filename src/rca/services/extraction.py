@@ -1,6 +1,6 @@
 """Extraction service — semiconductor-focused entity & relation extractor.
 
-Wraps an LLMClient with prompts that produce a structured ExtractionResult.
+Wraps an ILLMAdapter with prompts that produce a structured ExtractionResult.
 The extractor's output is rendered back into descriptive natural-language
 statements before handing to cognee — that lets cognee build embeddings +
 graph nodes from text it understands while preserving the structure we
@@ -17,7 +17,7 @@ from abc import ABC, abstractmethod
 from pydantic import ValidationError
 
 from rca.ports.in_.retain import ExtractionResult
-from rca.ports.out.llm import LLMClient
+from rca.ports.out.llm import ILLMAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -134,7 +134,7 @@ class IExtractionService(ABC):
 
 
 class SemiconductorExtractionService(IExtractionService):
-    def __init__(self, llm: LLMClient) -> None:
+    def __init__(self, llm: ILLMAdapter) -> None:
         self.llm = llm
 
     def extract(self, text: str, *, source_label: str = "unknown") -> ExtractionResult:

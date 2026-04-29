@@ -1,16 +1,16 @@
-"""OpenAI LLM adapter — implements ports.out.llm.LLMClient."""
+"""OpenAI LLM adapter — implements ports.out.llm.ILLMAdapter."""
 
 from __future__ import annotations
 
 import logging
 
 from rca.config import Settings
-from rca.ports.out.llm import Role
+from rca.ports.out.llm import ILLMAdapter, Role
 
 logger = logging.getLogger(__name__)
 
 
-class OpenAILLMAdapter:
+class OpenAILLMAdapter(ILLMAdapter):
     def __init__(self, settings: Settings, *, role: Role) -> None:
         from openai import OpenAI
 

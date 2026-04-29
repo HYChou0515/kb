@@ -12,14 +12,14 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
 from pypdf import PdfReader
 
 from rca.ports.in_.retain import ExtractionResult
-from rca.ports.out.graph import GraphClient
+from rca.ports.out.graph import IGraphAdapter
 from rca.services.extraction import IExtractionService, render_extraction_for_cognee
 
 logger = logging.getLogger(__name__)
@@ -119,7 +119,7 @@ class IIngestionService(ABC):
 
 
 class IngestionPipelineService(IIngestionService):
-    def __init__(self, extractor: IExtractionService, graph: GraphClient) -> None:
+    def __init__(self, extractor: IExtractionService, graph: IGraphAdapter) -> None:
         self.extractor = extractor
         self.graph = graph
 
@@ -177,7 +177,7 @@ class IngestionPipelineService(IIngestionService):
         dataset: str = "rca",
         run_cognify: bool = True,
     ) -> list[IngestedChunk]:
-        sid = session_id or datetime.utcnow().strftime("rca-chat-%Y%m%d-%H%M%S")
+        sid = session_id or datetime.now(timezone.utc).strftime("rca-chat-%Y%m%d-%H%M%S")
         rendered = "\n\n".join(
             f"[{turn.get('role', 'user').upper()}]\n{turn.get('content', '').strip()}"
             for turn in conversation

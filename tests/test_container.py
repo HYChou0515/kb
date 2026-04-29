@@ -81,7 +81,7 @@ def test_llm_selector_switches_on_settings(
     assert type(reasoning_llm).__name__ == expected_class
 
     # Roles get distinct models — a `extraction_model` env var (or the same
-    # default) is read at adapter construction; the LLMClient.model attribute
+    # default) is read at adapter construction; the ILLMAdapter.model attribute
     # is the externally-visible witness of the role split.
     assert hasattr(extraction_llm, "model")
     assert hasattr(reasoning_llm, "model")

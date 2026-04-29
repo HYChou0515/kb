@@ -17,6 +17,7 @@ from typing import Any
 from autocrud import AutoCRUD
 from autocrud.crud.route_templates.basic import DependencyProvider
 from autocrud.message_queue.simple import SimpleMessageQueueFactory
+from autocrud.resource_manager.basic import Encoding
 from autocrud.resource_manager.storage_factory import DiskStorageFactory
 
 from rca.adapter.out.autocrud.actions.report import sign_report
@@ -29,11 +30,12 @@ from rca.domain.document import DocumentSource
 from rca.domain.glossary import GlossaryEntry
 from rca.domain.rca_report import RCAReport
 from rca.domain.session import Session
+from rca.ports.out.autocrud import IAutoCrudWrapper
 
 logger = logging.getLogger(__name__)
 
 
-class AutoCrudWrapper:
+class AutoCrudWrapper(IAutoCrudWrapper):
     def __init__(self, settings: Settings, mirror: CogneeMirrorHandler) -> None:
         settings.autocrud_data_root.mkdir(parents=True, exist_ok=True)
 
@@ -42,10 +44,10 @@ class AutoCrudWrapper:
             message_queue_factory=SimpleMessageQueueFactory(),
             dependency_provider=DependencyProvider(
                 get_user=lambda: settings.autocrud_user,
-                get_now=lambda: dt.datetime.utcnow(),
+                get_now=lambda: dt.datetime.now(dt.UTC),
             ),
             model_naming="kebab",
-            encoding="json",
+            encoding=Encoding.json,
             event_handlers=[mirror],
         )
         self._register_models()
