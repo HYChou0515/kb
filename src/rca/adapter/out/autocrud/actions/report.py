@@ -10,13 +10,12 @@ claim of physical experimental validation. The reasoner system prompt
 makes this explicit when consuming the resulting node_set tags.
 """
 
-from __future__ import annotations
-
 import datetime as dt
 import logging
 
 from rca.domain.rca_report import RCAReport
 from rca.domain.types import SignerRole, VerificationStatus
+from rca.ports.in_.sign import SignReportRequest
 
 logger = logging.getLogger(__name__)
 
@@ -28,13 +27,7 @@ _ROLE_ALLOWS: dict[SignerRole, set[VerificationStatus]] = {
 }
 
 
-async def sign_report(
-    existing: RCAReport,
-    role: SignerRole,
-    status: VerificationStatus,
-    signed_by: str,
-    comment: str | None = None,
-) -> RCAReport:
+async def sign_report(existing: RCAReport, payload: SignReportRequest) -> RCAReport:
     """Elevate (or downgrade) an RCAReport's verification_status.
 
     Validation:
@@ -49,9 +42,9 @@ async def sign_report(
     """
     if not existing.agreed:
         raise ValueError("cannot sign an unagreed (draft) report")
-    if status not in _ROLE_ALLOWS[role]:
-        raise ValueError(f"role={role!r} cannot set status={status!r}")
-    if status == "refuted" and not (comment and comment.strip()):
+    if payload.status not in _ROLE_ALLOWS[payload.role]:
+        raise ValueError(f"role={payload.role!r} cannot set status={payload.status!r}")
+    if payload.status == "refuted" and not (payload.comment and payload.comment.strip()):
         raise ValueError("refuted status requires a non-empty comment")
 
     now = dt.datetime.utcnow()
@@ -63,10 +56,10 @@ async def sign_report(
         except ValueError:
             pass
 
-    existing.verification_status = status
-    existing.verifier_role = role
-    existing.verified_by = signed_by
+    existing.verification_status = payload.status
+    existing.verifier_role = payload.role
+    existing.verified_by = payload.signed_by
     existing.verified_at = now.isoformat(timespec="seconds") + "Z"
     existing.signoff_turnaround_seconds = turnaround
-    existing.signoff_comment = comment
+    existing.signoff_comment = payload.comment
     return existing

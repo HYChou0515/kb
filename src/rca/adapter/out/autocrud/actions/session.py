@@ -10,8 +10,6 @@ Mimics the v2 architecture's pod + PV pattern. The "PV" is the
 AutoCRUD). The "pod's filesystem" is `active_sessions/<case>/<token>/`.
 """
 
-from __future__ import annotations
-
 import datetime as dt
 import io
 import logging
@@ -124,7 +122,12 @@ def make_session_actions(case_study_mgr_factory: Callable[[], Any]):
             content_type="application/gzip",
         )
         new_case = structs.replace(case, workspace_archive=new_archive)
-        rm.update(case_id, new_case)
+        # AutoCRUD per-request ContextVars (now_ctx/user_ctx) are scoped to the
+        # CURRENT resource's manager. When the Session action updates a
+        # different resource (CaseStudy), that resource's ContextVars aren't
+        # set. Bridge them explicitly with autocrud's Ctx.ctx() helper.
+        with rm.user_ctx.ctx("system"), rm.now_ctx.ctx(dt.datetime.utcnow()):
+            rm.update(case_id, new_case)
         logger.info(
             "CaseStudy %s workspace_archive updated (%d bytes, session=%s)",
             case_id, len(tar_bytes), session_token,
