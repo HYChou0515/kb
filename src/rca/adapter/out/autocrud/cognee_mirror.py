@@ -44,9 +44,9 @@ logger = logging.getLogger(__name__)
 
 _RCA_NODE_SET: dict[str, list[str]] = {
     "unverified": ["rca_reports", "rca_reports_unverified"],
-    "partial":    ["rca_reports", "rca_reports_partial"],
-    "verified":   ["rca_reports", "rca_reports_verified"],
-    "refuted":    ["rca_reports", "rca_reports_refuted"],
+    "partial": ["rca_reports", "rca_reports_partial"],
+    "verified": ["rca_reports", "rca_reports_verified"],
+    "refuted": ["rca_reports", "rca_reports_refuted"],
 }
 
 
@@ -171,14 +171,18 @@ class CogneeMirrorHandler(IEventHandler):
             try:
                 asyncio.run(self._push(text, node_set, type_name))
             except Exception as exc:  # noqa: BLE001
-                logger.error("cognee mirror failed (sync path) for %s: %s", type_name, exc)
+                logger.error(
+                    "cognee mirror failed (sync path) for %s: %s", type_name, exc
+                )
             return
 
         loop.create_task(self._push(text, node_set, type_name))
 
     async def _push(self, text: str, node_set: list[str], type_name: str) -> None:
         try:
-            await self._graph.add_text(text, dataset=self._dataset, node_set=node_set)
+            await self._graph.remember_text(
+                text, dataset=self._dataset, node_set=node_set
+            )
             logger.info(
                 "mirrored %s → cognee (node_set=%s, %d chars)",
                 type_name,

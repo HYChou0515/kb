@@ -43,7 +43,9 @@ ConfidenceLevel = Literal[
 
 
 class Entity(BaseModel):
-    name: str = Field(..., description="Canonical name, prefer common semiconductor terminology")
+    name: str = Field(
+        ..., description="Canonical name, prefer common semiconductor terminology"
+    )
     type: EntityType
     aliases: list[str] = Field(default_factory=list)
     description: str = Field("", description="One-sentence description")
@@ -65,7 +67,9 @@ class Relation(BaseModel):
 class ExtractionResult(BaseModel):
     entities: list[Entity] = Field(default_factory=list)
     relations: list[Relation] = Field(default_factory=list)
-    summary: str = Field("", description="2-3 sentence summary of the document's RCA-relevant content")
+    summary: str = Field(
+        "", description="2-3 sentence summary of the document's RCA-relevant content"
+    )
 
 
 # ─── /retain/* request / response ───────────────────────────────────────────

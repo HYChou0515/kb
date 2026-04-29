@@ -35,19 +35,19 @@ class _FakeGraph:
     async def setup(self) -> None:
         pass
 
-    async def add_text(self, *a: Any, **kw: Any) -> None:
+    async def remember_text(self, *a: Any, **kw: Any) -> None:
         pass
 
-    async def add_documents(self, *a: Any, **kw: Any) -> None:
+    async def remember_files(self, *a: Any, **kw: Any) -> None:
         pass
 
     async def cognify(self, *a: Any, **kw: Any) -> None:
         pass
 
-    async def search(self, *a: Any, **kw: Any) -> list[Any]:
+    async def recall(self, *a: Any, **kw: Any) -> list[Any]:
         return []
 
-    async def prune(self) -> None:
+    async def forget(self) -> None:
         pass
 
 
@@ -61,29 +61,41 @@ class _FakeKBService:
     async def retain_text(self, req: Any) -> RetainResponse:
         self.last_call = ("retain_text", req)
         return RetainResponse(
-            chunks_ingested=1, entities_extracted=0, relations_extracted=0,
-            summary="ok", source_labels=[req.label],
+            chunks_ingested=1,
+            entities_extracted=0,
+            relations_extracted=0,
+            summary="ok",
+            source_labels=[req.label],
         )
 
     async def retain_conversation(self, req: Any) -> RetainResponse:
         self.last_call = ("retain_conversation", req)
         return RetainResponse(
-            chunks_ingested=1, entities_extracted=0, relations_extracted=0,
-            summary="ok", source_labels=[],
+            chunks_ingested=1,
+            entities_extracted=0,
+            relations_extracted=0,
+            summary="ok",
+            source_labels=[],
         )
 
     async def retain_extraction(self, req: Any) -> RetainResponse:
         self.last_call = ("retain_extraction", req)
         return RetainResponse(
-            chunks_ingested=1, entities_extracted=0, relations_extracted=0,
-            summary="ok", source_labels=[],
+            chunks_ingested=1,
+            entities_extracted=0,
+            relations_extracted=0,
+            summary="ok",
+            source_labels=[],
         )
 
     async def retain_file(self, path: Path, **kw: Any) -> RetainResponse:
         self.last_call = ("retain_file", (path, kw))
         return RetainResponse(
-            chunks_ingested=1, entities_extracted=0, relations_extracted=0,
-            summary="ok", source_labels=[],
+            chunks_ingested=1,
+            entities_extracted=0,
+            relations_extracted=0,
+            summary="ok",
+            source_labels=[],
         )
 
     async def recall(self, req: Any) -> Any:
@@ -91,7 +103,8 @@ class _FakeKBService:
         if req.mode == "assessment":
             return RecallAssessmentResponse(
                 assessment=CausalAssessment(
-                    correlation=req.query, verdict="uncertain",
+                    correlation=req.query,
+                    verdict="uncertain",
                     verdict_reasoning="(fake)",
                 )
             )
@@ -121,7 +134,8 @@ def client(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     monkeypatch.setenv("COGNEE_DATA_ROOT", str(tmp_path / "cognee_data"))
     monkeypatch.setenv("COGNEE_SYSTEM_ROOT", str(tmp_path / "cognee_system"))
 
-    from rca.main import app, container
+    from rca.container import container
+    from rca.main import app
 
     container.reset_singletons()  # ensure fresh resolution with our env
     fake_graph = _FakeGraph()
@@ -151,7 +165,9 @@ def test_retain_text_routes_to_kb_service(client) -> None:
     """POST /retain/text → KBService.retain_text. Verifies the retain router
     delegates correctly and the RetainTextRequest pydantic model parses."""
     c, fake = client
-    r = c.post("/retain/text", json={"text": "x", "label": "test", "source_kind": "literature"})
+    r = c.post(
+        "/retain/text", json={"text": "x", "label": "test", "source_kind": "literature"}
+    )
     assert r.status_code == 200
     body = r.json()
     assert body["chunks_ingested"] == 1
@@ -189,4 +205,6 @@ def test_autocrud_routes_mounted(client) -> None:
     r = c.get("/rca-report")
     # Either 200 with empty list, or 405 if AutoCRUD uses a different shape.
     # The point is the route MUST exist (not 404).
-    assert r.status_code != 404, f"AutoCRUD-generated /rca-report not mounted: {r.status_code}"
+    assert r.status_code != 404, (
+        f"AutoCRUD-generated /rca-report not mounted: {r.status_code}"
+    )

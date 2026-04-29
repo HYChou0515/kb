@@ -18,23 +18,31 @@ from fastapi.testclient import TestClient
 
 
 class _RecordingGraph:
-    """IGraphAdapter fake that records every add_text() call so we can assert
+    """IGraphAdapter fake that records every remember_text() call so we can assert
     the cognee mirror mirrored the right node_set tags after /sign."""
 
     def __init__(self) -> None:
         self.adds: list[tuple[str, list[str]]] = []  # (text, node_set) pairs
 
-    async def setup(self) -> None: pass
+    async def setup(self) -> None:
+        pass
 
-    async def add_text(
+    async def remember_text(
         self, text: str, *, dataset: str = "rca", node_set: list[str] | None = None
     ) -> None:
         self.adds.append((text, node_set or []))
 
-    async def add_documents(self, *a: Any, **kw: Any) -> None: pass
-    async def cognify(self, *a: Any, **kw: Any) -> None: pass
-    async def search(self, *a: Any, **kw: Any) -> list[Any]: return []
-    async def prune(self) -> None: pass
+    async def remember_files(self, *a: Any, **kw: Any) -> None:
+        pass
+
+    async def cognify(self, *a: Any, **kw: Any) -> None:
+        pass
+
+    async def recall(self, *a: Any, **kw: Any) -> list[Any]:
+        return []
+
+    async def forget(self) -> None:
+        pass
 
 
 @pytest.fixture
@@ -46,7 +54,8 @@ def app_client(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     monkeypatch.setenv("COGNEE_SYSTEM_ROOT", str(tmp_path / "cognee_system"))
     monkeypatch.chdir(tmp_path)
 
-    from rca.main import app, container
+    from rca.container import container
+    from rca.main import app
 
     container.reset_singletons()
     fake_graph = _RecordingGraph()
@@ -131,7 +140,7 @@ def test_sign_report_persists_verification_status(app_client) -> None:
 
 # NOTE: The HTTP-level mirror integration test was intentionally dropped.
 # CogneeMirrorHandler.handle_event uses `loop.create_task(...)` (fire-and-
-# forget) so the mirror's IGraphAdapter.add_text call may not have completed
+# forget) so the mirror's IGraphAdapter.remember_text call may not have completed
 # by the time the sync test thread checks fake_graph.adds. The renderer's
 # 4-tier node_set behavior is covered deterministically at unit level by
 # tests/test_cognee_mirror.py::test_mirror_status_aware_node_set.

@@ -18,7 +18,7 @@ from typing import Any, Literal
 
 from mcp.server.fastmcp import FastMCP
 
-from rca.container import Container
+from rca.container import get_kb
 from rca.ports.in_.recall import RecallRequest, SourceFilter
 from rca.ports.in_.retain import (
     ExtractionResult,
@@ -35,14 +35,9 @@ SourceKind = Literal["literature", "conversation", "rca_report"]
 
 mcp = FastMCP("kb-mcp")
 
-_container: Container | None = None
-
 
 def _kb():
-    global _container
-    if _container is None:
-        _container = Container()
-    return _container.kb()
+    return get_kb()
 
 
 @mcp.tool()

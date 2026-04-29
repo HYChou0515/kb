@@ -60,7 +60,9 @@ def load_cases(yaml_path: Path) -> list[BenchmarkCase]:
     return [BenchmarkCase(**c) for c in raw.get("cases", [])]
 
 
-def _score_keywords(assessment: CausalAssessment, keywords: list[str]) -> tuple[float, list[str], list[str]]:
+def _score_keywords(
+    assessment: CausalAssessment, keywords: list[str]
+) -> tuple[float, list[str], list[str]]:
     if not keywords:
         return 1.0, [], []
     blob_parts: list[str] = [
@@ -77,7 +79,9 @@ def _score_keywords(assessment: CausalAssessment, keywords: list[str]) -> tuple[
     return len(matched) / len(keywords), matched, missing
 
 
-async def run_benchmark(reasoning: IReasoningService, yaml_path: Path) -> BenchmarkReport:
+async def run_benchmark(
+    reasoning: IReasoningService, yaml_path: Path
+) -> BenchmarkReport:
     cases = load_cases(yaml_path)
     results: list[BenchmarkResult] = []
 
@@ -87,7 +91,9 @@ async def run_benchmark(reasoning: IReasoningService, yaml_path: Path) -> Benchm
             case.correlation,
             process_context=case.process_context,
         )
-        recall, matched, missing = _score_keywords(assessment, case.expected_reasoning_contains)
+        recall, matched, missing = _score_keywords(
+            assessment, case.expected_reasoning_contains
+        )
         verdict_match: bool | None
         if case.expected_verdict is None:
             verdict_match = None
@@ -113,14 +119,17 @@ async def run_benchmark(reasoning: IReasoningService, yaml_path: Path) -> Benchm
         avg_recall = sum(r.keyword_recall for r in results) / n
         verdict_evaluated = [r for r in results if r.verdict_match is not None]
         verdict_acc = (
-            sum(1 for r in verdict_evaluated if r.verdict_match) / len(verdict_evaluated)
+            sum(1 for r in verdict_evaluated if r.verdict_match)
+            / len(verdict_evaluated)
             if verdict_evaluated
             else None
         )
         summary = {
             "n_cases": n,
             "avg_keyword_recall": round(avg_recall, 3),
-            "verdict_accuracy": round(verdict_acc, 3) if verdict_acc is not None else None,
+            "verdict_accuracy": round(verdict_acc, 3)
+            if verdict_acc is not None
+            else None,
             "verdict_evaluated_n": len(verdict_evaluated),
         }
     return BenchmarkReport(cases=results, summary=summary)

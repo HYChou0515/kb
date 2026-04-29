@@ -68,8 +68,7 @@ def _filter_by_source(snippets: list[str], source_filter: str) -> list[str]:
     if source_filter == "conversations":
         return [s for s in snippets if "rca_conversations" in s]
     return [
-        s for s in snippets
-        if "rca_conversations" not in s and "rca_reports" not in s
+        s for s in snippets if "rca_conversations" not in s and "rca_reports" not in s
     ]
 
 
@@ -82,10 +81,14 @@ class IKBService(ABC):
     async def retain_text(self, req: RetainTextRequest) -> RetainResponse: ...
 
     @abstractmethod
-    async def retain_conversation(self, req: RetainConversationRequest) -> RetainResponse: ...
+    async def retain_conversation(
+        self, req: RetainConversationRequest
+    ) -> RetainResponse: ...
 
     @abstractmethod
-    async def retain_extraction(self, req: RetainExtractionRequest) -> RetainResponse: ...
+    async def retain_extraction(
+        self, req: RetainExtractionRequest
+    ) -> RetainResponse: ...
 
     @abstractmethod
     async def retain_file(
@@ -101,7 +104,9 @@ class IKBService(ABC):
     @abstractmethod
     async def recall(
         self, req: RecallRequest
-    ) -> RecallSnippetsResponse | RecallAssessmentResponse | RecallSynthesisResponse: ...
+    ) -> (
+        RecallSnippetsResponse | RecallAssessmentResponse | RecallSynthesisResponse
+    ): ...
 
     @abstractmethod
     async def admin_cognify(self, req: CognifyRequest) -> StatusResponse: ...
@@ -138,7 +143,9 @@ class KBService(IKBService):
         )
         return _summarize_chunks(chunks)
 
-    async def retain_conversation(self, req: RetainConversationRequest) -> RetainResponse:
+    async def retain_conversation(
+        self, req: RetainConversationRequest
+    ) -> RetainResponse:
         chunks = await self.ingestion.ingest_conversation(
             req.messages,
             session_id=req.session_id,
@@ -148,8 +155,10 @@ class KBService(IKBService):
         return _summarize_chunks(chunks)
 
     async def retain_extraction(self, req: RetainExtractionRequest) -> RetainResponse:
-        rendered = render_extraction_for_cognee(req.extraction, source_label=req.source_label)
-        await self.graph.add_text(
+        rendered = render_extraction_for_cognee(
+            req.extraction, source_label=req.source_label
+        )
+        await self.graph.remember_text(
             rendered, dataset=req.dataset, node_set=_node_set_for(req.source_kind)
         )
         if req.cognify:
@@ -206,13 +215,15 @@ class KBService(IKBService):
         if req.mode == "synthesis":
             from cognee.api.v1.search import SearchType
 
-            results = await self.graph.search(
+            results = await self.graph.recall(
                 req.query,
                 search_type=SearchType.GRAPH_COMPLETION,
                 top_k=req.top_k,
             )
             text_results: list[str] = [str(r) for r in results]
-            synthesis = "\n\n".join(text_results) if text_results else "(no graph match)"
+            synthesis = (
+                "\n\n".join(text_results) if text_results else "(no graph match)"
+            )
             return RecallSynthesisResponse(synthesis=synthesis, raw=text_results)
 
         raise ValueError(f"unknown mode: {req.mode}")
@@ -222,7 +233,7 @@ class KBService(IKBService):
         return StatusResponse(ok=True, detail=f"cognify(dataset={req.dataset}) done")
 
     async def admin_prune(self) -> StatusResponse:
-        await self.graph.prune()
+        await self.graph.forget()
         return StatusResponse(ok=True, detail="cognee stores pruned")
 
     async def visualize_graph(self) -> str:

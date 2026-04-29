@@ -5,8 +5,9 @@ from __future__ import annotations
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
 
+from rca.container import get_kb
 from rca.ports.in_.recall import (
     RecallAssessmentResponse,
     RecallRequest,
@@ -18,10 +19,6 @@ from rca.services.kb import IKBService
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["recall"])
-
-
-def get_kb(request: Request) -> IKBService:
-    return request.app.state.kb
 
 
 @router.post("/recall")

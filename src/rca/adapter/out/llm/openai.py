@@ -16,7 +16,11 @@ class OpenAILLMAdapter(ILLMAdapter):
 
         if not settings.openai_api_key:
             raise RuntimeError("OPENAI_API_KEY is unset")
-        self.model = settings.extraction_model if role == "extraction" else settings.reasoning_model
+        self.model = (
+            settings.extraction_model
+            if role == "extraction"
+            else settings.reasoning_model
+        )
         self._client = OpenAI(api_key=settings.openai_api_key)
         logger.debug("OpenAI LLM adapter: model=%s role=%s", self.model, role)
 

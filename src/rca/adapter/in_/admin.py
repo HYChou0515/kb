@@ -5,19 +5,16 @@ from __future__ import annotations
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
 from fastapi.responses import HTMLResponse
 
+from rca.container import get_kb
 from rca.ports.in_.admin import CognifyRequest, StatusResponse
 from rca.services.kb import IKBService
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["admin"])
-
-
-def get_kb(request: Request) -> IKBService:
-    return request.app.state.kb
 
 
 @router.get("/health", response_model=StatusResponse)

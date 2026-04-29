@@ -112,7 +112,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         device,
         trust_remote_code,
     )
-    model = SentenceTransformer(path, device=device, trust_remote_code=trust_remote_code)
+    model = SentenceTransformer(
+        path, device=device, trust_remote_code=trust_remote_code
+    )
     if max_seq_len is not None:
         model.max_seq_length = max_seq_len
 

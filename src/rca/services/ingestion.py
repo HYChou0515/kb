@@ -35,7 +35,9 @@ class IngestedChunk:
     extraction: ExtractionResult
 
 
-def _chunk_text(text: str, *, target: int = CHUNK_CHAR_TARGET, overlap: int = CHUNK_CHAR_OVERLAP) -> list[str]:
+def _chunk_text(
+    text: str, *, target: int = CHUNK_CHAR_TARGET, overlap: int = CHUNK_CHAR_OVERLAP
+) -> list[str]:
     text = text.strip()
     if len(text) <= target:
         return [text] if text else []
@@ -134,7 +136,7 @@ class IngestionPipelineService(IIngestionService):
     ) -> list[IngestedChunk]:
         chunks_text = _chunk_text(text)
         return await self._ingest_chunks(
-            [(f"{source_label}#c{i+1}", c) for i, c in enumerate(chunks_text)],
+            [(f"{source_label}#c{i + 1}", c) for i, c in enumerate(chunks_text)],
             dataset=dataset,
             node_set=node_set,
             run_cognify=run_cognify,
@@ -167,7 +169,9 @@ class IngestionPipelineService(IIngestionService):
         for p in sorted(directory.rglob("*")):
             if p.is_file():
                 all_chunks.extend(_read_file(p))
-        return await self._ingest_chunks(all_chunks, dataset=dataset, run_cognify=run_cognify)
+        return await self._ingest_chunks(
+            all_chunks, dataset=dataset, run_cognify=run_cognify
+        )
 
     async def ingest_conversation(
         self,
@@ -177,7 +181,9 @@ class IngestionPipelineService(IIngestionService):
         dataset: str = "rca",
         run_cognify: bool = True,
     ) -> list[IngestedChunk]:
-        sid = session_id or datetime.now(timezone.utc).strftime("rca-chat-%Y%m%d-%H%M%S")
+        sid = session_id or datetime.now(timezone.utc).strftime(
+            "rca-chat-%Y%m%d-%H%M%S"
+        )
         rendered = "\n\n".join(
             f"[{turn.get('role', 'user').upper()}]\n{turn.get('content', '').strip()}"
             for turn in conversation
@@ -212,8 +218,8 @@ class IngestionPipelineService(IIngestionService):
             logger.info("extracting: %s (%d chars)", label, len(text))
             extraction = self.extractor.extract(text, source_label=label)
             rendered = render_extraction_for_cognee(extraction, source_label=label)
-            await self.graph.add_text(rendered, dataset=dataset, node_set=node_set)
-            await self.graph.add_text(
+            await self.graph.remember_text(rendered, dataset=dataset, node_set=node_set)
+            await self.graph.remember_text(
                 f"# Raw source: {label}\n\n{text}",
                 dataset=dataset,
                 node_set=node_set,

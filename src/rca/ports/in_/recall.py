@@ -13,10 +13,14 @@ Verdict = Literal["plausible", "uncertain", "implausible"]
 
 
 class MechanismHypothesis(BaseModel):
-    description: str = Field(..., description="The proposed causal pathway A→B in 1-2 sentences")
+    description: str = Field(
+        ..., description="The proposed causal pathway A→B in 1-2 sentences"
+    )
     supporting_entities: list[str] = Field(default_factory=list)
     confidence: Literal["high", "medium", "low"] = "medium"
-    citations: list[str] = Field(default_factory=list, description="Source labels from the graph")
+    citations: list[str] = Field(
+        default_factory=list, description="Source labels from the graph"
+    )
 
 
 class ConfounderHypothesis(BaseModel):

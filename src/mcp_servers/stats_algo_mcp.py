@@ -42,16 +42,15 @@ mcp = FastMCP("stats-algo-mcp")
 def _build_indicator(history: pd.DataFrame) -> pd.DataFrame:
     """Wide-format indicator: rows=wafer_id, columns=(step|tool) pairs, values=0/1."""
     history = history.copy()
-    history["factor_id"] = history["process_name"].astype(str) + "::" + history["tool_id"].astype(str)
-    pivot = (
-        history.assign(value=1)
-        .pivot_table(
-            index="wafer_id",
-            columns="factor_id",
-            values="value",
-            aggfunc="max",
-            fill_value=0,
-        )
+    history["factor_id"] = (
+        history["process_name"].astype(str) + "::" + history["tool_id"].astype(str)
+    )
+    pivot = history.assign(value=1).pivot_table(
+        index="wafer_id",
+        columns="factor_id",
+        values="value",
+        aggfunc="max",
+        fill_value=0,
     )
     return pivot
 
@@ -82,7 +81,9 @@ async def compute_factor_scores(
     history = pd.read_csv(WAFER_HISTORY_CSV)
     defects = pd.read_csv(DEFECT_COUNTS_CSV)
     if drop_dummy_steps:
-        mask = ~history["process_name"].str.contains("DUMMY|SCRIBE", case=False, na=False)
+        mask = ~history["process_name"].str.contains(
+            "DUMMY|SCRIBE", case=False, na=False
+        )
         history = history[mask]
 
     indicator = _build_indicator(history)

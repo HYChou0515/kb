@@ -16,6 +16,7 @@ import pytest
 
 from rca.adapter.out.autocrud.cognee_mirror import _render_rca_report
 from rca.domain.rca_report import RCAReport
+from rca.domain.types import VerificationStatus
 
 
 def test_mirror_skips_draft() -> None:
@@ -34,7 +35,9 @@ def test_mirror_skips_draft() -> None:
         ("refuted", "rca_reports_refuted"),
     ],
 )
-def test_mirror_status_aware_node_set(status: str, expected_tag: str) -> None:
+def test_mirror_status_aware_node_set(
+    status: VerificationStatus, expected_tag: str
+) -> None:
     """Each verification_status maps to a distinct second-tier node_set tag.
     The base "rca_reports" tag is always present too — that's how
     `source_filter="rca_reports"` (the legacy 3-tier filter) keeps working
@@ -47,7 +50,7 @@ def test_mirror_status_aware_node_set(status: str, expected_tag: str) -> None:
         session_id="s1",
         markdown_content="# test",
         agreed=True,
-        verification_status=status,  # type: ignore[arg-type]
+        verification_status=status,
         signoff_comment="ok" if status == "refuted" else None,
     )
     rendered = _render_rca_report(rec)

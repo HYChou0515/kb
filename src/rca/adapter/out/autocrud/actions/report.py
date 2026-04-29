@@ -21,8 +21,8 @@ logger = logging.getLogger(__name__)
 
 
 _ROLE_ALLOWS: dict[SignerRole, set[VerificationStatus]] = {
-    "author":  {"unverified", "refuted"},
-    "senior":  {"unverified", "partial", "refuted"},
+    "author": {"unverified", "refuted"},
+    "senior": {"unverified", "partial", "refuted"},
     "manager": {"unverified", "partial", "verified", "refuted"},
 }
 
@@ -44,7 +44,9 @@ async def sign_report(existing: RCAReport, payload: SignReportRequest) -> RCARep
         raise ValueError("cannot sign an unagreed (draft) report")
     if payload.status not in _ROLE_ALLOWS[payload.role]:
         raise ValueError(f"role={payload.role!r} cannot set status={payload.status!r}")
-    if payload.status == "refuted" and not (payload.comment and payload.comment.strip()):
+    if payload.status == "refuted" and not (
+        payload.comment and payload.comment.strip()
+    ):
         raise ValueError("refuted status requires a non-empty comment")
 
     now = dt.datetime.now(dt.UTC)

@@ -8,6 +8,7 @@ real cognee, or real AutoCRUD.
 
 from __future__ import annotations
 
+from typing import cast
 
 import pytest
 
@@ -15,11 +16,17 @@ from rca.ports.in_.recall import (
     CausalAssessment,
     RecallRequest,
     RecallSnippetsResponse,
+    SourceFilter,
 )
+from rca.ports.out.autocrud import IAutoCrudWrapper
+from rca.ports.out.graph import IGraphAdapter
+from rca.services.extraction import IExtractionService
+from rca.services.ingestion import IIngestionService
 from rca.services.kb import KBService
+from rca.services.reasoning import IReasoningService
 
 
-class _FakeReasoning:
+class _FakeReasoning(IReasoningService):
     """Minimal IReasoningService fake — returns canned snippets so we can
     assert the filtering + dispatching contract of KBService.recall."""
 
@@ -44,13 +51,14 @@ class _FakeReasoning:
 
 def _kb_service(reasoning: _FakeReasoning) -> KBService:
     """KBService with only `reasoning` real; the rest are stubs not exercised
-    in /recall mode=snippets."""
+    in /recall mode=snippets. `cast(..., None)` placates type checkers
+    without instantiating real (heavy) services."""
     return KBService(
-        ingestion=None,  # type: ignore[arg-type]
-        reasoning=reasoning,  # type: ignore[arg-type]
-        extraction=None,  # type: ignore[arg-type]
-        autocrud=None,  # type: ignore[arg-type]
-        graph=None,  # type: ignore[arg-type]
+        ingestion=cast(IIngestionService, None),
+        reasoning=reasoning,
+        extraction=cast(IExtractionService, None),
+        autocrud=cast(IAutoCrudWrapper, None),
+        graph=cast(IGraphAdapter, None),
     )
 
 
@@ -97,7 +105,7 @@ async def test_recall_exclude_refuted_drops_refuted_snippets() -> None:
     ],
 )
 async def test_recall_source_filter_narrows(
-    source_filter: str, must_include: str, must_exclude: str
+    source_filter: SourceFilter, must_include: str, must_exclude: str
 ) -> None:
     """source_filter narrows recall results by provenance marker baked into
     the rendered snippet text. Three named tiers: rca_reports, conversations
@@ -112,9 +120,7 @@ async def test_recall_source_filter_narrows(
     kb = _kb_service(_FakeReasoning(snippets))
 
     resp = await kb.recall(
-        RecallRequest(
-            query="x", mode="snippets", source_filter=source_filter  # type: ignore[arg-type]
-        )
+        RecallRequest(query="x", mode="snippets", source_filter=source_filter)
     )
     assert isinstance(resp, RecallSnippetsResponse)
     assert any(must_include in s for s in resp.snippets), (

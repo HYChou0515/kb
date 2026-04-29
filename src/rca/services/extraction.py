@@ -130,7 +130,9 @@ def render_extraction_for_cognee(result: ExtractionResult, *, source_label: str)
 
 class IExtractionService(ABC):
     @abstractmethod
-    def extract(self, text: str, *, source_label: str = "unknown") -> ExtractionResult: ...
+    def extract(
+        self, text: str, *, source_label: str = "unknown"
+    ) -> ExtractionResult: ...
 
 
 class SemiconductorExtractionService(IExtractionService):
@@ -154,5 +156,7 @@ class SemiconductorExtractionService(IExtractionService):
             data = json.loads(cleaned)
             return ExtractionResult.model_validate(data)
         except (json.JSONDecodeError, ValidationError) as exc:
-            logger.error("extractor returned invalid JSON: %s\nRAW:\n%s", exc, raw[:2000])
+            logger.error(
+                "extractor returned invalid JSON: %s\nRAW:\n%s", exc, raw[:2000]
+            )
             return ExtractionResult(summary=f"(extraction failed: {exc})")

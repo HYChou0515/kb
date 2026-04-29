@@ -102,7 +102,9 @@ async def download_wafer_history(
     if wafer_ids:
         df = df[df["wafer_id"].isin(wafer_ids)]
     if stage_name_substr:
-        df = df[df["process_name"].str.contains(stage_name_substr, case=False, na=False)]
+        df = df[
+            df["process_name"].str.contains(stage_name_substr, case=False, na=False)
+        ]
     if drop_dummy_steps:
         mask = ~df["process_name"].str.contains("DUMMY|SCRIBE", case=False, na=False)
         df = df[mask]

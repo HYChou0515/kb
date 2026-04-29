@@ -19,21 +19,18 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from rca.adapter.in_ import admin, recall, retain
-from rca.container import Container
+from rca.container import container
 
 logger = logging.getLogger(__name__)
-
-
-# Single Container instance for the process. FastAPI's lifespan resolves
-# providers from this container.
-container = Container()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = container.settings()
-    logging.basicConfig(level=settings.log_level.upper(),
-                        format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    logging.basicConfig(
+        level=settings.log_level.upper(),
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
 
     graph = container.graph()
     await graph.setup()
@@ -42,7 +39,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     autocrud.register_actions()
     autocrud.apply(app)
 
-    app.state.kb = container.kb()
+    # Eager-resolve so first-request latency doesn't include the full DI graph.
+    # Routers fetch the same instance via Depends(get_kb) (rca.container).
+    container.kb()
     logger.info("KB API ready (AutoCRUD wrapper + cognee mirror live)")
     yield
 
@@ -88,7 +87,10 @@ async def _verbose_exception_handler(request: Request, exc: Exception) -> JSONRe
         hint = " | Hint: LLM provider rate-limited. Wait or reduce concurrency."
     logger.error(
         "Unhandled exception on %s %s: %s\n%s",
-        request.method, request.url.path, exc, traceback.format_exc(),
+        request.method,
+        request.url.path,
+        exc,
+        traceback.format_exc(),
     )
     return JSONResponse(
         status_code=status,

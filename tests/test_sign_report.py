@@ -11,6 +11,7 @@ import pytest
 
 from rca.adapter.out.autocrud.actions.report import sign_report
 from rca.domain.rca_report import RCAReport
+from rca.domain.types import SignerRole, VerificationStatus
 from rca.ports.in_.sign import SignReportRequest
 
 
@@ -42,7 +43,9 @@ async def test_sign_rejects_draft() -> None:
         ("senior", "verified"),
     ],
 )
-async def test_sign_rejects_role_status_overreach(role: str, status: str) -> None:
+async def test_sign_rejects_role_status_overreach(
+    role: SignerRole, status: VerificationStatus
+) -> None:
     """Role/status policy: author may only set unverified|refuted; senior may
     only set unverified|partial|refuted; verified is manager-only.
 
@@ -50,7 +53,7 @@ async def test_sign_rejects_role_status_overreach(role: str, status: str) -> Non
     A senior or author cannot self-elevate past their tier.
     """
     report = _agreed_report()
-    payload = SignReportRequest(role=role, status=status, signed_by="bob")  # type: ignore[arg-type]
+    payload = SignReportRequest(role=role, status=status, signed_by="bob")
     with pytest.raises(ValueError, match="cannot set status"):
         await sign_report(report, payload)
 

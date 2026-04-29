@@ -23,6 +23,6 @@ class DocumentSource(Struct):
     case_study_id: Annotated[
         str | None, Ref("case-study", on_delete=OnDelete.set_null)
     ] = None
-    session_id: Annotated[
-        str | None, Ref("session", on_delete=OnDelete.set_null)
-    ] = None
+    session_id: Annotated[str | None, Ref("session", on_delete=OnDelete.set_null)] = (
+        None
+    )

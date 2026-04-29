@@ -65,10 +65,14 @@ class Settings:
     kb_api_host: str = "127.0.0.1"
     kb_api_port: int = 8765
     kb_api_base_url: str = "http://127.0.0.1:8765"
-    mock_fab_data_dir: Path = field(default_factory=lambda: PROJECT_ROOT / "data" / "mock-fab-data")
+    mock_fab_data_dir: Path = field(
+        default_factory=lambda: PROJECT_ROOT / "data" / "mock-fab-data"
+    )
 
     sources_dir: Path = field(default_factory=lambda: PROJECT_ROOT / "data" / "sources")
-    benchmark_dir: Path = field(default_factory=lambda: PROJECT_ROOT / "data" / "benchmark")
+    benchmark_dir: Path = field(
+        default_factory=lambda: PROJECT_ROOT / "data" / "benchmark"
+    )
 
     def export_to_cognee_env(self) -> None:
         os.environ["LLM_PROVIDER"] = self.llm_provider
@@ -95,7 +99,9 @@ class Settings:
 def load_settings() -> Settings:
     provider = _env("LLM_PROVIDER", "openai").lower()
     if provider not in {"openai", "anthropic"}:
-        raise RuntimeError(f"Unsupported LLM_PROVIDER: {provider!r}. Use 'openai' or 'anthropic'.")
+        raise RuntimeError(
+            f"Unsupported LLM_PROVIDER: {provider!r}. Use 'openai' or 'anthropic'."
+        )
 
     openai_key = _env("OPENAI_API_KEY", "")
     anthropic_key = _env("ANTHROPIC_API_KEY", "")
@@ -119,8 +125,12 @@ def load_settings() -> Settings:
         reasoning_model=reasoning_model,
         openai_api_key=openai_key,
         anthropic_api_key=anthropic_key,
-        cognee_data_root=Path(_env("COGNEE_DATA_ROOT", str(PROJECT_ROOT / ".cognee_data"))).resolve(),
-        cognee_system_root=Path(_env("COGNEE_SYSTEM_ROOT", str(PROJECT_ROOT / ".cognee_system"))).resolve(),
+        cognee_data_root=Path(
+            _env("COGNEE_DATA_ROOT", str(PROJECT_ROOT / ".cognee_data"))
+        ).resolve(),
+        cognee_system_root=Path(
+            _env("COGNEE_SYSTEM_ROOT", str(PROJECT_ROOT / ".cognee_system"))
+        ).resolve(),
         embedding_provider=_env("EMBEDDING_PROVIDER", "openai_compatible"),
         embedding_model=_env("EMBEDDING_MODEL", "local-st"),
         embedding_dimensions=int(_env("EMBEDDING_DIMENSIONS", "1024")),
@@ -132,10 +142,14 @@ def load_settings() -> Settings:
         graph_db_provider=_env("GRAPH_DATABASE_PROVIDER", "kuzu"),
         vector_db_provider=_env("VECTOR_DB_PROVIDER", "lancedb"),
         log_level=_env("LOG_LEVEL", "INFO"),
-        autocrud_data_root=Path(_env("AUTOCRUD_DATA_ROOT", "./data/autocrud")).resolve(),
+        autocrud_data_root=Path(
+            _env("AUTOCRUD_DATA_ROOT", "./data/autocrud")
+        ).resolve(),
         autocrud_user=_env("AUTOCRUD_USER", "poc-admin"),
         kb_api_host=_env("KB_API_HOST", "127.0.0.1"),
         kb_api_port=int(_env("KB_API_PORT", "8765")),
         kb_api_base_url=_env("KB_API_BASE_URL", "http://127.0.0.1:8765"),
-        mock_fab_data_dir=Path(_env("MOCK_FAB_DATA_DIR", str(PROJECT_ROOT / "data" / "mock-fab-data"))).resolve(),
+        mock_fab_data_dir=Path(
+            _env("MOCK_FAB_DATA_DIR", str(PROJECT_ROOT / "data" / "mock-fab-data"))
+        ).resolve(),
     )

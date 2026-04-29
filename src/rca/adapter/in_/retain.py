@@ -8,8 +8,9 @@ import tempfile
 from pathlib import Path
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
+from rca.container import get_kb
 from rca.ports.in_.retain import (
     RetainConversationRequest,
     RetainExtractionRequest,
@@ -21,10 +22,6 @@ from rca.services.kb import IKBService, SourceKind
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/retain", tags=["retain"])
-
-
-def get_kb(request: Request) -> IKBService:
-    return request.app.state.kb
 
 
 @router.post("/text", response_model=RetainResponse)

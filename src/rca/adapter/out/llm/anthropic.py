@@ -18,7 +18,11 @@ class AnthropicLLMAdapter(ILLMAdapter):
 
         if not settings.anthropic_api_key:
             raise RuntimeError("ANTHROPIC_API_KEY is unset")
-        self.model = settings.extraction_model if role == "extraction" else settings.reasoning_model
+        self.model = (
+            settings.extraction_model
+            if role == "extraction"
+            else settings.reasoning_model
+        )
         self._client = Anthropic(api_key=settings.anthropic_api_key)
         logger.debug("Anthropic LLM adapter: model=%s role=%s", self.model, role)
 

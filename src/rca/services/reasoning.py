@@ -154,7 +154,11 @@ class CausalReasoningService(IReasoningService):
         top_k: int = 12,
     ) -> list[str]:
         await self.graph.setup()
-        full_query = correlation if not process_context else f"{correlation}\nContext: {process_context}"
+        full_query = (
+            correlation
+            if not process_context
+            else f"{correlation}\nContext: {process_context}"
+        )
 
         wanted_names = ("GRAPH_COMPLETION", "INSIGHTS", "CHUNKS")
         search_types = [
@@ -166,7 +170,7 @@ class CausalReasoningService(IReasoningService):
         snippets: list[str] = []
         for st in search_types:
             try:
-                res = await self.graph.search(full_query, search_type=st, top_k=top_k)
+                res = await self.graph.recall(full_query, search_type=st, top_k=top_k)
                 snippets.extend(_stringify_results(res))
             except Exception as exc:
                 logger.debug("search(%s) failed: %s", st, exc)
@@ -187,9 +191,11 @@ class CausalReasoningService(IReasoningService):
         process_context: str | None = None,
         top_k: int = 12,
     ) -> CausalAssessment:
-        snippets = await self.retrieve_context(correlation, process_context, top_k=top_k)
+        snippets = await self.retrieve_context(
+            correlation, process_context, top_k=top_k
+        )
         context_block = (
-            "\n\n".join(f"[snippet-{i+1}]\n{s}" for i, s in enumerate(snippets))
+            "\n\n".join(f"[snippet-{i + 1}]\n{s}" for i, s in enumerate(snippets))
             if snippets
             else "(no relevant graph context found)"
         )

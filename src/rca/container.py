@@ -36,20 +36,26 @@ from rca.services.reasoning import CausalReasoningService, IReasoningService
 class Container(containers.DeclarativeContainer):
     settings: providers.Provider[Settings] = providers.Singleton(load_settings)
 
-    _llm_provider_key = providers.Callable(
-        lambda s: s.llm_provider, settings
-    )
+    _llm_provider_key = providers.Callable(lambda s: s.llm_provider, settings)
 
     extraction_llm: providers.Provider[ILLMAdapter] = providers.Selector(
         _llm_provider_key,
-        openai=providers.Singleton(OpenAILLMAdapter, settings=settings, role="extraction"),
-        anthropic=providers.Singleton(AnthropicLLMAdapter, settings=settings, role="extraction"),
+        openai=providers.Singleton(
+            OpenAILLMAdapter, settings=settings, role="extraction"
+        ),
+        anthropic=providers.Singleton(
+            AnthropicLLMAdapter, settings=settings, role="extraction"
+        ),
     )
 
     reasoning_llm: providers.Provider[ILLMAdapter] = providers.Selector(
         _llm_provider_key,
-        openai=providers.Singleton(OpenAILLMAdapter, settings=settings, role="reasoning"),
-        anthropic=providers.Singleton(AnthropicLLMAdapter, settings=settings, role="reasoning"),
+        openai=providers.Singleton(
+            OpenAILLMAdapter, settings=settings, role="reasoning"
+        ),
+        anthropic=providers.Singleton(
+            AnthropicLLMAdapter, settings=settings, role="reasoning"
+        ),
     )
 
     graph: providers.Provider[IGraphAdapter] = providers.Singleton(
@@ -88,3 +94,18 @@ class Container(containers.DeclarativeContainer):
         autocrud=autocrud,
         graph=graph,
     )
+
+
+# ─── module-level singleton + FastAPI Depends helpers ─────────────────────
+# Routers and the in-process MCP server import these instead of fishing
+# the kb instance out of `request.app.state.kb` (which Pylance treats as
+# an opaque dynamic attribute and can't type-check).
+#
+# Tests override providers via `container.kb.override(fake_kb)`, so the
+# helpers below resolve the override transparently.
+
+container = Container()
+
+
+def get_kb() -> IKBService:
+    return container.kb()

@@ -1,4 +1,12 @@
-"""Cognee graph adapter — implements ports.out.graph.IGraphAdapter."""
+"""Cognee graph adapter — implements ports.out.graph.IGraphAdapter.
+
+Wires cognee's V1 add()+cognify() for batch-friendly ingestion and
+cognee's V2 recall()/forget() for search and cleanup. cognee V2's
+remember() bundles add+cognify per call — too expensive when a single
+ingestion run pushes hundreds of chunks. We therefore stay on V1 add()
+for the per-chunk path and keep cognify() exposed as an explicit batch
+boundary on the port.
+"""
 
 from __future__ import annotations
 
@@ -7,7 +15,6 @@ from pathlib import Path
 from typing import Any, Iterable
 
 import cognee
-from cognee.api.v1.search import SearchType
 
 from rca.config import Settings
 from rca.ports.out.graph import IGraphAdapter
@@ -37,7 +44,7 @@ class CogneeGraphAdapter(IGraphAdapter):
             self.settings.vector_db_provider,
         )
 
-    async def add_text(
+    async def remember_text(
         self,
         text: str,
         *,
@@ -45,9 +52,11 @@ class CogneeGraphAdapter(IGraphAdapter):
         node_set: list[str] | None = None,
     ) -> None:
         await self.setup()
+        # V1 add() under the hood — defers cognify() so a batch of
+        # remember_text() calls amortizes the graph build.
         await cognee.add(text, dataset_name=dataset, node_set=node_set)
 
-    async def add_documents(
+    async def remember_files(
         self, paths: Iterable[Path], *, dataset: str = "rca"
     ) -> None:
         await self.setup()
@@ -58,22 +67,25 @@ class CogneeGraphAdapter(IGraphAdapter):
         await self.setup()
         await cognee.cognify([dataset])
 
-    async def search(
+    async def recall(
         self,
         query: str,
         *,
-        search_type: Any = SearchType.GRAPH_COMPLETION,
+        search_type: Any = None,
         top_k: int = 10,
     ) -> list[Any]:
         await self.setup()
-        return await cognee.search(
+        # cognee.recall() auto-routes when query_type is None; pass
+        # explicit type when caller needs deterministic behavior.
+        return await cognee.recall(
             query_text=query,
             query_type=search_type,
             top_k=top_k,
         )
 
-    async def prune(self) -> None:
+    async def forget(self) -> None:
         await self.setup()
-        await cognee.prune.prune_data()
-        await cognee.prune.prune_system(metadata=True)
-        logger.warning("cognee stores pruned")
+        # cognee.forget(everything=True) replaces the legacy
+        # prune.prune_data + prune.prune_system pair.
+        await cognee.forget(everything=True)
+        logger.warning("cognee data + graph + vectors forgotten")

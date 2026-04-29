@@ -20,12 +20,23 @@ from fastapi.testclient import TestClient
 
 
 class _FakeGraph:
-    async def setup(self) -> None: pass
-    async def add_text(self, *a: Any, **kw: Any) -> None: pass
-    async def add_documents(self, *a: Any, **kw: Any) -> None: pass
-    async def cognify(self, *a: Any, **kw: Any) -> None: pass
-    async def search(self, *a: Any, **kw: Any) -> list[Any]: return []
-    async def prune(self) -> None: pass
+    async def setup(self) -> None:
+        pass
+
+    async def remember_text(self, *a: Any, **kw: Any) -> None:
+        pass
+
+    async def remember_files(self, *a: Any, **kw: Any) -> None:
+        pass
+
+    async def cognify(self, *a: Any, **kw: Any) -> None:
+        pass
+
+    async def recall(self, *a: Any, **kw: Any) -> list[Any]:
+        return []
+
+    async def forget(self) -> None:
+        pass
 
 
 @pytest.fixture
@@ -41,7 +52,8 @@ def app_client(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     # so we don't pollute repo root during tests.
     monkeypatch.chdir(tmp_path)
 
-    from rca.main import app, container
+    from rca.container import container
+    from rca.main import app
 
     container.reset_singletons()
     container.graph.override(_FakeGraph())
@@ -64,7 +76,9 @@ def _create_case(client: TestClient) -> str:
 def _open_session(client: TestClient, case_id: str) -> tuple[str, dict]:
     """POST /session/open/{case_id} then GET to fetch data. Returns (id, data)."""
     r_open = client.post(f"/session/open/{case_id}")
-    assert r_open.status_code in (200, 201), f"open failed: {r_open.status_code} {r_open.text}"
+    assert r_open.status_code in (200, 201), (
+        f"open failed: {r_open.status_code} {r_open.text}"
+    )
     sess_id = r_open.json()["resource_id"]
 
     r_get = client.get(f"/session/{sess_id}")
@@ -106,7 +120,9 @@ def test_session_close_tarballs_workspace(app_client: TestClient) -> None:
     assert r_sess.json()["data"]["status"] == "closed"
 
     r_case = app_client.get(f"/case-study/{case_id}")
-    assert r_case.json()["data"]["workspace_archive"] is not None, "archive not committed"
+    assert r_case.json()["data"]["workspace_archive"] is not None, (
+        "archive not committed"
+    )
 
 
 def test_session_abandon_drops_workspace(app_client: TestClient) -> None:
