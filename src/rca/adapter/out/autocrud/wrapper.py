@@ -185,8 +185,8 @@ class AutoCrudWrapper(IAutoCrudWrapper):
         # set explicitly via autocrud's Ctx.ctx() helper. (Ctx[T] generic
         # inference confuses ty — the literal values are correct at runtime.)
         with (
-            rm.user_ctx.ctx("system"),  # ty: ignore[invalid-argument-type]
-            rm.now_ctx.ctx(dt.datetime.now(dt.UTC)),  # ty: ignore[invalid-argument-type]
+            rm.user_ctx.ctx("system"),
+            rm.now_ctx.ctx(dt.datetime.now(dt.UTC)),
         ):
             rm.update(case_id, new_case)
         logger.info(

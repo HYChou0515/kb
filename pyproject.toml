@@ -74,6 +74,16 @@ testpaths = ["tests"]
 markers = [
     "integration: hits real cognee + embedding server + LLM (slow, costs tokens). Skipped by default; run with `make test-integration`.",
 ]
+# Third-party noise drowns the actual test summary. Whitelist OUR code's
+# warnings (so we still notice them) and silence the dependency churn.
+filterwarnings = [
+    "default::DeprecationWarning:rca",
+    "default::DeprecationWarning:embedding_server",
+    "default::DeprecationWarning:mcp_servers",
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+    "ignore::UserWarning:fastapi.openapi.utils",
+]
 
 [tool.coverage.run]
 source = ["src/rca"]

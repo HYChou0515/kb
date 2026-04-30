@@ -24,7 +24,7 @@ test-func:
 	uv run python -m coverage run -m pytest tests/ -m "not integration"
 
 test-integration:
-	uv run pytest tests/integration/ -m integration -v
+	uv run pytest tests/integration/ -m integration
 
 test: test-style test-func
 
