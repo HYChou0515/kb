@@ -18,7 +18,7 @@ from typing import AsyncIterator
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from rca.adapter.in_ import admin, recall, retain
+from rca.adapter.in_ import admin, recall, retain, workspace
 from rca.container import container
 
 logger = logging.getLogger(__name__)
@@ -62,6 +62,7 @@ app = FastAPI(
 app.include_router(admin.router)
 app.include_router(retain.router)
 app.include_router(recall.router)
+app.include_router(workspace.router)
 
 
 @app.exception_handler(Exception)
