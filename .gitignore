@@ -42,3 +42,4 @@ workspaces/              # per-CaseStudy committed state
 transcripts/             # OpenCode session logs (audit, not in KB)
 data/autocrud/           # AutoCRUD's DiskStorageFactory state
 
+.coverage

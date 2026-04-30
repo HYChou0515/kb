@@ -58,6 +58,11 @@ def integration_settings(tmp_path_factory: pytest.TempPathFactory):
     os.environ["COGNEE_DATA_ROOT"] = str(base / "cognee_data")
     os.environ["COGNEE_SYSTEM_ROOT"] = str(base / "cognee_system")
     os.environ["AUTOCRUD_DATA_ROOT"] = str(base / "autocrud")
+    # cognee 1.0 enables per-session memory caching by default — that means
+    # a recall call's result can be influenced by previous recalls in the
+    # same session. For E2E tests this manifests as flaky cross-test
+    # contamination. Force off so each test sees a clean retrieval path.
+    os.environ["CACHING"] = "false"
 
     settings = load_settings()
 

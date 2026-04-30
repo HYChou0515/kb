@@ -9,6 +9,16 @@ from pydantic import BaseModel, Field
 
 RecallMode = Literal["snippets", "assessment", "synthesis"]
 SourceFilter = Literal["literature", "conversations", "rca_reports", "all"]
+# Verification-tier inclusion filter for RCA reports. "any" preserves the
+# pre-tier behavior (no tier constraint). When set to a specific tier, the
+# request narrows to chunks tagged with the matching rca_reports_<tier>
+# node_set — and overrides source_filter (which can't express tier semantics).
+# `verified_or_partial` is the most common operating mode for trusted retrieval:
+# include manager-signoff'd reports (full or with reservations) but exclude
+# unverified drafts. `refuted` is intentionally NOT a tier_filter option —
+# excluding refuted is a separate orthogonal knob (exclude_refuted) since
+# refuted is a NOT operation, not an inclusion.
+TierFilter = Literal["any", "verified", "verified_or_partial"]
 Verdict = Literal["plausible", "uncertain", "implausible"]
 
 
@@ -46,6 +56,7 @@ class RecallRequest(BaseModel):
     mode: RecallMode = "assessment"
     process_context: str | None = None
     source_filter: SourceFilter = "all"
+    tier_filter: TierFilter = "any"
     top_k: int = 12
     exclude_refuted: bool = False
 

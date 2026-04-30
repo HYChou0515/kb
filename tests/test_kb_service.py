@@ -17,6 +17,7 @@ from rca.ports.in_.recall import (
     RecallRequest,
     RecallSnippetsResponse,
     SourceFilter,
+    TierFilter,
 )
 from rca.ports.out.autocrud import IAutoCrudWrapper
 from rca.ports.out.graph import IGraphAdapter
@@ -28,19 +29,39 @@ from rca.services.reasoning import IReasoningService
 
 class _FakeReasoning(IReasoningService):
     """Minimal IReasoningService fake — returns canned snippets so we can
-    assert the filtering + dispatching contract of KBService.recall."""
+    assert the filtering + dispatching contract of KBService.recall.
+
+    Captures the last `node_set` it was called with so tests can assert
+    KBService translated source_filter → node_set correctly (the load-bearing
+    contract after the post-fetch substring filter was retired)."""
 
     def __init__(self, snippets: list[str]) -> None:
         self._snippets = snippets
+        self.last_node_set: list[str] | None = None
+        self.last_top_k: int | None = None
 
     async def retrieve_context(
-        self, correlation: str, process_context: str | None, *, top_k: int = 12
+        self,
+        correlation: str,
+        process_context: str | None,
+        *,
+        top_k: int = 12,
+        node_set: list[str] | None = None,
     ) -> list[str]:
+        self.last_node_set = node_set
+        self.last_top_k = top_k
         return list(self._snippets)
 
     async def assess(
-        self, correlation: str, *, process_context: str | None = None, top_k: int = 12
+        self,
+        correlation: str,
+        *,
+        process_context: str | None = None,
+        top_k: int = 12,
+        node_set: list[str] | None = None,
     ) -> CausalAssessment:
+        self.last_node_set = node_set
+        self.last_top_k = top_k
         return CausalAssessment(
             correlation=correlation,
             process_context=process_context,
@@ -97,35 +118,115 @@ async def test_recall_exclude_refuted_drops_refuted_snippets() -> None:
 
 
 @pytest.mark.parametrize(
-    "source_filter,must_include,must_exclude",
+    "source_filter,expected_node_set",
     [
-        ("rca_reports", "rca_reports", "rca_literature"),
-        ("conversations", "rca_conversations", "rca_literature"),
-        ("literature", "rca_literature", "rca_reports"),
+        ("all", None),
+        ("rca_reports", ["rca_reports"]),
+        ("conversations", ["rca_conversations"]),
+        ("literature", ["rca_literature"]),
     ],
 )
-async def test_recall_source_filter_narrows(
-    source_filter: SourceFilter, must_include: str, must_exclude: str
+async def test_recall_source_filter_pushes_down_to_node_set(
+    source_filter: SourceFilter, expected_node_set: list[str] | None
 ) -> None:
-    """source_filter narrows recall results by provenance marker baked into
-    the rendered snippet text. Three named tiers: rca_reports, conversations
-    (rca_conversations), literature (everything else).
+    """source_filter is now enforced at the graph layer via cognee's NodeSet
+    matcher (passed through reasoning.retrieve_context as node_set). KBService's
+    job is the translation; the actual filter happens upstream.
 
-    "all" returns unfiltered — that's the default and not under test here."""
-    snippets = [
-        "Report content\n*node_set: rca_reports*",
-        "Conversation content\n*node_set: rca_conversations*",
-        "Literature content\n*node_set: rca_literature*",
-    ]
-    kb = _kb_service(_FakeReasoning(snippets))
+    "all" → None means "no filter applied" — cognee returns from any tag."""
+    fake = _FakeReasoning(["irrelevant"])
+    kb = _kb_service(fake)
 
-    resp = await kb.recall(
+    await kb.recall(
         RecallRequest(query="x", mode="snippets", source_filter=source_filter)
     )
-    assert isinstance(resp, RecallSnippetsResponse)
-    assert any(must_include in s for s in resp.snippets), (
-        f"expected snippet containing {must_include!r} after source_filter={source_filter}"
+
+    assert fake.last_node_set == expected_node_set, (
+        f"source_filter={source_filter} should push down node_set={expected_node_set} "
+        f"to reasoning, got {fake.last_node_set}"
     )
-    assert not any(must_exclude in s for s in resp.snippets), (
-        f"snippet containing {must_exclude!r} should have been filtered out"
+
+
+@pytest.mark.parametrize(
+    "tier_filter,expected_node_set",
+    [
+        ("any", None),
+        ("verified", ["rca_reports_verified"]),
+        ("verified_or_partial", ["rca_reports_verified", "rca_reports_partial"]),
+    ],
+)
+async def test_recall_tier_filter_pushes_down_to_node_set(
+    tier_filter: TierFilter, expected_node_set: list[str] | None
+) -> None:
+    """tier_filter narrows to manager-signoff'd RCA report tiers via node_set
+    push-down. "any" means no constraint (delegates to source_filter).
+    "verified" / "verified_or_partial" map to the corresponding rca_reports_<tier>
+    cognee node_set tags."""
+    fake = _FakeReasoning(["irrelevant"])
+    kb = _kb_service(fake)
+
+    await kb.recall(RecallRequest(query="x", mode="snippets", tier_filter=tier_filter))
+
+    assert fake.last_node_set == expected_node_set
+
+
+async def test_tier_filter_overrides_source_filter() -> None:
+    """tier_filter is RCA-report-specific; when set, it overrides source_filter
+    rather than producing the semantically incoherent "verified conversations"
+    intersection. Caller-friendly behavior — least surprise."""
+    fake = _FakeReasoning(["irrelevant"])
+    kb = _kb_service(fake)
+
+    await kb.recall(
+        RecallRequest(
+            query="x",
+            mode="snippets",
+            source_filter="conversations",  # would normally narrow to rca_conversations
+            tier_filter="verified",  # but this overrides
+        )
+    )
+
+    assert fake.last_node_set == ["rca_reports_verified"], (
+        "tier_filter should override source_filter — not produce intersection"
+    )
+
+
+async def test_assessment_mode_also_applies_node_set_filter() -> None:
+    """assessment mode previously ignored source_filter / tier_filter — only
+    snippets mode honored them. Now both modes push the filter down to
+    reasoning, so an assessment based on verified-only context can be
+    requested via tier_filter='verified'."""
+    fake = _FakeReasoning(["irrelevant"])
+    kb = _kb_service(fake)
+
+    await kb.recall(
+        RecallRequest(
+            query="x",
+            mode="assessment",
+            tier_filter="verified",
+        )
+    )
+
+    assert fake.last_node_set == ["rca_reports_verified"], (
+        "assessment mode must also push tier_filter down to reasoning.assess"
+    )
+
+
+async def test_recall_top_k_no_longer_eaten_by_source_filter() -> None:
+    """Regression: the old post-fetch substring filter ran AFTER reasoning
+    returned top_k items, so a narrow source_filter could shrink the response
+    far below the requested top_k. With node_set push-down, cognee returns
+    top_k items already matching the filter — the requested top_k actually
+    gets returned (modulo exclude_refuted, which is still a post-filter)."""
+    snippets = [f"snippet-{i}\n*node_set: rca_reports*" for i in range(5)]
+    fake = _FakeReasoning(snippets)
+    kb = _kb_service(fake)
+
+    resp = await kb.recall(
+        RecallRequest(query="x", mode="snippets", source_filter="rca_reports", top_k=5)
+    )
+    assert isinstance(resp, RecallSnippetsResponse)
+    assert len(resp.snippets) == 5, (
+        "top_k=5 with matching source_filter should return all 5 — old code "
+        "could shrink this if filter happened post-fetch"
     )

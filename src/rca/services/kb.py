@@ -19,6 +19,8 @@ from rca.ports.in_.recall import (
     RecallRequest,
     RecallSnippetsResponse,
     RecallSynthesisResponse,
+    SourceFilter,
+    TierFilter,
 )
 from rca.ports.in_.retain import (
     RetainConversationRequest,
@@ -60,20 +62,53 @@ def _summarize_chunks(chunks: list[IngestedChunk]) -> RetainResponse:
     )
 
 
-def _filter_by_source(snippets: list[str], source_filter: str) -> list[str]:
+_TIER_NODE_SETS: dict[TierFilter, list[str]] = {
+    "verified": ["rca_reports_verified"],
+    "verified_or_partial": ["rca_reports_verified", "rca_reports_partial"],
+}
+
+
+def _node_set_from_request(
+    source_filter: SourceFilter, tier_filter: TierFilter
+) -> list[str] | None:
+    """Translate (source_filter, tier_filter) into a cognee node_set inclusion
+    filter. Returns None for "all"+"any" (no filter applied at the graph layer).
+
+    tier_filter takes precedence when set: it's the verification-tier knob
+    (verified / verified_or_partial), inherently RCA-report-specific. When
+    a non-default tier_filter is requested, source_filter is ignored — asking
+    for "verified conversations" is semantically incoherent and silently
+    coercing to RCA scope is the least-surprise behavior.
+
+    Replaces the legacy post-fetch substring check — the filter runs at the
+    graph-traversal layer (cognee enforces during recall) instead of on
+    serialized snippet text."""
+    if tier_filter != "any":
+        return _TIER_NODE_SETS[tier_filter]
     if source_filter == "all":
-        return snippets
+        return None
     if source_filter == "rca_reports":
-        return [s for s in snippets if "rca_reports" in s]
+        return ["rca_reports"]
     if source_filter == "conversations":
-        return [s for s in snippets if "rca_conversations" in s]
-    return [
-        s for s in snippets if "rca_conversations" not in s and "rca_reports" not in s
-    ]
+        return ["rca_conversations"]
+    # "literature"
+    return ["rca_literature"]
 
 
 def _filter_refuted(snippets: list[str]) -> list[str]:
-    return [s for s in snippets if "rca_reports_refuted" not in s]
+    """Post-filter: cognee's NodeSet matcher only supports OR/AND inclusion,
+    not NOT-exclusion. Refuted-exclusion stays a string-level post-filter
+    until cognee gains an exclusion operator.
+
+    Matches both the rendered-markdown form ("verification_status: refuted",
+    produced by cognee_mirror._render_rca_report) and the raw node_set tag
+    ("rca_reports_refuted", which appears when callers test this directly
+    or when cognee's result happens to include the tag string)."""
+    return [
+        s
+        for s in snippets
+        if "rca_reports_refuted" not in s and "verification_status: refuted" not in s
+    ]
 
 
 class IKBService(ABC):
@@ -196,19 +231,29 @@ class KBService(IKBService):
         self, req: RecallRequest
     ) -> RecallSnippetsResponse | RecallAssessmentResponse | RecallSynthesisResponse:
         if req.mode == "snippets":
+            # source_filter is now enforced at the graph layer via node_set
+            # (cognee's NodeSet matcher), so the post-fetch substring filter
+            # that used to live here is gone. exclude_refuted stays a
+            # post-filter because cognee can't express NOT.
             snippets = await self.reasoning.retrieve_context(
-                req.query, req.process_context, top_k=req.top_k
+                req.query,
+                req.process_context,
+                top_k=req.top_k,
+                node_set=_node_set_from_request(req.source_filter, req.tier_filter),
             )
-            snippets = _filter_by_source(snippets, req.source_filter)
             if req.exclude_refuted:
                 snippets = _filter_refuted(snippets)
             return RecallSnippetsResponse(snippets=snippets[: req.top_k])
 
         if req.mode == "assessment":
+            # Same source_filter / tier_filter push-down as snippets mode —
+            # the reasoner sees a pre-filtered context window, so the LLM
+            # only weighs evidence the caller actually wants.
             assessment = await self.reasoning.assess(
                 req.query,
                 process_context=req.process_context,
                 top_k=req.top_k,
+                node_set=_node_set_from_request(req.source_filter, req.tier_filter),
             )
             return RecallAssessmentResponse(assessment=assessment)
 

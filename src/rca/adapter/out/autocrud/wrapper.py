@@ -95,6 +95,7 @@ class AutoCrudWrapper(IAutoCrudWrapper):
                 ("case_study_id", str),
                 ("session_id", str),
                 ("agreed", bool),
+                ("agreed_at", str),
                 ("verification_status", str),
             ],
         )

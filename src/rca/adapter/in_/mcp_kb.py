@@ -19,7 +19,7 @@ from typing import Any, Literal
 from mcp.server.fastmcp import FastMCP
 
 from rca.container import get_kb
-from rca.ports.in_.recall import RecallRequest, SourceFilter
+from rca.ports.in_.recall import RecallRequest, SourceFilter, TierFilter
 from rca.ports.in_.retain import (
     ExtractionResult,
     RetainConversationRequest,
@@ -54,9 +54,11 @@ async def retain_text(
       - "conversation" — live RCA discussion transcript
       - "rca_report"   — agreed-and-finalized RCA report markdown
 
-    Note: RCA reports are layered further by manager-signoff status
-    (unverified / partial / verified / refuted). Use the /sign action
-    on the resulting RCAReport to elevate trust.
+    Note: newly retained RCA reports default to verification_status="unverified".
+    Tier elevation (unverified → partial / verified / refuted) is a MANAGER
+    workflow performed in the web UI against the backend's /sign endpoint.
+    Agents do NOT drive signoff — they only read the resulting tier via
+    `tier_filter` on the recall tools.
     """
     req = RetainTextRequest(
         text=text, label=label, source_kind=source_kind, cognify=cognify
@@ -102,14 +104,24 @@ async def recall_assessment(
     query: str,
     process_context: str | None = None,
     source_filter: SourceFilter = "all",
+    tier_filter: TierFilter = "any",
     top_k: int = 12,
 ) -> dict[str, Any]:
-    """★ Primary tool for step 8 of the RCA flow. Structured causal assessment."""
+    """★ Primary tool for step 8 of the RCA flow. Structured causal assessment.
+
+    `tier_filter` narrows to manager-signoff'd RCA reports:
+      - "verified" — only top-tier signed reports
+      - "verified_or_partial" — include manager-signed-with-reservations too
+      - "any" (default) — no tier constraint
+
+    When set, tier_filter overrides source_filter (tier semantics are
+    RCA-report-specific)."""
     req = RecallRequest(
         query=query,
         mode="assessment",
         process_context=process_context,
         source_filter=source_filter,
+        tier_filter=tier_filter,
         top_k=top_k,
     )
     resp = await _kb().recall(req)
@@ -120,10 +132,14 @@ async def recall_assessment(
 async def recall_snippets(
     query: str,
     source_filter: SourceFilter = "all",
+    tier_filter: TierFilter = "any",
     top_k: int = 8,
     exclude_refuted: bool = False,
 ) -> dict[str, Any]:
     """Cheap retrieval of raw KG snippets — no LLM synthesis.
+
+    `tier_filter="verified"` / `"verified_or_partial"` narrows to
+    manager-signoff'd RCA reports (overrides source_filter when set).
 
     `exclude_refuted=True` drops snippets tagged as rca_reports_refuted
     (case-level attribution disproven; use when you only want positive
@@ -133,6 +149,7 @@ async def recall_snippets(
         query=query,
         mode="snippets",
         source_filter=source_filter,
+        tier_filter=tier_filter,
         top_k=top_k,
         exclude_refuted=exclude_refuted,
     )

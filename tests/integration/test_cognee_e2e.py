@@ -131,6 +131,45 @@ def benchmark_cases(project_root: Path) -> list[dict[str, Any]]:
 # ─── status-filter contract (the killer test) ──────────────────────────────
 
 
+async def test_tier_filter_verified_or_partial_excludes_unverified_and_refuted(
+    graph_with_corpus,
+) -> None:
+    """E2E: tier_filter="verified_or_partial" (the trusted-retrieval default
+    for prod-grade RCA reasoning) returns ONLY chunks tagged with
+    rca_reports_verified OR rca_reports_partial — not unverified drafts,
+    not ruled-out refuted findings.
+
+    This is the load-bearing user-facing knob: callers ask "give me the
+    organizational-consensus signal" without having to know about cognee
+    NodeSet plumbing. If this fails, tier_filter is broken end-to-end."""
+    results = await graph_with_corpus.recall(
+        "What does the report say about the contamination findings?",
+        node_set=["rca_reports_verified", "rca_reports_partial"],
+        node_set_operator="OR",
+        top_k=20,
+    )
+    blob = "\n".join(_result_text(r) for r in results)
+
+    # Positive check: filter didn't drop everything. Markers may not survive
+    # GRAPH_COMPLETION's LLM paraphrasing, so we only assert non-empty —
+    # the killer assertion below is the negative leak check.
+    assert blob.strip(), "verified_or_partial filter returned empty — broken"
+
+    # Negative (load-bearing): unverified + refuted markers MUST NOT leak.
+    # These are random unique tokens — if they appear it can only be because
+    # the corresponding chunk was retrieved and the LLM echoed the token
+    # verbatim (it's not a word the LLM would generate from thin air).
+    forbidden = [
+        _STATUS_CHUNKS["unverified"]["marker"],
+        _STATUS_CHUNKS["refuted"]["marker"],
+    ]
+    leaked = [m for m in forbidden if m in blob]
+    assert not leaked, (
+        f"verified_or_partial filter leaked {leaked} — should exclude "
+        f"unverified drafts and refuted findings"
+    )
+
+
 @pytest.mark.parametrize("target_status", list(_STATUS_CHUNKS.keys()))
 async def test_recall_with_node_set_returns_only_matching_status(
     graph_with_corpus, target_status: VerificationStatus

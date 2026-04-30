@@ -20,7 +20,7 @@ from typing import Any
 from cognee.api.v1.search import SearchType
 from pydantic import ValidationError
 
-from rca.ports.in_.recall import CausalAssessment
+from rca.ports.in_.recall import CausalAssessment, MechanismHypothesis
 from rca.ports.out.graph import IGraphAdapter
 from rca.ports.out.llm import ILLMAdapter
 
@@ -67,6 +67,14 @@ If a snippet's provenance label contains "rca_reports_verified", treat its
 causal claims as the strongest available evidence. Literature alone is prior,
 not evidence.
 
+CONFIDENCE DISCIPLINE (post-validated by the system):
+A mechanism may claim confidence="high" ONLY if at least one of its supporting
+snippets carries verification_status: verified or partial (manager-signoff'd
+RCA reports). If every supporting snippet is unverified, refuted, conversation,
+or literature, the mechanism's confidence MUST be at most "medium". The system
+will downgrade any high-confidence claim that doesn't satisfy this rule, so
+self-regulating saves a re-validation pass.
+
 Output STRICT JSON only — no prose outside the JSON, no markdown fences.
 
 Schema:
@@ -109,6 +117,45 @@ def _strip_fences(s: str) -> str:
     return _JSON_FENCE.sub("", s).strip()
 
 
+def _has_high_trust_signal(snippets: list[str]) -> bool:
+    """True iff at least one snippet carries a verified or partial tier marker.
+
+    Detection key: rendered RCAReport markdown always contains the
+    verbatim "verification_status: <tier>" line (see cognee_mirror's
+    _render_rca_report). High-trust = tier ∈ {verified, partial}; the
+    rest (unverified, refuted, conversations, literature) are not strong
+    enough to support confidence="high" on a mechanism that cites them."""
+    blob = "\n".join(snippets).lower()
+    return (
+        "verification_status: verified" in blob
+        or "verification_status: partial" in blob
+    )
+
+
+def _apply_tier_caps(
+    assessment: CausalAssessment, snippets: list[str]
+) -> CausalAssessment:
+    """Output-side guard for the trust hierarchy.
+
+    Caps any mechanism's confidence to "medium" when the snippet pool
+    carries no verified or partial tier signal. This prevents the
+    false-alarm pattern the POC exists to filter: an LLM declaring
+    high-confidence root cause based on literature priors / conversation
+    chatter / unverified drafts alone.
+
+    Returns a NEW assessment (msgspec/pydantic models are immutable-ish;
+    we rebuild the mechanisms list with capped values)."""
+    if _has_high_trust_signal(snippets):
+        return assessment
+    capped: list[MechanismHypothesis] = []
+    for m in assessment.mechanisms:
+        if m.confidence == "high":
+            capped.append(m.model_copy(update={"confidence": "medium"}))
+        else:
+            capped.append(m)
+    return assessment.model_copy(update={"mechanisms": capped})
+
+
 def _stringify_results(results: list[Any]) -> list[str]:
     out: list[str] = []
     for r in results:
@@ -129,6 +176,7 @@ class IReasoningService(ABC):
         process_context: str | None,
         *,
         top_k: int = 12,
+        node_set: list[str] | None = None,
     ) -> list[str]: ...
 
     @abstractmethod
@@ -138,6 +186,7 @@ class IReasoningService(ABC):
         *,
         process_context: str | None = None,
         top_k: int = 12,
+        node_set: list[str] | None = None,
     ) -> CausalAssessment: ...
 
 
@@ -152,6 +201,7 @@ class CausalReasoningService(IReasoningService):
         process_context: str | None,
         *,
         top_k: int = 12,
+        node_set: list[str] | None = None,
     ) -> list[str]:
         await self.graph.setup()
         full_query = (
@@ -160,7 +210,16 @@ class CausalReasoningService(IReasoningService):
             else f"{correlation}\nContext: {process_context}"
         )
 
-        wanted_names = ("GRAPH_COMPLETION", "INSIGHTS", "CHUNKS")
+        # GRAPH_COMPLETION is the only search type that enforces NodeSet
+        # filtering at the graph-traversal layer. CHUNKS / INSIGHTS bypass
+        # it (vector lookup only). When the caller asked for a specific
+        # node_set, restrict to GRAPH_COMPLETION so the filter is honored;
+        # otherwise fan out across all three for richer context.
+        wanted_names = (
+            ("GRAPH_COMPLETION",)
+            if node_set
+            else ("GRAPH_COMPLETION", "INSIGHTS", "CHUNKS")
+        )
         search_types = [
             getattr(SearchType, name)
             for name in wanted_names
@@ -170,7 +229,12 @@ class CausalReasoningService(IReasoningService):
         snippets: list[str] = []
         for st in search_types:
             try:
-                res = await self.graph.recall(full_query, search_type=st, top_k=top_k)
+                res = await self.graph.recall(
+                    full_query,
+                    search_type=st,
+                    top_k=top_k,
+                    node_set=node_set,
+                )
                 snippets.extend(_stringify_results(res))
             except Exception as exc:
                 logger.debug("search(%s) failed: %s", st, exc)
@@ -190,9 +254,10 @@ class CausalReasoningService(IReasoningService):
         *,
         process_context: str | None = None,
         top_k: int = 12,
+        node_set: list[str] | None = None,
     ) -> CausalAssessment:
         snippets = await self.retrieve_context(
-            correlation, process_context, top_k=top_k
+            correlation, process_context, top_k=top_k, node_set=node_set
         )
         context_block = (
             "\n\n".join(f"[snippet-{i + 1}]\n{s}" for i, s in enumerate(snippets))
@@ -240,4 +305,8 @@ class CausalReasoningService(IReasoningService):
                 verdict_reasoning=f"Reasoner output failed validation: {exc}",
                 raw_context_snippets=snippets,
             )
-        return assessment
+        # Output-side trust enforcement: cap mechanism confidence based on
+        # the actual evidence pool, regardless of what the LLM claimed. The
+        # system prompt asks the LLM to do this, but the post-validator is
+        # the safety net for false-alarm prevention.
+        return _apply_tier_caps(assessment, snippets)
