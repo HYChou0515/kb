@@ -27,7 +27,7 @@ from autocrud.types import (
 )
 
 from rca.adapter.out.autocrud.actions.session import ACTIVE_SESSIONS_DIR, untar_to_dir
-from rca.domain.session import Session
+from rca.domain.session import InactivityCloseReason, Session
 from rca.ports.out.autocrud import IAutoCrudWrapper
 from rca.ports.out.opencode_runtime import IOpencodeRuntime
 from rca.services.workspace_seed import seed_workspace
@@ -118,6 +118,34 @@ async def open_workspace(
         workspace_path=str(active_dir),
         resumed=resumed,
     )
+
+
+async def soft_close_workspace(
+    session_id: str,
+    *,
+    autocrud: IAutoCrudWrapper,
+    reason: InactivityCloseReason = "explicit_close",
+) -> None:
+    """Soft-close an active session: tar workspace → commit to CaseStudy →
+    remove active_dir → update session to status='closed'.
+
+    Raises ValueError if the session is not active.
+    Raises ResourceIDNotFoundError if session_id does not exist.
+    """
+    session_rm = autocrud.session_mgr()
+    session_resource = session_rm.get(session_id)
+    sess = session_resource.data
+
+    if sess.status != "active":
+        raise ValueError(f"Session {session_id} is not active (status={sess.status!r})")
+
+    sess.inactivity_close_reason = reason
+
+    updated_sess = await autocrud.close_session(sess)
+
+    now = dt.datetime.now(dt.UTC)
+    session_rm.update(session_id, updated_sess, user="system", now=now)
+    logger.info("session soft-closed: session=%s reason=%s", session_id, reason)
 
 
 # ─── helpers ─────────────────────────────────────────────────────────────────

@@ -15,7 +15,8 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 
 from rca.container import container
-from rca.services.workspace_lifecycle import open_workspace
+from rca.domain.session import InactivityCloseReason
+from rca.services.workspace_lifecycle import open_workspace, soft_close_workspace
 
 logger = logging.getLogger(__name__)
 
@@ -57,3 +58,35 @@ async def open_workspace_endpoint(case_id: str) -> JSONResponse:
             "resumed": result.resumed,
         }
     )
+
+
+@router.post("/session/{session_id}/soft-close")
+async def soft_close_endpoint(
+    session_id: str,
+    reason: InactivityCloseReason = "explicit_close",
+) -> JSONResponse:
+    """Soft-close an active session.
+
+    Tars the workspace, commits to CaseStudy.workspace_archive, removes the
+    active workspace directory, and updates the Session to status='closed'.
+    The opencode session is preserved in opencode's SQLite for cheap resume.
+
+    400 — session is not in 'active' status.
+    404 — session_id does not exist.
+    """
+    try:
+        await soft_close_workspace(
+            session_id,
+            autocrud=container.autocrud(),
+            reason=reason,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        cls = exc.__class__.__name__
+        if "NotFound" in cls or "not found" in str(exc).lower():
+            raise HTTPException(
+                status_code=404, detail=f"Session {session_id!r} not found"
+            ) from exc
+        raise
+    return JSONResponse({"status": "closed", "session_id": session_id})

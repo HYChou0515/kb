@@ -202,6 +202,67 @@ def test_open_workspace_resumes_from_latest_closed_session(
     )
 
 
+def test_soft_close_workspace_tars_and_closes_session(
+    app_env: tuple,
+) -> None:
+    """soft-close: workspace dir is removed, session status → 'closed',
+    CaseStudy.workspace_archive is set. This is the explicit-close contract
+    and the watchdog's close path."""
+    client, autocrud = app_env
+    case_id = _make_case(autocrud, title="Soft close test")
+
+    # Open workspace (creates the active dir on disk)
+    r = client.post(f"/case-study/{case_id}/open-workspace")
+    assert r.status_code == 200
+    body = r.json()
+    sess_id = body["session_id"]
+    workspace = Path(body["workspace_path"])
+    assert workspace.is_dir(), "workspace not created"
+
+    # Write a file so the tarball is non-empty
+    (workspace / "notes.md").write_text("hello", encoding="utf-8")
+
+    # Soft-close via HTTP
+    r_close = client.post(f"/session/{sess_id}/soft-close")
+    assert r_close.status_code == 200, (
+        f"soft-close failed: {r_close.status_code} {r_close.text}"
+    )
+
+    # Active dir should be gone
+    assert not workspace.exists(), "active workspace dir should be removed after soft-close"
+
+    # Session record should be closed
+    sess_resource = autocrud.session_mgr().get(sess_id)
+    assert sess_resource.data.status == "closed"
+    assert sess_resource.data.inactivity_close_reason == "explicit_close"
+
+    # CaseStudy should have a non-null workspace_archive
+    case_resource = autocrud.case_study_mgr().get(case_id)
+    assert case_resource.data.workspace_archive is not None, (
+        "workspace_archive not committed to CaseStudy after soft-close"
+    )
+
+
+def test_soft_close_already_closed_returns_400(
+    app_env: tuple,
+) -> None:
+    """Attempting to soft-close an already-closed session must return 400."""
+    client, autocrud = app_env
+    case_id = _make_case(autocrud)
+
+    r = client.post(f"/case-study/{case_id}/open-workspace")
+    sess_id = r.json()["session_id"]
+
+    # First close
+    client.post(f"/session/{sess_id}/soft-close")
+
+    # Second close — already closed
+    r2 = client.post(f"/session/{sess_id}/soft-close")
+    assert r2.status_code == 400, (
+        f"expected 400 for double-close, got {r2.status_code}: {r2.text}"
+    )
+
+
 def test_open_workspace_session_record_has_opencode_fields(
     app_env: tuple,
 ) -> None:
