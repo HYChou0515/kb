@@ -29,3 +29,4 @@ class CaseStudy(Struct):
     scan_stage: str | None = None
     tags: list[str] = []
     workspace_archive: Binary | None = None
+    last_stale_notify_at: str | None = None

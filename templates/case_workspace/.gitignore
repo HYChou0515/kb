@@ -1,0 +1,6 @@
+# Workspace-internal cache / tmp — not part of the workspace_archive blob
+.opencode/cache/
+.opencode/tmp/
+*.pyc
+__pycache__/
+.DS_Store

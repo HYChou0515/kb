@@ -9,6 +9,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Literal
 
 from dotenv import load_dotenv
 
@@ -73,6 +74,15 @@ class Settings:
     benchmark_dir: Path = field(
         default_factory=lambda: PROJECT_ROOT / "data" / "benchmark"
     )
+
+    # Workspace + opencode lifecycle
+    idle_threshold_minutes: int = 30
+    stale_threshold_days: int = 7
+    run_inprocess_watchdog: bool = True
+    agent_profile: Literal["poc", "prod"] = "poc"
+    opencode_url: str = "http://127.0.0.1:4096"
+    opencode_server_password: str = ""
+    sweep_secret: str = ""
 
     def export_to_cognee_env(self) -> None:
         os.environ["LLM_PROVIDER"] = self.llm_provider
@@ -152,4 +162,22 @@ def load_settings() -> Settings:
         mock_fab_data_dir=Path(
             _env("MOCK_FAB_DATA_DIR", str(PROJECT_ROOT / "data" / "mock-fab-data"))
         ).resolve(),
+        idle_threshold_minutes=int(_env("IDLE_THRESHOLD_MINUTES", "30")),
+        stale_threshold_days=int(_env("STALE_THRESHOLD_DAYS", "7")),
+        run_inprocess_watchdog=_env("RUN_INPROCESS_WATCHDOG", "true").lower()
+        in {"1", "true", "yes"},
+        agent_profile=_agent_profile(_env("RCA_AGENT_PROFILE", "poc")),
+        opencode_url=_env("OPENCODE_URL", "http://127.0.0.1:4096"),
+        opencode_server_password=_env("OPENCODE_SERVER_PASSWORD", ""),
+        sweep_secret=_env("SWEEP_SECRET", ""),
     )
+
+
+def _agent_profile(raw: str) -> Literal["poc", "prod"]:
+    """Validate RCA_AGENT_PROFILE — only "poc" or "prod" allowed (controls
+    bash tool policy via opencode permissions)."""
+    if raw == "poc":
+        return "poc"
+    if raw == "prod":
+        return "prod"
+    raise RuntimeError(f"RCA_AGENT_PROFILE must be 'poc' or 'prod', got {raw!r}")
