@@ -30,6 +30,7 @@ from rca.adapter.out.autocrud.actions.session import ACTIVE_SESSIONS_DIR, untar_
 from rca.domain.session import InactivityCloseReason, Session
 from rca.ports.out.autocrud import IAutoCrudWrapper
 from rca.ports.out.opencode_runtime import IOpencodeRuntime
+from rca.services.digest import digest_session
 from rca.services.workspace_seed import seed_workspace
 
 logger = logging.getLogger(__name__)
@@ -168,6 +169,14 @@ async def finalize_workspace(
 
     logger.info("session finalized: session=%s", session_id)
 
+    # Fire-and-forget digest on finalize (forced).
+    try:
+        await digest_session(session_id, autocrud=autocrud)
+    except Exception:
+        logger.warning(
+            "digest failed for session %s (ignored)", session_id, exc_info=True
+        )
+
 
 async def soft_close_workspace(
     session_id: str,
@@ -195,6 +204,14 @@ async def soft_close_workspace(
     now = dt.datetime.now(dt.UTC)
     session_rm.update(session_id, updated_sess, user="system", now=now)
     logger.info("session soft-closed: session=%s reason=%s", session_id, reason)
+
+    # Fire-and-forget digest: errors are logged but don't fail the close.
+    try:
+        await digest_session(session_id, autocrud=autocrud)
+    except Exception:
+        logger.warning(
+            "digest failed for session %s (ignored)", session_id, exc_info=True
+        )
 
 
 # ─── helpers ─────────────────────────────────────────────────────────────────
