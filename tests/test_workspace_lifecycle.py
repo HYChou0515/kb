@@ -243,6 +243,34 @@ def test_soft_close_workspace_tars_and_closes_session(
     )
 
 
+def test_finalize_workspace_closes_and_marks_finalize_reason(
+    app_env: tuple,
+) -> None:
+    """finalize: same as soft-close but inactivity_close_reason='finalize'.
+    The opencode.delete_session() is called via the fake (no-op). Active dir
+    is removed, session is closed."""
+    client, autocrud = app_env
+    case_id = _make_case(autocrud, title="Finalize test")
+
+    r = client.post(f"/case-study/{case_id}/open-workspace")
+    assert r.status_code == 200
+    body = r.json()
+    sess_id = body["session_id"]
+    workspace = Path(body["workspace_path"])
+    assert workspace.is_dir()
+
+    r_fin = client.post(f"/session/{sess_id}/finalize")
+    assert r_fin.status_code == 200, (
+        f"finalize failed: {r_fin.status_code} {r_fin.text}"
+    )
+
+    assert not workspace.exists(), "active workspace should be removed after finalize"
+
+    sess_resource = autocrud.session_mgr().get(sess_id)
+    assert sess_resource.data.status == "closed"
+    assert sess_resource.data.inactivity_close_reason == "finalize"
+
+
 def test_soft_close_already_closed_returns_400(
     app_env: tuple,
 ) -> None:

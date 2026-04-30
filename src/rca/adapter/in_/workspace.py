@@ -16,7 +16,11 @@ from fastapi.responses import JSONResponse
 
 from rca.container import container
 from rca.domain.session import InactivityCloseReason
-from rca.services.workspace_lifecycle import open_workspace, soft_close_workspace
+from rca.services.workspace_lifecycle import (
+    finalize_workspace,
+    open_workspace,
+    soft_close_workspace,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -90,3 +94,32 @@ async def soft_close_endpoint(
             ) from exc
         raise
     return JSONResponse({"status": "closed", "session_id": session_id})
+
+
+@router.post("/session/{session_id}/finalize")
+async def finalize_endpoint(session_id: str) -> JSONResponse:
+    """Finalize (hard-close) an active session.
+
+    Same as soft-close but also deletes the opencode session permanently,
+    removing the chat history from opencode's SQLite. Use when the user
+    explicitly marks the RCA as done.
+
+    400 — session is not in 'active' status.
+    404 — session_id does not exist.
+    """
+    try:
+        await finalize_workspace(
+            session_id,
+            autocrud=container.autocrud(),
+            opencode=container.opencode(),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        cls = exc.__class__.__name__
+        if "NotFound" in cls or "not found" in str(exc).lower():
+            raise HTTPException(
+                status_code=404, detail=f"Session {session_id!r} not found"
+            ) from exc
+        raise
+    return JSONResponse({"status": "finalized", "session_id": session_id})

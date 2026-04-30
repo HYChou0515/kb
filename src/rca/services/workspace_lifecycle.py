@@ -120,6 +120,55 @@ async def open_workspace(
     )
 
 
+async def finalize_workspace(
+    session_id: str,
+    *,
+    autocrud: IAutoCrudWrapper,
+    opencode: IOpencodeRuntime,
+) -> None:
+    """Hard-close an active session: soft-close + permanently delete the opencode
+    session (removes chat history from opencode's SQLite).
+
+    Use soft_close_workspace() if the user may return (chat history preserved).
+    Use finalize_workspace() when the user is done and wants to commit permanently.
+
+    Raises ValueError if the session is not active.
+    """
+    session_rm = autocrud.session_mgr()
+    session_resource = session_rm.get(session_id)
+    sess = session_resource.data
+
+    if sess.status != "active":
+        raise ValueError(f"Session {session_id} is not active (status={sess.status!r})")
+
+    oc_session_id = sess.opencode_session_id
+
+    sess.inactivity_close_reason = "finalize"
+
+    updated_sess = await autocrud.close_session(sess)
+
+    now = dt.datetime.now(dt.UTC)
+    session_rm.update(session_id, updated_sess, user="system", now=now)
+
+    # Delete the opencode session — this is the point of no return.
+    if oc_session_id:
+        try:
+            await opencode.delete_session(oc_session_id)
+            logger.info(
+                "opencode session deleted: session=%s opencode=%s",
+                session_id,
+                oc_session_id,
+            )
+        except Exception:
+            logger.warning(
+                "could not delete opencode session %s (ignored — local state already committed)",
+                oc_session_id,
+                exc_info=True,
+            )
+
+    logger.info("session finalized: session=%s", session_id)
+
+
 async def soft_close_workspace(
     session_id: str,
     *,
