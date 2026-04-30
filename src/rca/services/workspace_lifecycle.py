@@ -45,6 +45,12 @@ class OpenWorkspaceResult:
     resumed: bool
 
 
+@dataclass
+class UploadFinalReportResult:
+    session_id: str
+    opencode_url: str
+
+
 async def open_workspace(
     case_id: str,
     *,
@@ -119,6 +125,44 @@ async def open_workspace(
         workspace_path=str(active_dir),
         resumed=resumed,
     )
+
+
+async def upload_final_report(
+    case_id: str,
+    *,
+    report_content: str,
+    autocrud: IAutoCrudWrapper,
+    opencode: IOpencodeRuntime,
+) -> UploadFinalReportResult:
+    """Upload a final report to the active workspace.
+
+    If the case has no active session, auto-opens one (resume or first-time).
+    Writes `uploaded_final_report.md` to the active workspace directory.
+    Logs a prompt for the user to review via opencode.
+
+    Returns session_id and opencode_url for the user to open the chat.
+    """
+    # Find the active session for this case, or open a new one.
+    active_sess = _find_active_session(case_id, autocrud)
+    if active_sess is None:
+        result = await open_workspace(case_id, autocrud=autocrud, opencode=opencode)
+        session_id = result.session_id
+        workspace_path = Path(result.workspace_path)
+        opencode_url = result.opencode_url
+    else:
+        session_id = active_sess[0]
+        workspace_path = Path(active_sess[1].workspace_path)
+        opencode_url = active_sess[1].opencode_url or ""
+
+    report_path = workspace_path / "uploaded_final_report.md"
+    report_path.write_text(report_content, encoding="utf-8")
+
+    logger.info(
+        "Final report uploaded to %s. Open opencode at %s to review and submit.",
+        report_path,
+        opencode_url,
+    )
+    return UploadFinalReportResult(session_id=session_id, opencode_url=opencode_url)
 
 
 async def finalize_workspace(
@@ -215,6 +259,47 @@ async def soft_close_workspace(
 
 
 # ─── helpers ─────────────────────────────────────────────────────────────────
+
+
+def _find_active_session(
+    case_id: str, autocrud: IAutoCrudWrapper
+) -> tuple[str, Session] | None:
+    """Return (session_id, Session) for the first active session of this case,
+    or None if no active session exists."""
+    session_rm = autocrud.session_mgr()
+    query = ResourceMetaSearchQuery(
+        conditions=[
+            DataSearchGroup(
+                operator=DataSearchLogicOperator.and_op,
+                conditions=[
+                    DataSearchCondition(
+                        field_path="case_study_id",
+                        operator=DataSearchOperator.equals,
+                        value=case_id,
+                    ),
+                    DataSearchCondition(
+                        field_path="status",
+                        operator=DataSearchOperator.equals,
+                        value="active",
+                    ),
+                ],
+            )
+        ],
+        sorts=[
+            ResourceMetaSearchSort(
+                key=ResourceMetaSortKey.created_time,
+                direction=ResourceMetaSortDirection.descending,
+            )
+        ],
+        limit=1,
+    )
+    results = session_rm.list_resources(query)
+    for item in results:
+        info = getattr(item, "info", None)
+        data = getattr(item, "data", None)
+        if isinstance(data, Session) and info is not None:
+            return (info.resource_id, data)
+    return None
 
 
 def _find_latest_closed_session(

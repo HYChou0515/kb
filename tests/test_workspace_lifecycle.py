@@ -291,6 +291,56 @@ def test_soft_close_already_closed_returns_400(
     )
 
 
+def test_upload_final_report_writes_file_to_workspace(
+    app_env: tuple,
+) -> None:
+    """POST /case-study/{id}/upload-final-report writes the .md content to
+    uploaded_final_report.md in the active workspace and returns opencode_url."""
+    client, autocrud = app_env
+    case_id = _make_case(autocrud, title="Final report test")
+
+    # Open workspace first so there's an active session
+    r = client.post(f"/case-study/{case_id}/open-workspace")
+    assert r.status_code == 200
+    workspace = Path(r.json()["workspace_path"])
+
+    report_content = "# Final RCA Report\n\nRoot cause: Cu via resistance.\n"
+    import io
+
+    r_upload = client.post(
+        f"/case-study/{case_id}/upload-final-report",
+        files={"file": ("final_report.md", io.BytesIO(report_content.encode()), "text/markdown")},
+    )
+    assert r_upload.status_code == 200, (
+        f"upload failed: {r_upload.status_code} {r_upload.text}"
+    )
+
+    body = r_upload.json()
+    assert body.get("opencode_url", "").startswith("http")
+    assert "session_id" in body
+
+    report_file = workspace / "uploaded_final_report.md"
+    assert report_file.exists(), "uploaded_final_report.md not written to workspace"
+    assert "Root cause" in report_file.read_text()
+
+
+def test_upload_final_report_rejects_non_md(
+    app_env: tuple,
+) -> None:
+    """Non-.md uploads must return 400."""
+    client, autocrud = app_env
+    case_id = _make_case(autocrud)
+    client.post(f"/case-study/{case_id}/open-workspace")
+
+    import io
+
+    r = client.post(
+        f"/case-study/{case_id}/upload-final-report",
+        files={"file": ("report.pdf", io.BytesIO(b"pdf content"), "application/pdf")},
+    )
+    assert r.status_code == 400
+
+
 def test_open_workspace_session_record_has_opencode_fields(
     app_env: tuple,
 ) -> None:

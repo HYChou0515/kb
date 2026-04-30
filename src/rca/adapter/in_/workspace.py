@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
 from rca.container import container
@@ -20,6 +20,7 @@ from rca.services.workspace_lifecycle import (
     finalize_workspace,
     open_workspace,
     soft_close_workspace,
+    upload_final_report,
 )
 
 logger = logging.getLogger(__name__)
@@ -123,3 +124,45 @@ async def finalize_endpoint(session_id: str) -> JSONResponse:
             ) from exc
         raise
     return JSONResponse({"status": "finalized", "session_id": session_id})
+
+
+@router.post("/case-study/{case_id}/upload-final-report")
+async def upload_final_report_endpoint(case_id: str, file: UploadFile) -> JSONResponse:
+    """Upload a final report (.md) for a CaseStudy.
+
+    Writes the report to the active workspace as `uploaded_final_report.md`.
+    If no workspace is active, auto-opens one. Returns the opencode_url so
+    the user can review and submit via the chat.
+
+    400 — non-.md file / CaseStudy is closed.
+    404 — case_id does not exist.
+    """
+    if file.filename and not file.filename.lower().endswith(".md"):
+        raise HTTPException(status_code=400, detail="Only .md files are accepted")
+
+    content = await file.read()
+    try:
+        result = await upload_final_report(
+            case_id,
+            report_content=content.decode("utf-8", errors="replace"),
+            autocrud=container.autocrud(),
+            opencode=container.opencode(),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        cls = exc.__class__.__name__
+        if "NotFound" in cls or "not found" in str(exc).lower():
+            raise HTTPException(
+                status_code=404, detail=f"CaseStudy {case_id!r} not found"
+            ) from exc
+        raise
+    return JSONResponse(
+        {
+            "session_id": result.session_id,
+            "opencode_url": result.opencode_url,
+            "message": (
+                "Final report uploaded. Open the workspace to review and submit."
+            ),
+        }
+    )
