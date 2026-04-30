@@ -15,6 +15,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from autocrud.types import (
+    DataSearchCondition,
+    DataSearchGroup,
+    DataSearchLogicOperator,
+    DataSearchOperator,
+    ResourceMetaSearchQuery,
+    ResourceMetaSearchSort,
+    ResourceMetaSortDirection,
+    ResourceMetaSortKey,
+)
+
 from rca.adapter.out.autocrud.actions.session import ACTIVE_SESSIONS_DIR, untar_to_dir
 from rca.domain.session import Session
 from rca.ports.out.autocrud import IAutoCrudWrapper
@@ -66,11 +77,19 @@ async def open_workspace(
     # Seed template files + render CASE.md from the current CaseStudy record.
     seed_workspace(case, active_dir)
 
-    # Create opencode session scoped to the active workspace directory.
-    oc_session_id = await opencode.create_session(directory=active_dir)
-    oc_url = opencode.session_url(oc_session_id)
+    # Resume: reuse prior opencode session if one exists (avoids spawning a new
+    # opencode session and preserves the chat history from the prior session).
+    prior = _find_latest_closed_session(case_id, autocrud)
+    resumed = prior is not None and bool(prior.opencode_session_id)
 
-    # Persist the Session record so watchdog, resume, and digest can find it.
+    if resumed and prior is not None:
+        oc_session_id = prior.opencode_session_id  # type: ignore[assignment]
+        oc_url = prior.opencode_url or opencode.session_url(oc_session_id)
+    else:
+        oc_session_id = await opencode.create_session(directory=active_dir)
+        oc_url = opencode.session_url(oc_session_id)
+
+    # Persist a new Session record so watchdog, resume, and digest can find it.
     now = dt.datetime.now(dt.UTC)
     session_data = Session(
         case_study_id=case_id,
@@ -85,7 +104,8 @@ async def open_workspace(
     rev_info = session_rm.create(session_data, user="system", now=now)
 
     logger.info(
-        "workspace opened: case=%s session=%s opencode=%s dir=%s",
+        "workspace %s: case=%s session=%s opencode=%s dir=%s",
+        "resumed" if resumed else "opened",
         case_id,
         rev_info.resource_id,
         oc_session_id,
@@ -96,11 +116,53 @@ async def open_workspace(
         opencode_session_id=oc_session_id,
         opencode_url=oc_url,
         workspace_path=str(active_dir),
-        resumed=False,
+        resumed=resumed,
     )
 
 
 # ─── helpers ─────────────────────────────────────────────────────────────────
+
+
+def _find_latest_closed_session(
+    case_id: str, autocrud: IAutoCrudWrapper
+) -> Session | None:
+    """Return the most recently created closed Session for `case_id` that has
+    an opencode_session_id, or None if no such session exists."""
+    session_rm = autocrud.session_mgr()
+    query = ResourceMetaSearchQuery(
+        conditions=[
+            DataSearchGroup(
+                operator=DataSearchLogicOperator.and_op,
+                conditions=[
+                    DataSearchCondition(
+                        field_path="case_study_id",
+                        operator=DataSearchOperator.equals,
+                        value=case_id,
+                    ),
+                    DataSearchCondition(
+                        field_path="status",
+                        operator=DataSearchOperator.equals,
+                        value="closed",
+                    ),
+                ],
+            )
+        ],
+        sorts=[
+            ResourceMetaSearchSort(
+                key=ResourceMetaSortKey.created_time,
+                direction=ResourceMetaSortDirection.descending,
+            )
+        ],
+        limit=10,
+    )
+    results = session_rm.list_resources(query)
+    for item in results:
+        data = getattr(item, "data", None)
+        if data is None:
+            continue
+        if isinstance(data, Session) and data.opencode_session_id:
+            return data
+    return None
 
 
 def _restore_archive_if_present(case: object, case_rm: Any, active_dir: Path) -> None:

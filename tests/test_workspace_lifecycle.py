@@ -33,6 +33,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from rca.domain.case_study import CaseStudy
+from rca.domain.session import Session
 
 
 class _NullGraph:
@@ -165,6 +166,39 @@ def test_open_workspace_unknown_case_returns_404(
     r = client.post("/case-study/nonexistent-id/open-workspace")
     assert r.status_code == 404, (
         f"expected 404 for unknown case, got {r.status_code}: {r.text}"
+    )
+
+
+def test_open_workspace_resumes_from_latest_closed_session(
+    app_env: tuple,
+) -> None:
+    """If the case has a prior closed Session with an opencode_session_id, the
+    open-workspace call must reuse it (resumed=True) rather than spawning a
+    new opencode session. This is the resume contract."""
+    client, autocrud = app_env
+    case_id = _make_case(autocrud, title="Resume test case")
+
+    # Simulate a prior soft-close: a closed Session with an opencode session.
+    now = dt.datetime.now(dt.UTC)
+    prior_sess = Session(
+        case_study_id=case_id,
+        status="closed",
+        opened_at="2020-01-01T00:00:00Z",
+        closed_at="2020-01-01T01:00:00Z",
+        workspace_path="",
+        opencode_session_id="sess_prior_abc",
+        opencode_url="http://fake-opencode/app?session=sess_prior_abc",
+        last_activity_at="2020-01-01T01:00:00Z",
+    )
+    autocrud.session_mgr().create(prior_sess, user="test", now=now)
+
+    r = client.post(f"/case-study/{case_id}/open-workspace")
+    assert r.status_code == 200, f"open-workspace failed: {r.status_code} {r.text}"
+
+    body = r.json()
+    assert body["resumed"] is True, "expected resumed=True when prior closed session exists"
+    assert body["opencode_session_id"] == "sess_prior_abc", (
+        f"expected prior opencode_session_id to be reused, got: {body['opencode_session_id']!r}"
     )
 
 
