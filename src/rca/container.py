@@ -22,11 +22,14 @@ from rca.adapter.out.embedding.local_http import LocalHTTPEmbeddingAdapter
 from rca.adapter.out.graph.cognee import CogneeGraphAdapter
 from rca.adapter.out.llm.anthropic import AnthropicLLMAdapter
 from rca.adapter.out.llm.openai import OpenAILLMAdapter
+from rca.adapter.out.opencode.local_subprocess import LocalSubprocessOpencodeRuntime
 from rca.config import Settings, load_settings
 from rca.ports.out.autocrud import IAutoCrudWrapper
 from rca.ports.out.embedding import IEmbeddingAdapter
 from rca.ports.out.graph import IGraphAdapter
 from rca.ports.out.llm import ILLMAdapter
+from rca.ports.out.opencode_runtime import IOpencodeRuntime
+from rca.services.opencode_config import build_opencode_config
 from rca.services.extraction import IExtractionService, SemiconductorExtractionService
 from rca.services.ingestion import IIngestionService, IngestionPipelineService
 from rca.services.kb import IKBService, KBService
@@ -64,6 +67,23 @@ class Container(containers.DeclarativeContainer):
 
     embedding: providers.Provider[IEmbeddingAdapter] = providers.Singleton(
         LocalHTTPEmbeddingAdapter, settings=settings
+    )
+
+    # opencode runtime: POC = LocalSubprocessOpencodeRuntime (spawns child
+    # process at lifespan start). Pod migration swaps to RemoteOpencodeRuntime
+    # (no subprocess; just HTTP client to a separately-deployed opencode service).
+    opencode: providers.Provider[IOpencodeRuntime] = providers.Singleton(
+        LocalSubprocessOpencodeRuntime,
+        port=providers.Callable(
+            lambda s: int(s.opencode_url.rsplit(":", 1)[1]), settings
+        ),
+        opencode_data_root=providers.Callable(
+            lambda s: s.autocrud_data_root.parent / "opencode_data", settings
+        ),
+        config_content=providers.Callable(build_opencode_config, settings),
+        server_password=providers.Callable(
+            lambda s: s.opencode_server_password, settings
+        ),
     )
 
     cognee_mirror: providers.Provider[IEventHandler] = providers.Singleton(
