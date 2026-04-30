@@ -28,6 +28,7 @@ from typing import Any
 
 import pytest
 import yaml
+from cognee.modules.search.types import SearchType
 
 from rca.domain.types import VerificationStatus
 
@@ -147,6 +148,12 @@ async def test_recall_with_node_set_returns_only_matching_status(
         if status != target_status
     ]
 
+    # Default auto-route → GRAPH_COMPLETION, which is the search type
+    # that actually enforces node_name (node_set) filtering at the
+    # graph-traversal layer. SearchType.CHUNKS bypasses NodeSet because
+    # it's pure vector lookup — would leak chunks from other statuses.
+    # Markers are random unique tokens, so they survive LLM synthesis
+    # verbatim and stay exact-matchable.
     results = await graph_with_corpus.recall(
         f"What does the report say about {target_marker}?",
         node_set=[f"rca_reports_{target_status}"],
@@ -190,8 +197,13 @@ async def test_recall_primer_corpus_surfaces_expected_keywords(
     case = next(c for c in benchmark_cases if c["id"] == case_id)
     expected_keywords = [kw.lower() for kw in case["expected_reasoning_contains"]]
 
+    # CHUNKS search returns raw indexed primer text — keywords from the
+    # benchmark YAML appear verbatim because primers are the source of those
+    # keywords. GRAPH_COMPLETION (the auto-routed default) would synthesize
+    # via LLM and paraphrase the keywords away, making this test flaky.
     results = await graph_with_corpus.recall(
         case["correlation"],
+        search_type=SearchType.CHUNKS,
         top_k=10,
     )
     blob = "\n".join(_result_text(r) for r in results).lower()
