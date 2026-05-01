@@ -42,8 +42,20 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Eager-resolve so first-request latency doesn't include the full DI graph.
     # Routers fetch the same instance via Depends(get_kb) (rca.container).
     container.kb()
+
+    # Boot the opencode runtime if the impl owns a process. start/stop live
+    # on the concrete LocalSubprocessOpencodeRuntime, not the port — the
+    # remote impl has nothing to spawn, so this is a no-op there.
+    opencode = container.opencode()
+    if hasattr(opencode, "start"):
+        await opencode.start()
+
     logger.info("KB API ready (AutoCRUD wrapper + cognee mirror live)")
-    yield
+    try:
+        yield
+    finally:
+        if hasattr(opencode, "stop"):
+            await opencode.stop()
 
 
 app = FastAPI(
