@@ -106,7 +106,9 @@ def app_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
         container.reset_singletons()
 
 
-def _make_case(autocrud: Any, *, title: str = "Cu via resistance spike", status: str = "active") -> str:
+def _make_case(
+    autocrud: Any, *, title: str = "Cu via resistance spike", status: str = "active"
+) -> str:
     """Create a CaseStudy directly via the AutoCRUD manager. Returns resource_id."""
     now = dt.datetime.now(dt.UTC)
     case = CaseStudy(title=title, description="yield drop", status=status)  # type: ignore[arg-type]
@@ -196,7 +198,9 @@ def test_open_workspace_resumes_from_latest_closed_session(
     assert r.status_code == 200, f"open-workspace failed: {r.status_code} {r.text}"
 
     body = r.json()
-    assert body["resumed"] is True, "expected resumed=True when prior closed session exists"
+    assert body["resumed"] is True, (
+        "expected resumed=True when prior closed session exists"
+    )
     assert body["opencode_session_id"] == "sess_prior_abc", (
         f"expected prior opencode_session_id to be reused, got: {body['opencode_session_id']!r}"
     )
@@ -229,7 +233,9 @@ def test_soft_close_workspace_tars_and_closes_session(
     )
 
     # Active dir should be gone
-    assert not workspace.exists(), "active workspace dir should be removed after soft-close"
+    assert not workspace.exists(), (
+        "active workspace dir should be removed after soft-close"
+    )
 
     # Session record should be closed
     sess_resource = autocrud.session_mgr().get(sess_id)
@@ -309,7 +315,13 @@ def test_upload_final_report_writes_file_to_workspace(
 
     r_upload = client.post(
         f"/case-study/{case_id}/upload-final-report",
-        files={"file": ("final_report.md", io.BytesIO(report_content.encode()), "text/markdown")},
+        files={
+            "file": (
+                "final_report.md",
+                io.BytesIO(report_content.encode()),
+                "text/markdown",
+            )
+        },
     )
     assert r_upload.status_code == 200, (
         f"upload failed: {r_upload.status_code} {r_upload.text}"

@@ -67,7 +67,9 @@ def _make_case(autocrud: Any) -> str:
     return autocrud.case_study_mgr().create(case, user="test", now=now).resource_id
 
 
-def _make_session(autocrud: Any, case_id: str, *, transcript_path: str | None = None) -> str:
+def _make_session(
+    autocrud: Any, case_id: str, *, transcript_path: str | None = None
+) -> str:
     now = dt.datetime.now(dt.UTC)
     sess = Session(
         case_study_id=case_id,

@@ -8,8 +8,14 @@ adapter.out.autocrud.wrapper.AutoCrudWrapper.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from autocrud.resource_manager import ResourceManager
 from typing import Any
 
+from rca.domain.document import DocumentSource
+from rca.domain.agent_feedback import AgentFeedback
+from rca.domain.glossary import GlossaryEntry
+from rca.domain.case_study import CaseStudy
+from rca.domain.rca_report import RCAReport
 from rca.domain.session import Session
 
 
@@ -25,22 +31,22 @@ class IAutoCrudWrapper(ABC):
     """
 
     @abstractmethod
-    def session_mgr(self) -> Any: ...
+    def session_mgr(self) -> ResourceManager[Session]: ...
 
     @abstractmethod
-    def case_study_mgr(self) -> Any: ...
+    def case_study_mgr(self) -> ResourceManager[CaseStudy]: ...
 
     @abstractmethod
-    def rca_report_mgr(self) -> Any: ...
+    def rca_report_mgr(self) -> ResourceManager[RCAReport]: ...
 
     @abstractmethod
-    def glossary_mgr(self) -> Any: ...
+    def glossary_mgr(self) -> ResourceManager[GlossaryEntry]: ...
 
     @abstractmethod
-    def agent_feedback_mgr(self) -> Any: ...
+    def agent_feedback_mgr(self) -> ResourceManager[AgentFeedback]: ...
 
     @abstractmethod
-    def document_mgr(self) -> Any: ...
+    def document_mgr(self) -> ResourceManager[DocumentSource]: ...
 
     @abstractmethod
     async def close_session(self, existing: Session) -> Session:

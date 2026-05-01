@@ -108,7 +108,7 @@ def run() -> None:  # console-script entry
 
     settings = container.settings()
     uvicorn.run(
-        "main:app",
+        "rca.main:app",
         host=settings.kb_api_host,
         port=settings.kb_api_port,
         reload=False,

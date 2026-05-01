@@ -13,7 +13,7 @@ from typing import Literal
 
 from dotenv import load_dotenv
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 load_dotenv(PROJECT_ROOT / ".env", override=False)
 
@@ -23,6 +23,28 @@ def _env(name: str, default: str | None = None, *, required: bool = False) -> st
     if required and not val:
         raise RuntimeError(f"Missing required environment variable: {name}")
     return val or ""
+
+
+def _eager_export_cognee_paths() -> None:
+    """Set DATA/SYSTEM_ROOT_DIRECTORY before cognee is imported anywhere.
+
+    Why: cognee's logger reads these env vars at module import. If we wait
+    until CogneeGraphAdapter.setup() runs (in the FastAPI lifespan), the
+    logger has already initialized against cognee's default location inside
+    site-packages, and the misleading 'Database storage: <venv>/.../cognee/
+    .cognee_system' line shows up before our override takes effect.
+    """
+    data_root = Path(
+        os.environ.get("COGNEE_DATA_ROOT") or str(PROJECT_ROOT / ".cognee_data")
+    ).resolve()
+    system_root = Path(
+        os.environ.get("COGNEE_SYSTEM_ROOT") or str(PROJECT_ROOT / ".cognee_system")
+    ).resolve()
+    os.environ.setdefault("DATA_ROOT_DIRECTORY", str(data_root))
+    os.environ.setdefault("SYSTEM_ROOT_DIRECTORY", str(system_root))
+
+
+_eager_export_cognee_paths()
 
 
 _DEFAULT_MODEL_BY_PROVIDER = {

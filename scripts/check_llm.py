@@ -12,7 +12,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from rca.config import load_settings  # noqa: E402
-from rca.container import Container  # noqa: E402
 
 
 def main() -> int:
@@ -25,8 +24,18 @@ def main() -> int:
     print(f"  provider: {settings.llm_provider}")
     print(f"  model:    {settings.llm_model}")
 
+    # Instantiate the LLM adapter directly instead of going through the DI
+    # Container — Container imports the cognee graph adapter eagerly, and a
+    # key sanity check shouldn't pay cognee's startup cost (or pollute logs).
     try:
-        client = Container().reasoning_llm()
+        if settings.llm_provider == "openai":
+            from rca.adapter.out.llm.openai import OpenAILLMAdapter
+
+            client = OpenAILLMAdapter(settings=settings, role="reasoning")
+        else:
+            from rca.adapter.out.llm.anthropic import AnthropicLLMAdapter
+
+            client = AnthropicLLMAdapter(settings=settings, role="reasoning")
         out = client.complete(system="Reply with the single word OK.", user="ping", max_tokens=10)
     except Exception as exc:
         cls = exc.__class__.__name__
