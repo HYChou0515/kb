@@ -87,6 +87,7 @@ class AutoCrudWrapper(IAutoCrudWrapper):
                 ("status", str),
                 ("case_study_id", str),
                 ("rca_completed", bool),
+                ("opencode_session_id", str),
             ],
         )
         self.crud.add_model(

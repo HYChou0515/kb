@@ -323,6 +323,11 @@ def _find_latest_closed_session(
                         operator=DataSearchOperator.equals,
                         value="closed",
                     ),
+                    DataSearchCondition(
+                        field_path="opencode_session_id",
+                        operator=DataSearchOperator.exists,
+                        value=True,
+                    ),
                 ],
             )
         ],
@@ -332,15 +337,11 @@ def _find_latest_closed_session(
                 direction=ResourceMetaSortDirection.descending,
             )
         ],
-        limit=10,
+        limit=1,
     )
     results = session_rm.list_resources(query)
     for item in results:
-        data = getattr(item, "data", None)
-        if data is None:
-            continue
-        if isinstance(data, Session) and data.opencode_session_id:
-            return data
+        return item.data
     return None
 
 
