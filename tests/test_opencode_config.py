@@ -24,7 +24,12 @@ from rca.config import Settings
 from rca.services.opencode_config import build_opencode_config
 
 
-def _settings(*, profile: str = "poc") -> Settings:
+def _settings(
+    *,
+    profile: str = "poc",
+    opencode_llm_provider: str = "openai",
+    opencode_llm_model: str = "gpt-4o",
+) -> Settings:
     """Minimum-fields Settings for tests — only the fields build_opencode_config
     actually reads."""
     return Settings(
@@ -33,6 +38,8 @@ def _settings(*, profile: str = "poc") -> Settings:
         llm_api_key="sk-test",
         extraction_model="gpt-4o",
         reasoning_model="gpt-4o",
+        opencode_llm_provider=opencode_llm_provider,
+        opencode_llm_model=opencode_llm_model,
         openai_api_key="sk-test",
         anthropic_api_key="",
         cognee_data_root=__import__("pathlib").Path("/tmp/test_cognee_data"),
@@ -53,6 +60,130 @@ def _settings(*, profile: str = "poc") -> Settings:
         kb_api_base_url="http://127.0.0.1:8765",
         agent_profile=profile,  # ty: ignore[invalid-argument-type]
     )
+
+
+# ─── model wiring ──────────────────────────────────────────────────────────
+
+
+def test_model_rendered_as_provider_slash_model() -> None:
+    """opencode addresses LLMs by `<provider>/<model>` (models.dev convention).
+    The opencode_llm_provider + opencode_llm_model fields must compose into
+    that exact form so opencode picks up the operator's choice instead of
+    silently falling back to its own default."""
+    cfg = build_opencode_config(_settings())
+    assert cfg["model"] == "openai/gpt-4o", (
+        f"expected 'openai/gpt-4o', got {cfg['model']!r}"
+    )
+
+
+def test_opencode_uses_dedicated_llm_setting_independent_of_kb_api() -> None:
+    """The opencode chat agent and kb-api's extraction/reasoning models are
+    intentionally separate — operator can pair, e.g., a cheap extraction
+    model with a stronger user-facing chat model. build_opencode_config must
+    only consult the opencode_* fields, not llm_provider/llm_model."""
+    cfg = build_opencode_config(
+        _settings(
+            opencode_llm_provider="anthropic",
+            opencode_llm_model="claude-sonnet-4-5",
+        )
+    )
+    assert cfg["model"] == "anthropic/claude-sonnet-4-5", (
+        f"opencode model should track opencode_llm_*, got {cfg['model']!r}"
+    )
+
+
+# ─── load_settings env-var fallback ────────────────────────────────────────
+
+
+def _base_env(monkeypatch, tmp_path) -> None:
+    """Minimum env for load_settings to succeed — provider=openai with key."""
+    monkeypatch.setenv("LLM_PROVIDER", "openai")
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-fake")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-fake")
+    monkeypatch.setenv("LLM_MODEL", "gpt-4o")
+    monkeypatch.setenv("AUTOCRUD_DATA_ROOT", str(tmp_path / "autocrud"))
+    monkeypatch.setenv("COGNEE_DATA_ROOT", str(tmp_path / "cognee_data"))
+    monkeypatch.setenv("COGNEE_SYSTEM_ROOT", str(tmp_path / "cognee_system"))
+    # Wipe potential leakage from the host shell
+    monkeypatch.delenv("OPENCODE_LLM_PROVIDER", raising=False)
+    monkeypatch.delenv("OPENCODE_LLM_MODEL", raising=False)
+
+
+def test_opencode_llm_falls_back_to_kb_api_settings_when_unset(
+    monkeypatch, tmp_path
+) -> None:
+    """When OPENCODE_LLM_PROVIDER/MODEL are unset, opencode_llm_* should
+    inherit from llm_provider/llm_model — operators who don't care about
+    the split shouldn't have to configure it."""
+    from rca.config import load_settings
+
+    _base_env(monkeypatch, tmp_path)
+    s = load_settings()
+    assert s.opencode_llm_provider == "openai"
+    assert s.opencode_llm_model == "gpt-4o"
+
+
+def test_opencode_llm_takes_dedicated_env_vars_when_set(
+    monkeypatch, tmp_path
+) -> None:
+    """OPENCODE_LLM_PROVIDER/MODEL override the kb-api defaults."""
+    from rca.config import load_settings
+
+    _base_env(monkeypatch, tmp_path)
+    monkeypatch.setenv("OPENCODE_LLM_PROVIDER", "anthropic")
+    monkeypatch.setenv("OPENCODE_LLM_MODEL", "claude-haiku-4-5")
+    s = load_settings()
+    assert s.opencode_llm_provider == "anthropic"
+    assert s.opencode_llm_model == "claude-haiku-4-5"
+
+
+def test_switching_opencode_provider_alone_picks_that_providers_default_model(
+    monkeypatch, tmp_path
+) -> None:
+    """If only OPENCODE_LLM_PROVIDER is set (different from LLM_PROVIDER),
+    the default model should match the new provider — not blindly carry
+    over llm_model, which would point at the wrong provider's catalog."""
+    from rca.config import load_settings
+
+    _base_env(monkeypatch, tmp_path)  # LLM_PROVIDER=openai, LLM_MODEL=gpt-4o
+    monkeypatch.setenv("OPENCODE_LLM_PROVIDER", "anthropic")
+    s = load_settings()
+    assert s.opencode_llm_provider == "anthropic"
+    assert s.opencode_llm_model != "gpt-4o", (
+        "opencode_llm_model should not silently keep an openai model when "
+        "opencode_llm_provider was switched to anthropic"
+    )
+
+
+def test_opencode_llm_provider_anthropic_requires_anthropic_key(
+    monkeypatch, tmp_path
+) -> None:
+    """opencode reads ANTHROPIC_API_KEY from the inherited process env. If
+    the operator picks the anthropic provider for opencode but didn't set
+    the key, fail loudly at config-load time, not silently at first chat."""
+    import pytest
+
+    from rca.config import load_settings
+
+    _base_env(monkeypatch, tmp_path)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setenv("OPENCODE_LLM_PROVIDER", "anthropic")
+    with pytest.raises(RuntimeError, match="ANTHROPIC_API_KEY"):
+        load_settings()
+
+
+def test_api_key_not_embedded_in_config() -> None:
+    """The opencode config travels via OPENCODE_CONFIG_CONTENT env var. We
+    rely on opencode reading OPENAI_API_KEY / ANTHROPIC_API_KEY from the
+    inherited process env, not the config payload, so secrets don't end up
+    in logs or process listings that capture env values."""
+    import json
+
+    settings = _settings()
+    cfg = build_opencode_config(settings)
+    serialized = json.dumps(cfg)
+    assert settings.openai_api_key not in serialized
+    assert settings.llm_api_key not in serialized
 
 
 # ─── permission profile (security-critical) ────────────────────────────────

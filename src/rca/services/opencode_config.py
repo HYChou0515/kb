@@ -29,8 +29,21 @@ def build_opencode_config(settings: Settings) -> dict[str, Any]:
     """Render the opencode config dict from Settings + active agent_profile.
 
     Pure function — no I/O. Result is JSON-serializable and meant to be
-    set as the OPENCODE_CONFIG_CONTENT env var when spawning opencode."""
+    set as the OPENCODE_CONFIG_CONTENT env var when spawning opencode.
+
+    `model` is rendered as `<provider>/<model>` because that's opencode's
+    models.dev identifier convention. The provider's API key is read by
+    opencode from the standard env var (OPENAI_API_KEY / ANTHROPIC_API_KEY)
+    inherited from the kb-api process — we don't put the secret in config
+    text that ends up in OPENCODE_CONFIG_CONTENT.
+
+    The opencode chat agent's LLM is independent from kb-api's
+    extraction/reasoning models (it reads `opencode_llm_provider` /
+    `opencode_llm_model` so operators can pair a small backend model with
+    a stronger user-facing chat model).
+    """
     return {
+        "model": f"{settings.opencode_llm_provider}/{settings.opencode_llm_model}",
         "mcp": _mcp_servers(settings),
         "permission": _permission_policy(settings.agent_profile),
     }

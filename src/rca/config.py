@@ -62,6 +62,14 @@ class Settings:
     extraction_model: str
     reasoning_model: str
 
+    # The chat agent that opencode drives is independent from kb-api's
+    # extraction/reasoning models — operators usually want the user-facing
+    # agent on a more capable (and pricier) model than the backend's
+    # structured-output passes. Both fall back to llm_provider/llm_model
+    # when their dedicated env vars are unset.
+    opencode_llm_provider: str
+    opencode_llm_model: str
+
     openai_api_key: str
     anthropic_api_key: str
 
@@ -155,12 +163,40 @@ def load_settings() -> Settings:
     extraction_model = _env("EXTRACTION_MODEL", "") or llm_model
     reasoning_model = _env("REASONING_MODEL", "") or llm_model
 
+    opencode_llm_provider = (
+        _env("OPENCODE_LLM_PROVIDER", "").lower() or provider
+    )
+    if opencode_llm_provider not in {"openai", "anthropic"}:
+        raise RuntimeError(
+            f"Unsupported OPENCODE_LLM_PROVIDER: {opencode_llm_provider!r}. "
+            "Use 'openai' or 'anthropic'."
+        )
+    opencode_default_model = _DEFAULT_MODEL_BY_PROVIDER[opencode_llm_provider]
+    # If the user picked a different opencode provider but didn't override
+    # the model, prefer that provider's default rather than the kb-api
+    # llm_model (which probably belongs to the other provider).
+    opencode_llm_model = _env("OPENCODE_LLM_MODEL", "") or (
+        llm_model if opencode_llm_provider == provider else opencode_default_model
+    )
+    if opencode_llm_provider == "openai" and not openai_key:
+        raise RuntimeError(
+            "OPENCODE_LLM_PROVIDER=openai but OPENAI_API_KEY is not set "
+            "(opencode reads it from the inherited process env)."
+        )
+    if opencode_llm_provider == "anthropic" and not anthropic_key:
+        raise RuntimeError(
+            "OPENCODE_LLM_PROVIDER=anthropic but ANTHROPIC_API_KEY is not "
+            "set (opencode reads it from the inherited process env)."
+        )
+
     return Settings(
         llm_provider=provider,
         llm_model=llm_model,
         llm_api_key=_env("LLM_API_KEY", active_key),
         extraction_model=extraction_model,
         reasoning_model=reasoning_model,
+        opencode_llm_provider=opencode_llm_provider,
+        opencode_llm_model=opencode_llm_model,
         openai_api_key=openai_key,
         anthropic_api_key=anthropic_key,
         cognee_data_root=Path(
