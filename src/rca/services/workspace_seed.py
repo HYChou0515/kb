@@ -20,10 +20,15 @@ agent cannot self-modify its own constraints.
 
 from __future__ import annotations
 
+import logging
+import os
 import shutil
+import subprocess
 from pathlib import Path
 
 from rca.domain.case_study import CaseStudy
+
+logger = logging.getLogger(__name__)
 
 # Template tree lives at <repo>/templates/case_workspace/
 _TEMPLATE_DIR = Path(__file__).resolve().parents[3] / "templates" / "case_workspace"
@@ -37,6 +42,71 @@ def seed_workspace(case: CaseStudy, dest_dir: Path) -> None:
     dest_dir.mkdir(parents=True, exist_ok=True)
     _copy_template_tree(_TEMPLATE_DIR, dest_dir)
     (dest_dir / "CASE.md").write_text(_render_case_md(case), encoding="utf-8")
+    _ensure_git_repo(dest_dir)
+
+
+def _ensure_git_repo(dest_dir: Path) -> None:
+    """Make `dest_dir` a git repo with an initial commit so opencode's UI works.
+
+    Why: opencode anchors its project root to the nearest .git ancestor of
+    the launch cwd. Without `.git` it falls back to its own cwd (the KB API
+    repo). And opencode's web UI file tree reads from `git ls-files` rather
+    than scanning the disk — with zero commits everything is untracked and
+    the files panel renders empty even though the files exist on disk. So
+    we both `git init` and lay down a seed commit. Both steps are idempotent
+    on resume (init is a no-op once `.git` exists; commit only fires when
+    HEAD doesn't yet exist).
+    """
+    has_git = (dest_dir / ".git").exists()
+    if not has_git:
+        try:
+            subprocess.run(
+                ["git", "init", "-q", "-b", "main"],
+                cwd=dest_dir,
+                check=True,
+                capture_output=True,
+            )
+        except (FileNotFoundError, subprocess.CalledProcessError) as exc:
+            logger.warning(
+                "git init failed for %s: %s — opencode may anchor to cwd",
+                dest_dir,
+                exc,
+            )
+            return
+
+    # If HEAD already exists this repo has commits; resume path leaves user
+    # commits intact. Otherwise, lay down the seed commit so the file tree
+    # has something to enumerate.
+    try:
+        head_check = subprocess.run(
+            ["git", "rev-parse", "--verify", "-q", "HEAD"],
+            cwd=dest_dir,
+            capture_output=True,
+        )
+        if head_check.returncode == 0:
+            return
+        env = {
+            "GIT_AUTHOR_NAME": "rca-kb",
+            "GIT_AUTHOR_EMAIL": "rca-kb@local",
+            "GIT_COMMITTER_NAME": "rca-kb",
+            "GIT_COMMITTER_EMAIL": "rca-kb@local",
+        }
+        subprocess.run(
+            ["git", "add", "-A"], cwd=dest_dir, check=True, capture_output=True
+        )
+        subprocess.run(
+            ["git", "commit", "-q", "-m", "seed workspace", "--allow-empty"],
+            cwd=dest_dir,
+            check=True,
+            capture_output=True,
+            env={**os.environ, **env},
+        )
+    except subprocess.CalledProcessError as exc:
+        logger.warning(
+            "seed commit failed for %s: %s — opencode file tree may render empty",
+            dest_dir,
+            exc.stderr.decode("utf-8", "replace") if exc.stderr else exc,
+        )
 
 
 def _copy_template_tree(src: Path, dst: Path) -> None:

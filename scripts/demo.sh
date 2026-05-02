@@ -119,8 +119,13 @@ for i in $(seq 1 60); do
   sleep 1
 done
 
-echo "[6/7] seeding KB with built-in semiconductor primer"
-uv run python scripts/seed_primer.py
+
+if [ "${SKIP_PRIMER:-0}" = "1" ]; then
+  echo "[6/7] SKIP_PRIMER=1 → skipping primer seed"
+else
+  echo "[6/7] seeding KB with built-in semiconductor primer"
+  uv run python scripts/seed_primer.py
+fi
 
 echo "[7/7] following KB API log (Ctrl-C to stop)"
 if [ -n "$EMB_LOG" ]; then

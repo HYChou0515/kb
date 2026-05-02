@@ -44,12 +44,16 @@ async def opencode_runtime(
     )
 
     data_root = tmp_path_factory.mktemp("opencode_runtime_test")
+    project_root = tmp_path_factory.mktemp("opencode_runtime_test_project")
     runtime = LocalSubprocessOpencodeRuntime(
         port=4097,  # avoid clashing with prod opencode on 4096
         opencode_data_root=data_root,
         config_content={"mcp": {}, "permission": {"edit": "ask", "bash": "ask"}},
     )
-    await runtime.start()
+    # opencode pins its project root to the cwd at process start; create_session
+    # would lazy-start it for us, but health_check / session_url tests don't go
+    # through create_session, so we boot explicitly here.
+    await runtime.start(cwd=project_root)
     try:
         yield runtime
     finally:

@@ -19,7 +19,9 @@ from typing import Any, TypeGuard
 logger = logging.getLogger(__name__)
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[4]
+# __file__: <project>/src/rca/adapter/out/autocrud/actions/session.py — climb
+# 6 levels (actions → autocrud → out → adapter → rca → src) to project root.
+PROJECT_ROOT = Path(__file__).resolve().parents[6]
 ACTIVE_SESSIONS_DIR = (PROJECT_ROOT / "active_sessions").resolve()
 TRANSCRIPTS_DIR = (PROJECT_ROOT / "transcripts").resolve()
 

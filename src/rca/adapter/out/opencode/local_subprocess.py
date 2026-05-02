@@ -1,8 +1,13 @@
 """LocalSubprocessOpencodeRuntime — opencode `serve` as a child process.
 
-POC impl of IOpencodeRuntime: spawns one `opencode serve` subprocess at
-start(), shuts it down at stop(). Talks to the running server's HTTP API
-for session lifecycle (create / delete / inspect).
+POC impl of IOpencodeRuntime: spawns `opencode serve` lazily on first
+create_session, shuts it down at stop(). Talks to the running server's
+HTTP API for session lifecycle (create / delete / inspect).
+
+opencode's `serve` permanently anchors its project root to the cwd of
+the launched process — `POST /session` ignores `directory` / `cwd` /
+`path` body fields. So we must (re)start opencode with the workspace
+directory as cwd whenever a session for a different workspace is opened.
 
 XDG isolation: child opencode uses XDG_DATA_HOME=<opencode_data_root> so
 its SQLite + snapshots live under our control (per-deployment), not in
@@ -56,6 +61,7 @@ class LocalSubprocessOpencodeRuntime(IOpencodeRuntime):
         self._server_password = server_password
         self._proc: asyncio.subprocess.Process | None = None
         self._client: httpx.AsyncClient | None = None
+        self._cwd: Path | None = None
 
     @property
     def base_url(self) -> str:
@@ -63,9 +69,15 @@ class LocalSubprocessOpencodeRuntime(IOpencodeRuntime):
 
     # ─── lifecycle ─────────────────────────────────────────────────────────
 
-    async def start(self) -> None:
-        """Spawn opencode serve, wait for /global/health to respond 2xx."""
+    async def start(self, *, cwd: Path) -> None:
+        """Spawn opencode serve in `cwd`, wait for /global/health to respond.
+
+        `cwd` becomes opencode's project root for every session this process
+        ever creates — opencode resolves the project once at startup from its
+        own cwd and ignores per-request directory hints.
+        """
         self._opencode_data_root.mkdir(parents=True, exist_ok=True)
+        cwd.mkdir(parents=True, exist_ok=True)
 
         env = {
             **os.environ,
@@ -78,8 +90,9 @@ class LocalSubprocessOpencodeRuntime(IOpencodeRuntime):
             env["OPENCODE_SERVER_PASSWORD"] = self._server_password
 
         logger.info(
-            "spawning opencode serve port=%d data_root=%s",
+            "spawning opencode serve port=%d cwd=%s data_root=%s",
             self._port,
+            cwd,
             self._opencode_data_root,
         )
         self._proc = await asyncio.create_subprocess_exec(
@@ -88,9 +101,11 @@ class LocalSubprocessOpencodeRuntime(IOpencodeRuntime):
             f"--port={self._port}",
             f"--hostname={self._host}",
             env=env,
+            cwd=str(cwd),
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
+        self._cwd = cwd
 
         # Build the HTTP client now (so health-poll can use it).
         auth = None
@@ -107,17 +122,44 @@ class LocalSubprocessOpencodeRuntime(IOpencodeRuntime):
         if self._client is not None:
             await self._client.aclose()
             self._client = None
-        if self._proc is None or self._proc.returncode is not None:
-            return
         try:
-            self._proc.send_signal(signal.SIGTERM)
-            await asyncio.wait_for(self._proc.wait(), timeout=grace_seconds)
-        except asyncio.TimeoutError:
-            logger.warning("opencode did not exit on SIGTERM, sending SIGKILL")
-            self._proc.kill()
-            await self._proc.wait()
+            if self._proc is None or self._proc.returncode is not None:
+                return
+            try:
+                self._proc.send_signal(signal.SIGTERM)
+                await asyncio.wait_for(self._proc.wait(), timeout=grace_seconds)
+            except asyncio.TimeoutError:
+                logger.warning("opencode did not exit on SIGTERM, sending SIGKILL")
+                self._proc.kill()
+                await self._proc.wait()
         finally:
             self._proc = None
+            self._cwd = None
+
+    async def _ensure_running_for(self, cwd: Path) -> None:
+        """Make sure opencode serve is up and anchored to `cwd`.
+
+        Restart strategy: opencode's project root is fixed at process
+        startup, so a session for a different workspace requires a full
+        process bounce. POC scope assumes one active workspace at a time;
+        cross-workspace concurrency would need a runtime-per-case design.
+        """
+        target = cwd.resolve()
+        if (
+            self._proc is not None
+            and self._proc.returncode is None
+            and self._cwd is not None
+            and self._cwd.resolve() == target
+        ):
+            return
+        if self._proc is not None:
+            logger.info(
+                "restarting opencode serve to switch project root: %s → %s",
+                self._cwd,
+                target,
+            )
+            await self.stop()
+        await self.start(cwd=target)
 
     async def _wait_until_healthy(self) -> None:
         deadline = asyncio.get_event_loop().time() + _STARTUP_TIMEOUT_SECONDS
@@ -152,13 +194,12 @@ class LocalSubprocessOpencodeRuntime(IOpencodeRuntime):
         return r.status_code < 300
 
     async def create_session(self, *, directory: Path) -> str:
+        # opencode anchors its project root to the cwd of `opencode serve`
+        # and ignores per-request directory hints, so we (re)start the server
+        # in `directory` before asking for the session.
+        await self._ensure_running_for(directory)
         client = self._require_client()
-        # opencode's POST /session accepts a directory pin in the body —
-        # the session is scoped to operate within that workspace dir.
-        r = await client.post(
-            _SESSION_PATH,
-            json={"directory": str(directory)},
-        )
+        r = await client.post(_SESSION_PATH, json={})
         r.raise_for_status()
         body = r.json()
         sess_id = body.get("id") or body.get("sessionID") or body.get("session_id")

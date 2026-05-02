@@ -25,12 +25,22 @@ class OpenAILLMAdapter(ILLMAdapter):
         logger.debug("OpenAI LLM adapter: model=%s role=%s", self.model, role)
 
     def complete(self, *, system: str, user: str, max_tokens: int) -> str:
-        resp = self._client.chat.completions.create(
-            model=self.model,
-            max_tokens=max_tokens,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-            ],
-        )
+        if self.model in ("gpt-5.4-nano"):
+            resp = self._client.chat.completions.create(
+                model=self.model,
+                max_completion_tokens=max_tokens,
+                messages=[
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user},
+                ],
+            )
+        else:
+            resp = self._client.chat.completions.create(
+                model=self.model,
+                max_tokens=max_tokens,
+                messages=[
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user},
+                ],
+            )
         return resp.choices[0].message.content or ""

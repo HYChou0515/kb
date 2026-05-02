@@ -11,17 +11,37 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
 from rca.container import container
 from rca.domain.session import InactivityCloseReason
+from rca.ports.out.autocrud import IAutoCrudWrapper
+from rca.services.digest import digest_session
 from rca.services.workspace_lifecycle import (
     finalize_workspace,
     open_workspace,
     soft_close_workspace,
     upload_final_report,
 )
+
+
+async def _safe_digest(session_id: str, autocrud: IAutoCrudWrapper) -> None:
+    """Wrap digest so a failure never escapes the BackgroundTasks runner.
+
+    Why: BackgroundTasks runs after the response is sent — there's no client
+    to surface an error to. Log and swallow so a transient digest failure
+    doesn't crash the server's task group.
+    """
+    try:
+        await digest_session(session_id, autocrud=autocrud)
+    except Exception:
+        logger.warning(
+            "background digest failed for session %s (ignored)",
+            session_id,
+            exc_info=True,
+        )
+
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +88,7 @@ async def open_workspace_endpoint(case_id: str) -> JSONResponse:
 @router.post("/session/{session_id}/soft-close")
 async def soft_close_endpoint(
     session_id: str,
+    background_tasks: BackgroundTasks,
     reason: InactivityCloseReason = "explicit_close",
 ) -> JSONResponse:
     """Soft-close an active session.
@@ -76,13 +97,18 @@ async def soft_close_endpoint(
     active workspace directory, and updates the Session to status='closed'.
     The opencode session is preserved in opencode's SQLite for cheap resume.
 
+    Digest (transcript → cognee) runs as a background task after the response
+    is returned — it can take seconds to minutes depending on transcript size,
+    and we don't want to hold the HTTP socket open for that.
+
     400 — session is not in 'active' status.
     404 — session_id does not exist.
     """
+    autocrud = container.autocrud()
     try:
         await soft_close_workspace(
             session_id,
-            autocrud=container.autocrud(),
+            autocrud=autocrud,
             reason=reason,
         )
     except ValueError as exc:
@@ -94,24 +120,31 @@ async def soft_close_endpoint(
                 status_code=404, detail=f"Session {session_id!r} not found"
             ) from exc
         raise
+    background_tasks.add_task(_safe_digest, session_id, autocrud)
     return JSONResponse({"status": "closed", "session_id": session_id})
 
 
 @router.post("/session/{session_id}/finalize")
-async def finalize_endpoint(session_id: str) -> JSONResponse:
+async def finalize_endpoint(
+    session_id: str,
+    background_tasks: BackgroundTasks,
+) -> JSONResponse:
     """Finalize (hard-close) an active session.
 
     Same as soft-close but also deletes the opencode session permanently,
     removing the chat history from opencode's SQLite. Use when the user
     explicitly marks the RCA as done.
 
+    Digest runs as a background task after the response — see soft_close_endpoint.
+
     400 — session is not in 'active' status.
     404 — session_id does not exist.
     """
+    autocrud = container.autocrud()
     try:
         await finalize_workspace(
             session_id,
-            autocrud=container.autocrud(),
+            autocrud=autocrud,
             opencode=container.opencode(),
         )
     except ValueError as exc:
@@ -123,6 +156,7 @@ async def finalize_endpoint(session_id: str) -> JSONResponse:
                 status_code=404, detail=f"Session {session_id!r} not found"
             ) from exc
         raise
+    background_tasks.add_task(_safe_digest, session_id, autocrud)
     return JSONResponse({"status": "finalized", "session_id": session_id})
 
 
