@@ -53,12 +53,18 @@ class LocalSubprocessOpencodeRuntime(IOpencodeRuntime):
         opencode_data_root: Path,
         config_content: dict[str, Any],
         server_password: str = "",
+        openchamber_base_url: str = "",
     ) -> None:
         self._port = port
         self._host = host
         self._opencode_data_root = opencode_data_root
         self._config_content = config_content
         self._server_password = server_password
+        # When non-empty, session_url() points at OpenChamber instead of
+        # opencode's built-in /app. OpenChamber must be run separately and
+        # configured via OPENCODE_SKIP_START=true to attach to this same
+        # opencode server.
+        self._openchamber_base_url = openchamber_base_url.rstrip("/")
         self._proc: asyncio.subprocess.Process | None = None
         self._client: httpx.AsyncClient | None = None
         self._cwd: Path | None = None
@@ -246,7 +252,12 @@ class LocalSubprocessOpencodeRuntime(IOpencodeRuntime):
         return _parse_timestamp(ts)
 
     def session_url(self, opencode_session_id: str) -> str:
-        # opencode's web UI is at /app and accepts session via query.
+        # opencode's built-in UI is at /app; OpenChamber serves the same
+        # session at /. Both accept ?session=<id>. We hand back OpenChamber's
+        # URL when configured because its file tree, diff viewer, and approval
+        # UX are production-grade — opencode's /app is dev-tooling.
+        if self._openchamber_base_url:
+            return f"{self._openchamber_base_url}/?session={opencode_session_id}"
         return f"{self.base_url}/app?session={opencode_session_id}"
 
     # ─── helpers ───────────────────────────────────────────────────────────

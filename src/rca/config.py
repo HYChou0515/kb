@@ -105,6 +105,12 @@ class Settings:
     opencode_url: str = "http://127.0.0.1:4096"
     opencode_server_password: str = ""
     sweep_secret: str = ""
+    # When set, the per-session URL we hand back to users points at OpenChamber
+    # (prod-grade web UI for opencode) instead of opencode's built-in /app.
+    # OpenChamber must be run separately (`OPENCODE_SKIP_START=true openchamber
+    # --port 3000`) and must be configured to attach to the same opencode
+    # server we spawn. URL form: <base>/?session=<opencode_session_id>.
+    openchamber_base_url: str = ""
 
     def export_to_cognee_env(self) -> None:
         os.environ["LLM_PROVIDER"] = self.llm_provider
@@ -192,6 +198,7 @@ def load_settings() -> Settings:
         opencode_url=_env("OPENCODE_URL", "http://127.0.0.1:4096"),
         opencode_server_password=_env("OPENCODE_SERVER_PASSWORD", ""),
         sweep_secret=_env("SWEEP_SECRET", ""),
+        openchamber_base_url=_env("OPENCHAMBER_BASE_URL", ""),
     )
 
 

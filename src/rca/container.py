@@ -84,6 +84,9 @@ class Container(containers.DeclarativeContainer):
         server_password=providers.Callable(
             lambda s: s.opencode_server_password, settings
         ),
+        openchamber_base_url=providers.Callable(
+            lambda s: s.openchamber_base_url, settings
+        ),
     )
 
     cognee_mirror: providers.Provider[IEventHandler] = providers.Singleton(

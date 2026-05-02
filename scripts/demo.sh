@@ -6,6 +6,8 @@
 #   - .env exists with OPENAI_API_KEY (or ANTHROPIC_API_KEY if LLM_PROVIDER=anthropic)
 #   - if EMBEDDING_PROVIDER=openai_compatible (the default), LOCAL_EMBEDDING_MODEL_PATH
 #     must point to your locally-downloaded sentence-transformers checkpoint.
+#   - if OPENCHAMBER_BASE_URL is set, the `openchamber` CLI must be on PATH
+#     (https://github.com/btriapitsyn/openchamber).
 #
 # What it does:
 #   1. uv sync
@@ -13,8 +15,9 @@
 #   3. generate mock fab data
 #   4. (if local embeddings) start embedding-server in background
 #   5. start KB API in background
-#   6. seed KB with primer
-#   7. tail KB API log (Ctrl-C to stop)
+#   6. (if OPENCHAMBER_BASE_URL set) start OpenChamber in background
+#   7. seed KB with primer
+#   8. tail KB API log (Ctrl-C to stop)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -90,14 +93,17 @@ else
   echo "[4/7] EMBEDDING_PROVIDER=$EMB_PROVIDER → skipping local embedding-server"
 fi
 
-echo "[5/7] starting KB API in the background"
+echo "[5/8] starting KB API in the background"
 KB_LOG=$(mktemp -t kb-api.XXXXXX.log)
 echo "      log: $KB_LOG"
 uv run kb-api >"$KB_LOG" 2>&1 &
 API_PID=$!
 
+OC_PID=""
+OC_LOG=""
+
 cleanup() {
-  for pid in "$API_PID" "$EMB_PID"; do
+  for pid in "$API_PID" "$OC_PID" "$EMB_PID"; do
     if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
       kill "$pid" 2>/dev/null || true
     fi
@@ -119,16 +125,66 @@ for i in $(seq 1 60); do
   sleep 1
 done
 
+# OpenChamber attaches to the opencode server kb-api spawns. We start it
+# here so the URL kb-api hands back (when OPENCHAMBER_BASE_URL is set) is
+# already live by the time the user follows it. opencode itself is started
+# lazily by kb-api on the first /open-workspace call — OpenChamber will
+# show a "waiting for opencode" state until then, which is fine.
+if [ -n "${OPENCHAMBER_BASE_URL:-}" ]; then
+  if ! command -v openchamber >/dev/null 2>&1; then
+    echo "ERROR: OPENCHAMBER_BASE_URL is set but \`openchamber\` is not on PATH." >&2
+    echo "       Install per upstream instructions at https://github.com/openchamber/openchamber" >&2
+    echo "       Or unset OPENCHAMBER_BASE_URL to fall back to opencode's built-in /app." >&2
+    exit 1
+  fi
+  OC_PORT=${OPENCHAMBER_PORT:-3000}
+  OC_LOG=$(mktemp -t openchamber.XXXXXX.log)
+  # Match the port kb-api spawns opencode on. Settings reads OPENCODE_URL
+  # from .env (default http://127.0.0.1:4096); when unset we fall back to
+  # opencode's compiled-in default port. ${var##*:} = strip everything up
+  # to and including the last ':' → just the port.
+  OPENCODE_URL_VAL=${OPENCODE_URL:-http://127.0.0.1:4096}
+  OPENCODE_PORT_VAL=${OPENCODE_URL_VAL##*:}
+  echo "[6/8] starting OpenChamber in the background"
+  echo "      log:  $OC_LOG"
+  echo "      port: $OC_PORT (attaches to opencode at port $OPENCODE_PORT_VAL)"
+  OC_ARGS=(--port "$OC_PORT" --foreground)
+  if [ -n "${OPENCHAMBER_UI_PASSWORD:-}" ]; then
+    OC_ARGS+=(--ui-password "$OPENCHAMBER_UI_PASSWORD")
+  fi
+  OPENCODE_PORT="$OPENCODE_PORT_VAL" \
+  OPENCODE_SKIP_START=true \
+    openchamber "${OC_ARGS[@]}" >"$OC_LOG" 2>&1 &
+  OC_PID=$!
+  echo "      waiting for $OPENCHAMBER_BASE_URL ..."
+  for i in $(seq 1 30); do
+    if curl -fs -o /dev/null "$OPENCHAMBER_BASE_URL/" 2>/dev/null; then
+      echo "      OpenChamber is up (after ${i}s)"
+      break
+    fi
+    if ! kill -0 "$OC_PID" 2>/dev/null; then
+      echo "ERROR: OpenChamber died during startup. Last 50 lines of log:" >&2
+      tail -n 50 "$OC_LOG" >&2
+      exit 1
+    fi
+    sleep 1
+  done
+else
+  echo "[6/8] OPENCHAMBER_BASE_URL not set → using opencode's built-in /app"
+fi
 
 if [ "${SKIP_PRIMER:-0}" = "1" ]; then
-  echo "[6/7] SKIP_PRIMER=1 → skipping primer seed"
+  echo "[7/8] SKIP_PRIMER=1 → skipping primer seed"
 else
-  echo "[6/7] seeding KB with built-in semiconductor primer"
+  echo "[7/8] seeding KB with built-in semiconductor primer"
   uv run python scripts/seed_primer.py
 fi
 
-echo "[7/7] following KB API log (Ctrl-C to stop)"
+echo "[8/8] following KB API log (Ctrl-C to stop)"
 if [ -n "$EMB_LOG" ]; then
   echo "      (embedding-server log at $EMB_LOG)"
+fi
+if [ -n "$OC_LOG" ]; then
+  echo "      (openchamber log at $OC_LOG)"
 fi
 tail -f "$KB_LOG"
