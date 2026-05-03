@@ -42,6 +42,16 @@ for port in 8765 4096 3000; do
   done
 done
 
+# OpenChamber's "am I already running?" check reads run/openchamber-<port>.pid
+# and asks ps if that PID is alive. If a previous demo.sh died unclean and
+# the node process became a zombie (parent didn't reap it), the PID is still
+# in `ps` (state "Z") and OpenChamber refuses to start with "already running
+# on port 3000". Killing the zombie doesn't help — only its parent can reap
+# it. The pid file IS our problem; nuke it.
+project_root=$(dirname "$(dirname "$(readlink -f "$0")")")
+rm -f "$project_root"/data/openchamber/run/openchamber-*.pid \
+      "$project_root"/data/openchamber/run/openchamber-*.json 2>/dev/null || true
+
 remaining=$(ss -tlnp 2>/dev/null | grep -cE ':8765 |:4096 |:3000 ' || true)
 if [ "$remaining" -eq 0 ]; then
   echo "stale processes cleared (ports 8765 / 4096 / 3000 free)"

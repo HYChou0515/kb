@@ -101,6 +101,7 @@ API_PID=$!
 
 OC_PID=""
 OC_LOG=""
+TAIL_PID=""
 
 # `uv run` → uvicorn → kb-api → opencode child → MCP servers is a 4-deep
 # process tree, and `kill <pid>` only signals the direct child. Walk the
@@ -120,17 +121,41 @@ kill_tree() {
 }
 
 cleanup() {
-  trap - EXIT INT TERM  # don't re-enter on signal during cleanup
-  for pid in "$API_PID" "$OC_PID" "$EMB_PID"; do
+  # First line — proves the trap actually fired. If you press Ctrl-C
+  # (or Ctrl-Z, which we map to the same behavior) and do NOT see this
+  # message, the trap is being suppressed and we have a bigger problem
+  # than slow cleanup.
+  printf '\n[demo.sh] signal received, cleanup invoked...\n' >&2
+  trap - EXIT INT TERM TSTP  # don't re-enter on signal during cleanup
+  for pid in "$API_PID" "$OC_PID" "$EMB_PID" "$TAIL_PID"; do
     kill_tree "$pid" TERM
   done
   # Brief grace, then SIGKILL anything that ignored TERM.
   sleep 1
-  for pid in "$API_PID" "$OC_PID" "$EMB_PID"; do
+  for pid in "$API_PID" "$OC_PID" "$EMB_PID" "$TAIL_PID"; do
     kill_tree "$pid" KILL
   done
+  # Backstop: nuke anything still bound to demo ports. Catches the case
+  # where kill_tree misses a process (e.g. one that re-parented to init).
+  "$(dirname "$0")/kill-stale.sh" >/dev/null 2>&1 || true
+  printf '[demo.sh] done.\n' >&2
 }
-trap cleanup EXIT INT TERM
+# Treat Ctrl-Z (SIGTSTP) the same as Ctrl-C: trigger cleanup and exit.
+# Some terminal setups (VSCode integrated terminal with sendKeybindings
+# off, certain tmux configs, locked-down corp environments) don't deliver
+# Ctrl-C as SIGINT — Ctrl-Z is the only signal the user can reliably send
+# from the keyboard. Without this trap, ^Z would suspend bash and leave
+# every child process running with no way to recover except `kill` from
+# another terminal. The trade-off: legitimate "suspend and bg" via ^Z is
+# unavailable. For a foreground-runner script that's the right call.
+trap 'cleanup; exit 146' TSTP
+# `cleanup; exit` for INT/TERM ensures bash unblocks from `wait` and
+# exits even if some bash version doesn't gracefully resume after the
+# trap returns. EXIT-only trap remains a cleanup as fallback for
+# non-signal exit paths (set -e fires, etc.).
+trap 'cleanup; exit 130' INT
+trap 'cleanup; exit 143' TERM
+trap cleanup EXIT
 
 echo "      waiting for /health on $API_URL ..."
 for i in $(seq 1 60); do
@@ -236,11 +261,18 @@ else
   uv run python scripts/seed_primer.py
 fi
 
-echo "[8/8] following KB API log (Ctrl-C to stop)"
+echo "[8/8] following KB API log (Ctrl-C or Ctrl-Z to stop)"
 if [ -n "$EMB_LOG" ]; then
   echo "      (embedding-server log at $EMB_LOG)"
 fi
 if [ -n "$OC_LOG" ]; then
   echo "      (openchamber log at $OC_LOG)"
 fi
-tail -f "$KB_LOG"
+
+# Background `tail` + bash `wait` instead of foreground `tail`. wait is a
+# bash builtin and traps fire on it WITHOUT delay, so Ctrl-C / Ctrl-Z
+# reliably trigger cleanup. With foreground `tail -f` bash blocks in
+# wait4 on tail's pid and the trap doesn't fire until tail itself exits.
+tail -f "$KB_LOG" &
+TAIL_PID=$!
+wait "$TAIL_PID" 2>/dev/null || true

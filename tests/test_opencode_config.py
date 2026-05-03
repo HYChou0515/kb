@@ -282,11 +282,32 @@ def test_all_three_rca_mcp_servers_registered() -> None:
 def test_kb_mcp_passes_kb_api_base_url_from_settings() -> None:
     """kb-mcp speaks to the KB API via KB_API_BASE_URL env var; the value
     MUST come from Settings (not hardcoded) so prod / staging point at the
-    right service."""
+    right service.
+
+    Field name is `environment` (opencode's MCP local schema), NOT `env` —
+    using `env` would silently drop the override. Regression guard for the
+    bug where MCPs couldn't see MOCK_FAB_DATA_DIR / KB_API_BASE_URL."""
     settings = _settings()
     cfg = build_opencode_config(settings)
     kb_mcp = cfg["mcp"]["kb-mcp"]
-    assert kb_mcp["env"]["KB_API_BASE_URL"] == settings.kb_api_base_url
+    assert "env" not in kb_mcp, (
+        "MCP env-override field must be `environment`, not `env` — opencode's "
+        "schema (config/mcp.ts:Local.environment) silently drops `env`"
+    )
+    assert kb_mcp["environment"]["KB_API_BASE_URL"] == settings.kb_api_base_url
+
+
+def test_wafer_data_mcp_passes_mock_fab_data_dir() -> None:
+    """wafer-data-mcp resolves CSV paths from MOCK_FAB_DATA_DIR. Without it
+    the MCP falls back to `./data/mock-fab-data` resolved against cwd —
+    which under opencode is the workspace dir, not the project root, so
+    no CSVs are found. Regression guard."""
+    settings = _settings()
+    cfg = build_opencode_config(settings)
+    wafer = cfg["mcp"]["wafer-data-mcp"]
+    assert wafer["environment"]["MOCK_FAB_DATA_DIR"] == str(settings.mock_fab_data_dir), (
+        f"MCP can't see fab data: got {wafer.get('environment', {}).get('MOCK_FAB_DATA_DIR')!r}"
+    )
 
 
 def test_mcp_servers_use_local_subprocess_type() -> None:

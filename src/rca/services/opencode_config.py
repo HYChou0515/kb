@@ -104,13 +104,26 @@ def _permission_policy(profile: str) -> dict[str, str]:
 
 def _mcp_servers(settings: Settings) -> dict[str, dict[str, Any]]:
     """Three local-subprocess MCP servers the agent uses for the 9-step RCA flow.
+
     All `command` arrays start with `uv run` so they pick up the project
-    venv (the same one the API server runs in)."""
+    venv (the same one the API server runs in).
+
+    The env-override field is `environment` (not `env`) — that's opencode's
+    schema name (config/mcp.ts:Local). Using `env` would silently drop the
+    override and the MCP would inherit only opencode's process env, which
+    has nothing pointing at MOCK_FAB_DATA_DIR / KB_API_BASE_URL.
+
+    cwd is intentionally NOT set: opencode spawns local MCPs with cwd =
+    the session's workspace dir (mcp/index.ts:390). `uv run` walks up to
+    find pyproject.toml, so the venv resolves correctly. The MCP servers
+    don't depend on cwd for data — they read MOCK_FAB_DATA_DIR / similar
+    as absolute paths from their environment.
+    """
     return {
         "kb-mcp": {
             "type": "local",
             "command": ["uv", "run", "kb-mcp"],
-            "env": {
+            "environment": {
                 "KB_API_BASE_URL": settings.kb_api_base_url,
                 "LOG_LEVEL": settings.log_level,
             },
@@ -118,7 +131,7 @@ def _mcp_servers(settings: Settings) -> dict[str, dict[str, Any]]:
         "wafer-data-mcp": {
             "type": "local",
             "command": ["uv", "run", "wafer-data-mcp"],
-            "env": {
+            "environment": {
                 "MOCK_FAB_DATA_DIR": str(settings.mock_fab_data_dir),
                 "LOG_LEVEL": settings.log_level,
             },
@@ -126,7 +139,7 @@ def _mcp_servers(settings: Settings) -> dict[str, dict[str, Any]]:
         "stats-algo-mcp": {
             "type": "local",
             "command": ["uv", "run", "stats-algo-mcp"],
-            "env": {
+            "environment": {
                 "MOCK_FAB_DATA_DIR": str(settings.mock_fab_data_dir),
                 "LOG_LEVEL": settings.log_level,
             },
