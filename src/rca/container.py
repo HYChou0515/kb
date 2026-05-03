@@ -13,11 +13,21 @@ type-safely in tests.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from autocrud.types import IEventHandler
 from dependency_injector import containers, providers
 
 from rca.adapter.out.autocrud.cognee_mirror import CogneeMirrorHandler
 from rca.adapter.out.autocrud.wrapper import AutoCrudWrapper
+
+# Project-blessed `.opencode/` dir we hand opencode via OPENCODE_CONFIG_DIR.
+# Lives outside any case workspace so the agent's external_directory:deny
+# permission blocks tampering. Single source-of-truth — also the template
+# we copy into each workspace as documentation.
+_AGENT_CONFIG_DIR = (
+    Path(__file__).resolve().parents[2] / "templates" / "case_workspace" / ".opencode"
+)
 from rca.adapter.out.embedding.local_http import LocalHTTPEmbeddingAdapter
 from rca.adapter.out.graph.cognee import CogneeGraphAdapter
 from rca.adapter.out.llm.anthropic import AnthropicLLMAdapter
@@ -81,6 +91,7 @@ class Container(containers.DeclarativeContainer):
             lambda s: s.autocrud_data_root.parent / "opencode_data", settings
         ),
         config_content=providers.Callable(build_opencode_config, settings),
+        agent_config_dir=providers.Object(_AGENT_CONFIG_DIR),
         server_password=providers.Callable(
             lambda s: s.opencode_server_password, settings
         ),

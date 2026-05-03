@@ -76,6 +76,34 @@ def test_model_rendered_as_provider_slash_model() -> None:
     )
 
 
+def test_instructions_points_at_template_agents_md() -> None:
+    """AGENTS.md is the orientation file opencode auto-prepends to the agent's
+    system prompt. We block opencode's project-level discovery for security
+    (OPENCODE_DISABLE_PROJECT_CONFIG=true), so this `instructions` field is
+    the controlled re-entry: opencode loads the kb-api-blessed AGENTS.md
+    via this absolute-path list. If the path drifts (template moved, but
+    config not updated), the agent loses its workspace orientation."""
+    cfg = build_opencode_config(_settings())
+    assert "instructions" in cfg, "missing `instructions` field"
+    assert isinstance(cfg["instructions"], list), "`instructions` must be a list"
+    assert any(
+        path.endswith("templates/case_workspace/AGENTS.md")
+        for path in cfg["instructions"]
+    ), (
+        f"AGENTS.md path missing from instructions: {cfg['instructions']!r}"
+    )
+
+
+def test_default_agent_is_rca_agent() -> None:
+    """opencode's UI opens on `default_agent` if set, else falls back to
+    `build`. We seed every workspace with `.opencode/agents/rca-agent.md`
+    and want the UI to land on it without manual switching."""
+    cfg = build_opencode_config(_settings())
+    assert cfg["default_agent"] == "rca-agent", (
+        f"expected default_agent='rca-agent', got {cfg.get('default_agent')!r}"
+    )
+
+
 def test_opencode_uses_dedicated_llm_setting_independent_of_kb_api() -> None:
     """The opencode chat agent and kb-api's extraction/reasoning models are
     intentionally separate — operator can pair, e.g., a cheap extraction
@@ -217,6 +245,19 @@ def test_edit_always_asks_for_approval() -> None:
         cfg = build_opencode_config(_settings(profile=profile))
         assert cfg["permission"]["edit"] == "ask", (
             f"profile={profile}: edit must require approval"
+        )
+
+
+def test_external_directory_denied_for_all_profiles() -> None:
+    """The agent must stay confined to the workspace dir. Both profiles set
+    `external_directory: deny` so every filesystem tool — read, edit, bash,
+    glob, grep, list — refuses paths outside the workspace at the tool
+    boundary. (MCP server subprocesses are separate and unaffected.)"""
+    for profile in ("poc", "prod"):
+        cfg = build_opencode_config(_settings(profile=profile))
+        assert cfg["permission"]["external_directory"] == "deny", (
+            f"profile={profile}: external_directory must be 'deny' to keep "
+            f"the agent inside its workspace"
         )
 
 

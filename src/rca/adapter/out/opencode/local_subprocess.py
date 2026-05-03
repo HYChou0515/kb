@@ -52,6 +52,7 @@ class LocalSubprocessOpencodeRuntime(IOpencodeRuntime):
         host: str = "127.0.0.1",
         opencode_data_root: Path,
         config_content: dict[str, Any],
+        agent_config_dir: Path,
         server_password: str = "",
         openchamber_base_url: str = "",
     ) -> None:
@@ -59,6 +60,11 @@ class LocalSubprocessOpencodeRuntime(IOpencodeRuntime):
         self._host = host
         self._opencode_data_root = opencode_data_root
         self._config_content = config_content
+        # Read-only-to-agent directory containing the named agents we want
+        # opencode to discover (e.g. rca-agent). Lives outside the agent's
+        # workspace so external_directory:deny blocks any tampering. See
+        # the OPENCODE_CONFIG_DIR comment in start() for the threat model.
+        self._agent_config_dir = agent_config_dir
         self._server_password = server_password
         # When non-empty, session_url() points at OpenChamber instead of
         # opencode's built-in /app. OpenChamber must be run separately and
@@ -89,7 +95,30 @@ class LocalSubprocessOpencodeRuntime(IOpencodeRuntime):
             **os.environ,
             "XDG_DATA_HOME": str(self._opencode_data_root),
             "XDG_CONFIG_HOME": str(self._opencode_data_root / "config"),
+            # Two-flag combo that locks down agent self-modification:
+            #
+            # 1) OPENCODE_DISABLE_PROJECT_CONFIG=true tells opencode NOT to
+            #    walk up from cwd looking for `.opencode/`, opencode.json,
+            #    or AGENTS.md. So a malicious agent writing
+            #    `<workspace>/.opencode/agents/evil.md` (frontmatter:
+            #    permission.bash=allow) is invisible — opencode never sees
+            #    it. opencode merges per-agent frontmatter permission AFTER
+            #    top-level config (agent.ts ~L264), so without this flag a
+            #    discovered evil agent would re-enable bash and bypass our
+            #    permission policy on a single user "approve" click.
+            #
+            # 2) OPENCODE_CONFIG_DIR points at a kb-api-controlled directory
+            #    OUTSIDE the workspace (the seed-template's .opencode dir).
+            #    opencode treats this dir like any other `.opencode` source
+            #    and discovers rca-agent.md from `<dir>/agents/`. The agent
+            #    can't write here because `permission.external_directory =
+            #    deny` blocks any path outside the workspace.
+            #
+            # Together these two flags give the agent a UI-visible named
+            # agent (loaded from a tamper-proof location) while preventing
+            # it from injecting its own agent definitions.
             "OPENCODE_DISABLE_PROJECT_CONFIG": "true",
+            "OPENCODE_CONFIG_DIR": str(self._agent_config_dir),
             "OPENCODE_CONFIG_CONTENT": json.dumps(self._config_content),
         }
         if self._server_password:

@@ -102,11 +102,32 @@ API_PID=$!
 OC_PID=""
 OC_LOG=""
 
+# `uv run` → uvicorn → kb-api → opencode child → MCP servers is a 4-deep
+# process tree, and `kill <pid>` only signals the direct child. Walk the
+# tree via pgrep so SIGTERM reaches all descendants (then SIGKILL whoever
+# didn't go down). Without this, Ctrl-C leaves opencode + MCP processes
+# running and the next demo.sh fails with "address already in use".
+kill_tree() {
+  local pid=$1 sig=${2:-TERM}
+  [ -z "$pid" ] && return 0
+  kill -0 "$pid" 2>/dev/null || return 0
+  local children
+  children=$(pgrep -P "$pid" 2>/dev/null || true)
+  kill -"$sig" "$pid" 2>/dev/null || true
+  for c in $children; do
+    kill_tree "$c" "$sig"
+  done
+}
+
 cleanup() {
+  trap - EXIT INT TERM  # don't re-enter on signal during cleanup
   for pid in "$API_PID" "$OC_PID" "$EMB_PID"; do
-    if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
-      kill "$pid" 2>/dev/null || true
-    fi
+    kill_tree "$pid" TERM
+  done
+  # Brief grace, then SIGKILL anything that ignored TERM.
+  sleep 1
+  for pid in "$API_PID" "$OC_PID" "$EMB_PID"; do
+    kill_tree "$pid" KILL
   done
 }
 trap cleanup EXIT INT TERM

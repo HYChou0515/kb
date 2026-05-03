@@ -3,10 +3,10 @@
 When a user opens a workspace for a freshly-created CaseStudy (no prior
 workspace_archive blob), the active_dir is empty. We seed it with:
 
-  - Static template files (AGENTS.md, README.md, notes.md, draft_report.md,
-    .gitignore, .opencode/agents/) — copied verbatim from
-    `templates/case_workspace/`. These give opencode its agent instructions
-    and give the user a familiar workspace skeleton.
+  - User-facing template files (README.md, notes.md, draft_report.md,
+    .gitignore) — copied verbatim from `templates/case_workspace/`.
+    These give the fab engineer a familiar workspace skeleton to read
+    and edit.
 
   - CASE.md — rendered programmatically from the CaseStudy struct fields
     (title, description, defect_type, etc.). This is the case-specific
@@ -16,6 +16,14 @@ CASE.md is ALWAYS overwritten on open-workspace because the CaseStudy
 record is the authoritative source of case metadata; users edit
 CaseStudy fields via the AutoCRUD PATCH endpoint, not by editing
 CASE.md inside the workspace.
+
+`AGENTS.md` and `.opencode/` live next to the user-facing templates inside
+`templates/case_workspace/` but are NOT seeded into workspaces — they are
+kb-api-blessed opencode resources loaded from outside the workspace
+(AGENTS.md via the `instructions` config field; `.opencode/` via
+OPENCODE_CONFIG_DIR). Seeding them would mislead users into thinking
+their workspace-local edits take effect (they don't, because
+OPENCODE_DISABLE_PROJECT_CONFIG=true blocks workspace-level discovery).
 
 opencode.json is intentionally NOT in the template — opencode config is
 injected via env vars (OPENCODE_DISABLE_PROJECT_CONFIG=true +
@@ -47,14 +55,25 @@ def test_seed_creates_template_files_and_rendered_case_md(tmp_path: Path) -> Non
 
     seed_workspace(case, tmp_path)
 
-    # Static template files copied
-    assert (tmp_path / "AGENTS.md").exists(), (
-        "AGENTS.md missing — opencode reads this for agent instructions"
-    )
+    # User-facing template files copied
     assert (tmp_path / "README.md").exists(), "human-facing README.md missing"
     assert (tmp_path / "notes.md").exists(), "notes.md skeleton missing"
     assert (tmp_path / "draft_report.md").exists(), "draft_report.md skeleton missing"
     assert (tmp_path / ".gitignore").exists(), ".gitignore missing"
+
+    # AGENTS.md and .opencode/ are kb-api-blessed and loaded from the template
+    # dir directly; seeding them into the workspace would mislead users into
+    # thinking workspace-local edits take effect (they don't — opencode's
+    # OPENCODE_DISABLE_PROJECT_CONFIG=true blocks workspace discovery).
+    assert not (tmp_path / "AGENTS.md").exists(), (
+        "AGENTS.md must NOT be seeded — it's loaded from the template dir "
+        "via the opencode `instructions` config (see opencode_config.py)"
+    )
+    assert not (tmp_path / ".opencode").exists(), (
+        ".opencode/ must NOT be seeded — agent definitions are loaded from "
+        "OPENCODE_CONFIG_DIR pointing at the template dir, outside the "
+        "workspace (see local_subprocess.py)"
+    )
 
     # opencode.json must NOT be in the template (security: env-injected only)
     assert not (tmp_path / "opencode.json").exists(), (

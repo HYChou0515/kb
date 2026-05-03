@@ -142,8 +142,15 @@ def test_open_workspace_first_time_seeds_dir_and_returns_opencode_url(
     case_md = (workspace / "CASE.md").read_text()
     assert "Cu via resistance spike" in case_md, "CASE.md missing case title"
 
-    # Template files should also be seeded
-    assert (workspace / "AGENTS.md").exists(), "AGENTS.md not seeded"
+    # User-facing template files should be seeded
+    assert (workspace / "README.md").exists(), "README.md not seeded"
+    assert (workspace / "notes.md").exists(), "notes.md not seeded"
+    assert (workspace / "draft_report.md").exists(), "draft_report.md not seeded"
+
+    # AGENTS.md and .opencode/ are kb-api-blessed and loaded from outside the
+    # workspace; they MUST NOT be seeded — see test_workspace_seed for why.
+    assert not (workspace / "AGENTS.md").exists(), "AGENTS.md must not be seeded"
+    assert not (workspace / ".opencode").exists(), ".opencode/ must not be seeded"
 
 
 def test_open_workspace_closed_case_returns_400(

@@ -20,9 +20,26 @@ Edits (write_file / edit_file) always require approval — even POC.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from rca.config import Settings
+
+# Absolute path to the kb-api-blessed AGENTS.md (orientation prepended to the
+# agent's system prompt). Lives next to the OPENCODE_CONFIG_DIR contents so
+# the same dir holds every config artifact opencode loads from outside the
+# workspace. We pass it via the `instructions` config field because
+# OPENCODE_DISABLE_PROJECT_CONFIG=true blocks opencode's own AGENTS.md
+# discovery from the workspace tree (see local_subprocess.py).
+#
+# __file__ = <project>/src/rca/services/opencode_config.py — climb 4 levels
+# (services → rca → src → <project>) to reach the project root.
+_AGENTS_MD_PATH = (
+    Path(__file__).resolve().parents[3]
+    / "templates"
+    / "case_workspace"
+    / "AGENTS.md"
+)
 
 
 def build_opencode_config(settings: Settings) -> dict[str, Any]:
@@ -41,9 +58,22 @@ def build_opencode_config(settings: Settings) -> dict[str, Any]:
     extraction/reasoning models (it reads `opencode_llm_provider` /
     `opencode_llm_model` so operators can pair a small backend model with
     a stronger user-facing chat model).
+
+    `default_agent: "rca-agent"` matches the named agent loaded from
+    OPENCODE_CONFIG_DIR (templates/case_workspace/.opencode/agents/
+    rca-agent.md). Without this the UI opens on opencode's built-in
+    `build` agent and the user has to switch manually.
+
+    `instructions: [<AGENTS.md path>]` re-injects the AGENTS.md orientation
+    that opencode's project-config discovery would normally pick up. We
+    block that discovery (OPENCODE_DISABLE_PROJECT_CONFIG=true) so the
+    agent can't smuggle a malicious AGENTS.md via a workspace write — this
+    field is the controlled re-entry point for the file we control.
     """
     return {
         "model": f"{settings.opencode_llm_provider}/{settings.opencode_llm_model}",
+        "default_agent": "rca-agent",
+        "instructions": [str(_AGENTS_MD_PATH)],
         "mcp": _mcp_servers(settings),
         "permission": _permission_policy(settings.agent_profile),
     }
@@ -51,11 +81,24 @@ def build_opencode_config(settings: Settings) -> dict[str, Any]:
 
 def _permission_policy(profile: str) -> dict[str, str]:
     """Per-tool permission policy. "ask" = user approval prompt; "deny" = blocked.
-    bash flips between profiles; edit always requires approval."""
+
+    bash flips between profiles; edit always requires approval.
+
+    `external_directory: deny` confines every filesystem-touching tool
+    (read / edit / bash / glob / grep / list) to within the agent's
+    workspace dir. Workspace-relative case files stay reachable;
+    `cat /etc/passwd` or `ls ../..` get blocked at the tool boundary.
+    See opencode's external-directory.ts for the universal check.
+
+    MCP servers run in their own subprocesses and aren't subject to this
+    rule, so wafer-data-mcp / stats-algo-mcp can still serve absolute
+    paths to mock fab data outside the workspace.
+    """
     bash_policy = "deny" if profile == "prod" else "ask"
     return {
         "edit": "ask",
         "bash": bash_policy,
+        "external_directory": "deny",
     }
 
 

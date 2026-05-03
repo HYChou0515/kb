@@ -33,6 +33,15 @@ logger = logging.getLogger(__name__)
 # Template tree lives at <repo>/templates/case_workspace/
 _TEMPLATE_DIR = Path(__file__).resolve().parents[3] / "templates" / "case_workspace"
 
+# Files / dirs in `_TEMPLATE_DIR` that are kb-api-blessed opencode resources,
+# NOT user-facing seed files. opencode reads them from the template dir
+# directly (AGENTS.md via the `instructions` config field, `.opencode/` via
+# OPENCODE_CONFIG_DIR). Seeding them into each workspace would mislead the
+# fab engineer into thinking edits to those copies take effect — they
+# don't, because OPENCODE_DISABLE_PROJECT_CONFIG=true makes opencode
+# ignore workspace-level .opencode/ and AGENTS.md.
+_SEED_EXCLUDE = frozenset({"AGENTS.md", ".opencode"})
+
 
 def seed_workspace(case: CaseStudy, dest_dir: Path) -> None:
     """Populate `dest_dir` with the case workspace skeleton.
@@ -113,8 +122,13 @@ def _copy_template_tree(src: Path, dst: Path) -> None:
     """Recursively copy `src` into `dst`, skipping any file that already
     exists at the destination. Mirrors `shutil.copytree(dirs_exist_ok=True)`
     semantics but with a per-file "skip if exists" guard so user edits in
-    notes.md / draft_report.md survive a defensive second seed."""
+    notes.md / draft_report.md survive a defensive second seed.
+
+    Top-level entries listed in `_SEED_EXCLUDE` are skipped entirely."""
+    is_top_level = src == _TEMPLATE_DIR
     for entry in src.iterdir():
+        if is_top_level and entry.name in _SEED_EXCLUDE:
+            continue
         target = dst / entry.name
         if entry.is_dir():
             target.mkdir(exist_ok=True)
