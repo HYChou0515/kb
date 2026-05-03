@@ -41,17 +41,17 @@ EMB_PORT=${EMBEDDING_SERVER_PORT:-8766}
 EMB_URL="http://${EMB_HOST}:${EMB_PORT}"
 EMB_PROVIDER=${EMBEDDING_PROVIDER:-openai_compatible}
 
-echo "[1/7] uv sync"
+echo "[1/8] uv sync"
 uv sync
 
-echo "[2/7] sanity-checking LLM provider key (one tiny call)"
+echo "[2/8] sanity-checking LLM provider key (one tiny call)"
 if ! uv run python scripts/check_llm.py; then
   echo "ABORT: LLM key sanity check failed. See messages above." >&2
   echo "       Fix .env, then re-run ./scripts/demo.sh" >&2
   exit 1
 fi
 
-echo "[3/7] generating mock fab data"
+echo "[3/8] generating mock fab data"
 uv run python data/mock-fab-data/generate.py
 
 EMB_PID=""
@@ -68,7 +68,7 @@ if [ "$EMB_PROVIDER" = "openai_compatible" ]; then
     exit 1
   fi
 
-  echo "[4/7] starting embedding-server in the background"
+  echo "[4/8] starting embedding-server in the background"
   EMB_LOG=$(mktemp -t embedding-server.XXXXXX.log)
   echo "      log:   $EMB_LOG"
   echo "      model: $LOCAL_EMBEDDING_MODEL_PATH"
@@ -90,7 +90,7 @@ if [ "$EMB_PROVIDER" = "openai_compatible" ]; then
     sleep 1
   done
 else
-  echo "[4/7] EMBEDDING_PROVIDER=$EMB_PROVIDER → skipping local embedding-server"
+  echo "[4/8] EMBEDDING_PROVIDER=$EMB_PROVIDER → skipping local embedding-server"
 fi
 
 echo "[5/8] starting KB API in the background"

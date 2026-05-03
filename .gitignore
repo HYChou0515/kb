@@ -36,10 +36,26 @@ build/
 *.safetensors
 *.bin
 
-# v2 architecture simulation (lifecycle state, not source)
-active_sessions/         # ephemeral; recreated per session-open
-workspaces/              # per-CaseStudy committed state
-transcripts/             # OpenCode session logs (audit, not in KB)
-data/autocrud/           # AutoCRUD's DiskStorageFactory state
+# Lifecycle / runtime state — not source. NB: gitignore does NOT support
+# inline comments — `pattern  # note` is read as a literal pattern with
+# spaces and `#`, matching nothing. Comments must live on their own line.
+
+# Per-case workspaces (ephemeral; recreated per /open-workspace call)
+active_sessions/
+
+# Session transcripts (opencode session logs; archived in AutoCRUD)
+transcripts/
+
+# Generated final RCA reports (the source-of-truth lives in the KB)
+reports/
+
+# AutoCRUD DiskStorageFactory state (case studies, sessions, KB records)
+data/autocrud/
+
+# opencode server runtime state (XDG_DATA_HOME — SQLite + snapshots)
+data/opencode_data/
+
+# OpenChamber web UI runtime state (settings.json, project icons)
+data/openchamber/
 
 .coverage
