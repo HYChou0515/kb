@@ -38,6 +38,10 @@ dependencies = [
     "rich>=13.7.0",
     "typer>=0.12.0",
     "dependency-injector>=4.49.0",
+    # rca_ui — NiceGUI chat + OpenAI Agents SDK driving MCP-based agent loop.
+    # Replaces the opencode + OpenChamber stack.
+    "nicegui>=2.10",
+    "openai-agents>=0.15",
 ]
 
 [project.optional-dependencies]
@@ -53,6 +57,7 @@ dev = [
 
 [project.scripts]
 kb-api = "rca.main:run"
+rca-ui = "rca_ui.main:run"
 embedding-server = "embedding_server.main:run"
 kb-mcp = "rca.adapter.in_.mcp_kb:main"
 wafer-data-mcp = "mcp_servers.wafer_data_mcp:main"
@@ -63,7 +68,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/rca", "src/embedding_server", "src/mcp_servers"]
+packages = ["src/rca", "src/rca_ui", "src/embedding_server", "src/mcp_servers"]
 
 [tool.uv]
 package = true
