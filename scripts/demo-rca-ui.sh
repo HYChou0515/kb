@@ -32,16 +32,10 @@ UI_HOST=${RCA_UI_HOST:-127.0.0.1}
 UI_PORT=${RCA_UI_PORT:-3001}
 UI_URL="http://${UI_HOST}:${UI_PORT}"
 
-echo "[1/7] uv sync"
+echo "[1/6] uv sync"
 uv sync
 
-echo "[2/7] sanity-checking LLM provider key"
-if ! uv run python scripts/check_llm.py; then
-  echo "ABORT: LLM key sanity check failed." >&2
-  exit 1
-fi
-
-echo "[3/7] generating mock fab data"
+echo "[2/6] generating mock fab data"
 uv run python data/mock-fab-data/generate.py
 
 EMB_PID=""
@@ -51,7 +45,7 @@ if [ "$EMB_PROVIDER" = "openai_compatible" ]; then
     echo "ABORT: EMBEDDING_PROVIDER=openai_compatible but LOCAL_EMBEDDING_MODEL_PATH is empty." >&2
     exit 1
   fi
-  echo "[4/7] starting embedding-server in the background"
+  echo "[3/6] starting embedding-server in the background"
   EMB_LOG=$(mktemp -t embedding-server.XXXXXX.log)
   echo "      log: $EMB_LOG"
   uv run embedding-server >"$EMB_LOG" 2>&1 &
@@ -70,10 +64,10 @@ if [ "$EMB_PROVIDER" = "openai_compatible" ]; then
     sleep 1
   done
 else
-  echo "[4/7] EMBEDDING_PROVIDER=$EMB_PROVIDER → skipping embedding-server"
+  echo "[3/6] EMBEDDING_PROVIDER=$EMB_PROVIDER → skipping embedding-server"
 fi
 
-echo "[5/7] starting KB API in the background"
+echo "[4/6] starting KB API in the background"
 KB_LOG=$(mktemp -t kb-api.XXXXXX.log)
 echo "      log: $KB_LOG"
 uv run kb-api >"$KB_LOG" 2>&1 &
@@ -127,7 +121,7 @@ for i in $(seq 1 60); do
   sleep 1
 done
 
-echo "[6/7] starting rca-ui (NiceGUI + OpenAI Agents SDK) in the background"
+echo "[5/6] starting rca-ui (NiceGUI + OpenAI Agents SDK) in the background"
 UI_LOG=$(mktemp -t rca-ui.XXXXXX.log)
 echo "      log: $UI_LOG"
 echo "      url: $UI_URL"
@@ -149,9 +143,9 @@ for i in $(seq 1 60); do
 done
 
 if [ "${SKIP_PRIMER:-0}" = "1" ]; then
-  echo "[7/7] SKIP_PRIMER=1 → skipping primer seed"
+  echo "[6/6] SKIP_PRIMER=1 → skipping primer seed"
 else
-  echo "[7/7] seeding KB with built-in semiconductor primer"
+  echo "[6/6] seeding KB with built-in semiconductor primer"
   uv run python scripts/seed_primer.py
 fi
 
