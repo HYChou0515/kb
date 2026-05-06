@@ -19,6 +19,7 @@ from rca.domain.session import InactivityCloseReason
 from rca.ports.out.autocrud import IAutoCrudWrapper
 from rca.services.digest import digest_session
 from rca.services.workspace_lifecycle import (
+    AnotherCaseActiveError,
     finalize_workspace,
     open_workspace,
     soft_close_workspace,
@@ -57,6 +58,8 @@ async def open_workspace_endpoint(case_id: str) -> JSONResponse:
 
     400 — CaseStudy is in "closed" status (PATCH to "active" first).
     404 — case_id does not exist.
+    409 — a different CaseStudy already has an active session (the local
+          opencode runtime is single-cwd; soft-close that session first).
     """
     try:
         result = await open_workspace(
@@ -64,6 +67,8 @@ async def open_workspace_endpoint(case_id: str) -> JSONResponse:
             autocrud=container.autocrud(),
             opencode=container.opencode(),
         )
+    except AnotherCaseActiveError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:

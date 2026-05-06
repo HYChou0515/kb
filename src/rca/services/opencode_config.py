@@ -80,24 +80,31 @@ def build_opencode_config(settings: Settings) -> dict[str, Any]:
 
 
 def _permission_policy(profile: str) -> dict[str, str]:
-    """Per-tool permission policy. "ask" = user approval prompt; "deny" = blocked.
+    """Per-tool permission policy. "allow" = silent OK, "ask" = user approval
+    prompt, "deny" = blocked.
 
-    bash flips between profiles; edit always requires approval.
+    Both bash and edit relax in POC and tighten in prod:
+      - POC: bash="ask" (user approves each command), edit="allow" (silent
+        writes; the agent constantly updates notes.md / draft_report.md and
+        prompting on every edit kills the flow)
+      - prod: bash="deny" (whitelist-only tooling), edit="ask" (multi-user
+        surface; every write must be reviewable)
 
     `external_directory: deny` confines every filesystem-touching tool
     (read / edit / bash / glob / grep / list) to within the agent's
-    workspace dir. Workspace-relative case files stay reachable;
-    `cat /etc/passwd` or `ls ../..` get blocked at the tool boundary.
-    See opencode's external-directory.ts for the universal check.
+    workspace dir regardless of the per-tool rule. Workspace-relative case
+    files stay reachable; `cat /etc/passwd` or `ls ../..` get blocked at
+    the tool boundary. See opencode's external-directory.ts for the
+    universal check.
 
     MCP servers run in their own subprocesses and aren't subject to this
     rule, so wafer-data-mcp / stats-algo-mcp can still serve absolute
     paths to mock fab data outside the workspace.
     """
-    bash_policy = "deny" if profile == "prod" else "ask"
+    is_prod = profile == "prod"
     return {
-        "edit": "ask",
-        "bash": bash_policy,
+        "edit": "ask" if is_prod else "allow",
+        "bash": "deny" if is_prod else "ask",
         "external_directory": "deny",
     }
 

@@ -35,6 +35,28 @@ from rca.services.workspace_seed import seed_workspace
 logger = logging.getLogger(__name__)
 
 
+class AnotherCaseActiveError(Exception):
+    """A different case already has an active session.
+
+    The local opencode runtime is single-cwd: only one workspace can be
+    open at a time. If we silently accepted a second open, the URL we
+    handed back would point at opencode's CURRENT cwd (the latest opened
+    case) rather than the case the URL claims — the user clicks and lands
+    in the wrong workspace with no error. Reject up-front instead.
+
+    HTTP layer maps this to 409 Conflict.
+    """
+
+    def __init__(self, blocking_case_id: str, blocking_session_id: str) -> None:
+        self.blocking_case_id = blocking_case_id
+        self.blocking_session_id = blocking_session_id
+        super().__init__(
+            f"CaseStudy {blocking_case_id!r} is currently active "
+            f"(session {blocking_session_id!r}). Soft-close or finalize that "
+            f"session before opening another case."
+        )
+
+
 @dataclass
 class OpenWorkspaceResult:
     session_id: str
@@ -72,6 +94,15 @@ async def open_workspace(
     if case.status == "closed":
         raise ValueError(
             f"CaseStudy {case_id} is closed. PATCH status to 'active' before reopening."
+        )
+
+    # Single-active-case constraint. See AnotherCaseActiveError docstring.
+    other_active = _find_other_active_session(case_id, autocrud)
+    if other_active is not None:
+        blocking_session_id, blocking_session = other_active
+        raise AnotherCaseActiveError(
+            blocking_case_id=blocking_session.case_study_id,
+            blocking_session_id=blocking_session_id,
         )
 
     active_dir: Path = ACTIVE_SESSIONS_DIR / case_id
@@ -124,6 +155,66 @@ async def open_workspace(
         workspace_path=str(active_dir),
         resumed=resumed,
     )
+
+
+async def cleanup_stale_active_sessions(autocrud: IAutoCrudWrapper) -> int:
+    """Abandon every Session record currently marked 'active'.
+
+    Called from kb-api lifespan startup. Reason: any 'active' record at
+    process-start time is necessarily stale — the opencode subprocess that
+    was tied to it is a child of the previous kb-api, which is no longer
+    running. The single-active-case constraint enforced by `open_workspace`
+    would otherwise refuse to open ANY case until the user manually closed
+    each leftover (a UX hole the user doesn't deserve to fall into).
+
+    Returns the count of sessions abandoned. The actual write of the
+    abandoned status uses autocrud.abandon_session (which also nukes the
+    leftover active_dir on disk if it still exists).
+    """
+    session_rm = autocrud.session_mgr()
+    query = ResourceMetaSearchQuery(
+        conditions=[
+            DataSearchGroup(
+                operator=DataSearchLogicOperator.and_op,
+                conditions=[
+                    DataSearchCondition(
+                        field_path="status",
+                        operator=DataSearchOperator.equals,
+                        value="active",
+                    ),
+                ],
+            )
+        ],
+        # In a healthy system there's at most 1 active session. A higher
+        # cap accommodates accidental duplicates from past crash loops.
+        limit=100,
+    )
+    results = session_rm.list_resources(query)
+    now = dt.datetime.now(dt.UTC)
+    count = 0
+    for item in results:
+        info = getattr(item, "info", None)
+        data = getattr(item, "data", None)
+        if not isinstance(data, Session) or info is None:
+            continue
+        try:
+            updated = await autocrud.abandon_session(data)
+            session_rm.update(info.resource_id, updated, user="system", now=now)
+            logger.info(
+                "stale active session abandoned: session=%s case=%s",
+                info.resource_id,
+                data.case_study_id,
+            )
+            count += 1
+        except Exception:
+            logger.warning(
+                "failed to abandon stale session %s (continuing)",
+                info.resource_id,
+                exc_info=True,
+            )
+    if count:
+        logger.info("startup cleanup: abandoned %d stale active session(s)", count)
+    return count
 
 
 async def upload_final_report(
@@ -282,6 +373,42 @@ def _find_active_session(
         data = getattr(item, "data", None)
         if isinstance(data, Session) and info is not None:
             return (info.resource_id, data)
+    return None
+
+
+def _find_other_active_session(
+    case_id: str, autocrud: IAutoCrudWrapper
+) -> tuple[str, Session] | None:
+    """Return (session_id, Session) for any active session that belongs to a
+    case OTHER than `case_id`, or None.
+
+    Used by open_workspace to enforce single-active-case. We over-fetch
+    (limit=10) and filter in Python because there's no `not_equals` operator
+    we can rely on across AutoCRUD storage backends — and in practice there
+    should be 0 or 1 active sessions total."""
+    session_rm = autocrud.session_mgr()
+    query = ResourceMetaSearchQuery(
+        conditions=[
+            DataSearchGroup(
+                operator=DataSearchLogicOperator.and_op,
+                conditions=[
+                    DataSearchCondition(
+                        field_path="status",
+                        operator=DataSearchOperator.equals,
+                        value="active",
+                    ),
+                ],
+            )
+        ],
+        limit=10,
+    )
+    results = session_rm.list_resources(query)
+    for item in results:
+        info = getattr(item, "info", None)
+        data = getattr(item, "data", None)
+        if isinstance(data, Session) and info is not None:
+            if data.case_study_id != case_id:
+                return (info.resource_id, data)
     return None
 
 

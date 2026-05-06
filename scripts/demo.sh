@@ -219,9 +219,16 @@ try:
 except (json.JSONDecodeError, OSError):
     current = {}
 current["defaultModel"] = target_model
+# Force WebSocket transport for the message stream. OpenChamber defaults
+# to "auto" which falls back to SSE; SSE silently disconnects without
+# triggering the reconnect path in some browser/proxy setups, leaving
+# the UI looking dead until full page reload. WS has heartbeat/close
+# semantics that the client actually notices.
+current["messageStreamTransport"] = "ws"
 path.parent.mkdir(parents=True, exist_ok=True)
 path.write_text(json.dumps(current, indent=2), "utf-8")
 print(f"      settings.json defaultModel ← {target_model}")
+print(f"      settings.json messageStreamTransport ← ws")
 PY
 
   echo "[6/8] starting OpenChamber in the background"

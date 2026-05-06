@@ -237,15 +237,26 @@ def test_prod_profile_denies_bash() -> None:
     )
 
 
-def test_edit_always_asks_for_approval() -> None:
-    """File edits (write_file / edit_file) need user approval in BOTH profiles.
-    Even POC: agent shouldn't silently rewrite the workspace; user wants to
-    see the diff."""
-    for profile in ("poc", "prod"):
-        cfg = build_opencode_config(_settings(profile=profile))
-        assert cfg["permission"]["edit"] == "ask", (
-            f"profile={profile}: edit must require approval"
-        )
+def test_poc_profile_allows_silent_edits() -> None:
+    """POC profile lets the agent write_file / edit_file without prompting.
+    The agent constantly updates notes.md and draft_report.md as the
+    9-step flow progresses; gating each write behind a confirmation kills
+    the workflow. external_directory:deny still scopes writes to within
+    the workspace, so the blast radius of a stray edit is bounded."""
+    cfg = build_opencode_config(_settings(profile="poc"))
+    assert cfg["permission"]["edit"] == "allow", (
+        f"POC: edit should be 'allow' to keep the agent flowing, "
+        f"got {cfg['permission']['edit']!r}"
+    )
+
+
+def test_prod_profile_asks_for_edit_approval() -> None:
+    """Prod is multi-user; every write must be reviewable, so edit reverts
+    to 'ask' (the user behind the OpenChamber UI sees a diff and approves)."""
+    cfg = build_opencode_config(_settings(profile="prod"))
+    assert cfg["permission"]["edit"] == "ask", (
+        f"prod: edit must require approval, got {cfg['permission']['edit']!r}"
+    )
 
 
 def test_external_directory_denied_for_all_profiles() -> None:

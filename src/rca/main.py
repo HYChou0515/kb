@@ -20,6 +20,7 @@ from fastapi.responses import JSONResponse
 
 from rca.adapter.in_ import admin, recall, retain, workspace
 from rca.container import container
+from rca.services.workspace_lifecycle import cleanup_stale_active_sessions
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     autocrud = container.autocrud()
     autocrud.register_actions()
     autocrud.apply(app)
+
+    # Any Session record marked 'active' here is a leftover from a previous
+    # kb-api process that died — the opencode subprocess it pointed at no
+    # longer exists. Abandon them so the single-active-case constraint in
+    # open_workspace doesn't 409 the user out of every fresh case open.
+    await cleanup_stale_active_sessions(autocrud)
 
     # Eager-resolve so first-request latency doesn't include the full DI graph.
     # Routers fetch the same instance via Depends(get_kb) (rca.container).

@@ -178,6 +178,151 @@ def test_open_workspace_unknown_case_returns_404(
     )
 
 
+def test_open_second_case_while_first_active_returns_409(
+    app_env: tuple,
+) -> None:
+    """The local opencode runtime is single-cwd: only one case can be the
+    active workspace at a time. Quietly accepting a second open-workspace
+    call while another case is active produces a URL that points at
+    opencode's CURRENT cwd (the latest opened case), not at the case the
+    URL claims to belong to. The user clicks the URL and lands in the
+    wrong case — without any error.
+
+    Contract: reject the second open with 409 Conflict and tell the user
+    which case is blocking. They must soft-close the active one first.
+
+    Self-resume (opening case A while A's session is already active) is
+    a separate behavior — covered in another test."""
+    client, autocrud = app_env
+    case_a = _make_case(autocrud, title="Case A")
+    case_b = _make_case(autocrud, title="Case B")
+
+    r_a = client.post(f"/case-study/{case_a}/open-workspace")
+    assert r_a.status_code == 200, f"opening A failed: {r_a.status_code} {r_a.text}"
+
+    r_b = client.post(f"/case-study/{case_b}/open-workspace")
+    assert r_b.status_code == 409, (
+        f"expected 409 Conflict when another case is already active, "
+        f"got {r_b.status_code}: {r_b.text}"
+    )
+    detail = r_b.json().get("detail", "")
+    assert case_a in detail, (
+        f"error must name the blocking case so the user knows which to close; "
+        f"got: {detail!r}"
+    )
+
+
+def test_open_second_case_succeeds_after_first_is_soft_closed(
+    app_env: tuple,
+) -> None:
+    """The single-active-case constraint releases as soon as the active
+    session is soft-closed. Otherwise the user would be stuck unable to
+    move on after finishing one case."""
+    client, autocrud = app_env
+    case_a = _make_case(autocrud, title="Case A — to be closed")
+    case_b = _make_case(autocrud, title="Case B — opens after")
+
+    r_a = client.post(f"/case-study/{case_a}/open-workspace")
+    assert r_a.status_code == 200
+    sess_a = r_a.json()["session_id"]
+
+    r_close = client.post(f"/session/{sess_a}/soft-close")
+    assert r_close.status_code == 200, f"soft-close failed: {r_close.text}"
+
+    r_b = client.post(f"/case-study/{case_b}/open-workspace")
+    assert r_b.status_code == 200, (
+        f"opening B after A closed should succeed; got {r_b.status_code}: "
+        f"{r_b.text}"
+    )
+
+
+def test_reopen_same_case_while_active_is_not_blocked_as_other_case(
+    app_env: tuple,
+) -> None:
+    """The 409 guard fires only when a DIFFERENT case is active. Re-opening
+    the SAME case is its own can of worms (currently produces a duplicate
+    active session — that's a separate issue), but it must NOT trigger the
+    409 conflict response, which would incorrectly say `case A is blocking
+    case A`."""
+    client, autocrud = app_env
+    case_a = _make_case(autocrud, title="Case A self-reopen")
+
+    r1 = client.post(f"/case-study/{case_a}/open-workspace")
+    assert r1.status_code == 200
+
+    r2 = client.post(f"/case-study/{case_a}/open-workspace")
+    assert r2.status_code != 409, (
+        f"self-reopen must not be flagged as a conflict; got: {r2.text}"
+    )
+
+
+async def test_cleanup_stale_active_sessions_marks_them_abandoned(
+    app_env: tuple,
+) -> None:
+    """When kb-api starts, all DB Session records still marked 'active' are
+    leftovers from a previous process that died (Ctrl+Z hang, kill -9,
+    crash, host reboot). The opencode subprocess they were tied to is gone
+    too — there is no actual `active` runtime state, only stale DB rows.
+
+    `cleanup_stale_active_sessions` (called from lifespan startup) must
+    abandon every such record so the user doesn't have to manually
+    `soft-close` dead sessions before opening a new case."""
+    from rca.services.workspace_lifecycle import cleanup_stale_active_sessions
+
+    _client, autocrud = app_env
+    case_a = _make_case(autocrud, title="Stale case A")
+    case_b = _make_case(autocrud, title="Stale case B")
+
+    # Simulate two crash-leftover active sessions
+    now = dt.datetime.now(dt.UTC)
+    for case_id, oc_id in [(case_a, "sess_orphan_a"), (case_b, "sess_orphan_b")]:
+        sess = Session(
+            case_study_id=case_id,
+            status="active",
+            opened_at="2020-01-01T00:00:00Z",
+            workspace_path="",
+            opencode_session_id=oc_id,
+            opencode_url=f"http://opencode/{oc_id}",
+            last_activity_at="2020-01-01T00:01:00Z",
+        )
+        autocrud.session_mgr().create(sess, user="test", now=now)
+
+    await cleanup_stale_active_sessions(autocrud)
+
+    # Both should now be abandoned, not active
+    session_rm = autocrud.session_mgr()
+    from autocrud.types import (
+        DataSearchCondition,
+        DataSearchGroup,
+        DataSearchLogicOperator,
+        DataSearchOperator,
+        ResourceMetaSearchQuery,
+    )
+
+    still_active = session_rm.list_resources(
+        ResourceMetaSearchQuery(
+            conditions=[
+                DataSearchGroup(
+                    operator=DataSearchLogicOperator.and_op,
+                    conditions=[
+                        DataSearchCondition(
+                            field_path="status",
+                            operator=DataSearchOperator.equals,
+                            value="active",
+                        ),
+                    ],
+                )
+            ],
+            limit=10,
+        )
+    )
+    leftover = [item for item in still_active if item.data is not None]
+    assert len(leftover) == 0, (
+        f"cleanup must abandon all active sessions; still active: "
+        f"{[item.data.case_study_id for item in leftover]}"
+    )
+
+
 def test_open_workspace_resumes_from_latest_closed_session(
     app_env: tuple,
 ) -> None:
