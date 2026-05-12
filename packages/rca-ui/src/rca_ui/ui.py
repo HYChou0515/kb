@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -58,30 +59,111 @@ def register_pages(settings: UISettings) -> None:
 
 
 def _install_theme() -> None:
-    """Per-page theme: tighten Quasar defaults (q-page padding eats height),
-    set a slate background, and pick our accent blue."""
-    ui.colors(primary="#2563eb", secondary="#475569", accent="#3b82f6")
+    """VSCode Light-ish theme. Locks the q-page to viewport height so the
+    flex layout below can use 100% without overflow."""
+    ui.colors(primary="#0078d4", secondary="#6c6c6c", accent="#0078d4")
     ui.add_head_html(
         "<style>"
-        "body{background:#f8fafc;}"
-        ".q-page{padding:0!important;}"
-        ".rca-bubble{border-radius:1rem;padding:0.65rem 0.9rem;"
-        " line-height:1.45;box-shadow:0 1px 2px rgba(15,23,42,0.06);}"
-        ".rca-bubble.user{background:#2563eb;color:#fff;}"
-        ".rca-bubble.user .q-markdown,.rca-bubble.user *{color:#fff;}"
-        ".rca-bubble.assistant{background:#fff;border:1px solid #e2e8f0;color:#0f172a;}"
-        ".rca-tool{display:inline-flex;align-items:center;gap:0.35rem;"
-        " background:#f1f5f9;border:1px solid #e2e8f0;border-radius:0.5rem;"
-        " padding:0.2rem 0.55rem;color:#475569;font:12px/1.4 ui-monospace,SFMono-Regular,monospace;"
-        " white-space:pre-wrap;word-break:break-all;}"
-        ".rca-tool.output{background:transparent;border:none;color:#64748b;padding-left:1.5rem;}"
-        ".rca-file-row{display:flex;align-items:center;gap:0.4rem;"
-        " padding:0.3rem 0.55rem;border-radius:0.4rem;cursor:pointer;"
-        " font:13px ui-sans-serif,system-ui,sans-serif;color:#334155;}"
-        ".rca-file-row:hover{background:#f1f5f9;}"
-        ".rca-file-row.selected{background:#dbeafe;color:#1d4ed8;font-weight:500;}"
-        ".rca-file-row .name{font-family:ui-monospace,SFMono-Regular,monospace;"
-        " font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}"
+        # ─── viewport reset ────────────────────────────────────────
+        # NiceGUI wraps content in <main class='q-page nicegui-content'>
+        # which ships with padding:1rem + gap:1rem + max width.  Strip
+        # all of that so .rca-root can actually fill the viewport.
+        "html,body,#q-app,.q-layout,.q-page-container,.q-page,"
+        ".nicegui-content"
+        "{height:100vh!important;width:100%!important;"
+        " overflow:hidden!important;"
+        " margin:0!important;padding:0!important;gap:0!important;"
+        " max-width:none!important;"
+        " font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,"
+        "  'Helvetica Neue',Arial,sans-serif;}"
+        ".rca-root{display:flex;flex-direction:column;"
+        " height:100%;width:100%;"
+        " background:#f3f3f3;color:#333;}"
+        # ─── title bar ─────────────────────────────────────────────
+        ".rca-titlebar{display:flex;align-items:center;gap:8px;"
+        " background:#dddddd;border-bottom:1px solid #cecece;"
+        " padding:4px 10px;min-height:34px;flex-shrink:0;font-size:13px;color:#333;}"
+        ".rca-titlebar .title{font-weight:500;}"
+        ".rca-titlebar .status{font-size:12px;color:#6c6c6c;}"
+        # ─── body row ──────────────────────────────────────────────
+        ".rca-body{display:flex;flex:1 1 auto;min-height:0;width:100%;}"
+        # ─── sidebar (file tree) ───────────────────────────────────
+        ".rca-sidebar{width:240px;flex-shrink:0;display:flex;"
+        " flex-direction:column;background:#f3f3f3;"
+        " border-right:1px solid #e5e5e5;}"
+        ".rca-section-title{padding:8px 16px 4px;font-size:11px;font-weight:600;"
+        " color:#616161;text-transform:uppercase;letter-spacing:0.04em;}"
+        ".rca-section-title .toolbtn{cursor:pointer;color:#616161;"
+        " padding:2px;border-radius:3px;display:inline-flex;}"
+        ".rca-section-title .toolbtn:hover{background:#e0e0e0;}"
+        ".rca-tree{flex:1 1 auto;overflow-y:auto;padding:2px 0;}"
+        ".rca-file-row{display:flex;align-items:center;gap:6px;"
+        " padding:2px 16px;cursor:pointer;user-select:none;color:#424242;"
+        " font:13px 'Segoe UI',system-ui,sans-serif;}"
+        ".rca-file-row:hover{background:#e8e8e8;}"
+        ".rca-file-row.selected{background:#e4e6f1;color:#0078d4;}"
+        ".rca-file-row .row-icon{font-size:16px;color:#6c6c6c;}"
+        ".rca-file-row.selected .row-icon{color:#0078d4;}"
+        ".rca-file-row .name{flex:1 1 auto;overflow:hidden;"
+        " text-overflow:ellipsis;white-space:nowrap;}"
+        # ─── editor area ───────────────────────────────────────────
+        ".rca-editor{display:flex;flex-direction:column;flex:1 1 auto;"
+        " min-width:0;background:#ffffff;}"
+        ".rca-tabbar{display:flex;align-items:stretch;background:#ececec;"
+        " border-bottom:1px solid #e5e5e5;min-height:35px;flex-shrink:0;"
+        " overflow-x:auto;}"
+        ".rca-tab{display:flex;align-items:center;gap:6px;padding:0 10px 0 14px;"
+        " cursor:pointer;user-select:none;background:#ececec;color:#6c6c6c;"
+        " font:13px 'Segoe UI',system-ui,sans-serif;"
+        " border-right:1px solid #e5e5e5;border-top:1px solid transparent;"
+        " border-bottom:1px solid transparent;}"
+        ".rca-tab .tab-icon{font-size:14px;color:#888;}"
+        ".rca-tab .tab-name{white-space:nowrap;}"
+        ".rca-tab.active{background:#ffffff;color:#333;"
+        " border-top:1px solid #0078d4;border-bottom-color:transparent;}"
+        ".rca-tab.dirty .tab-name::before{content:'● ';color:#888;}"
+        ".rca-tab .close{visibility:hidden;padding:2px;border-radius:3px;"
+        " display:inline-flex;}"
+        ".rca-tab:hover .close,.rca-tab.active .close{visibility:visible;}"
+        ".rca-tab .close:hover{background:#c8c8c8;}"
+        ".rca-tab .close .q-icon{font-size:14px;color:#555;}"
+        ".rca-editor-host{flex:1 1 auto;min-height:0;display:flex;"
+        " flex-direction:column;}"
+        ".rca-editor-host > .nicegui-codemirror{flex:1 1 auto;min-height:0;}"
+        ".rca-editor-empty{flex:1 1 auto;display:flex;align-items:center;"
+        " justify-content:center;color:#9e9e9e;font-size:13px;"
+        " font-style:italic;background:#fafafa;}"
+        ".rca-statusbar{display:flex;align-items:center;gap:14px;"
+        " background:#0078d4;color:#fff;padding:2px 12px;font-size:12px;"
+        " min-height:22px;flex-shrink:0;}"
+        ".rca-statusbar .savebtn{margin-left:auto;cursor:pointer;"
+        " padding:0 6px;border-radius:3px;display:inline-flex;align-items:center;gap:4px;}"
+        ".rca-statusbar .savebtn:hover{background:rgba(255,255,255,0.18);}"
+        ".rca-statusbar .savebtn[disabled]{opacity:0.5;cursor:default;"
+        " pointer-events:none;}"
+        # ─── chat panel ────────────────────────────────────────────
+        ".rca-chat{width:380px;flex-shrink:0;display:flex;flex-direction:column;"
+        " background:#f8f8f8;border-left:1px solid #e5e5e5;}"
+        ".rca-chat-scroll{flex:1 1 auto;min-height:0;}"
+        ".rca-chat-list{display:flex;flex-direction:column;gap:10px;"
+        " padding:14px 14px 18px;}"
+        ".rca-bubble{border-radius:10px;padding:8px 12px;font-size:13.5px;"
+        " line-height:1.5;max-width:100%;box-shadow:0 1px 2px rgba(0,0,0,0.04);"
+        " word-wrap:break-word;}"
+        ".rca-bubble.user{background:#0078d4;color:#fff;align-self:flex-end;}"
+        ".rca-bubble.user *{color:#fff!important;}"
+        ".rca-bubble.assistant{background:#fff;border:1px solid #e5e5e5;"
+        " color:#1f1f1f;align-self:flex-start;}"
+        ".rca-tool{align-self:flex-start;display:inline-flex;align-items:center;"
+        " gap:6px;background:#e8e8e8;border-radius:6px;padding:3px 8px;"
+        " color:#444;font:12px/1.5 ui-monospace,SFMono-Regular,monospace;"
+        " word-break:break-all;white-space:pre-wrap;max-width:100%;}"
+        ".rca-tool.output{background:transparent;color:#666;padding-left:24px;"
+        " padding-right:0;}"
+        ".rca-chat-typing{padding:0 14px 4px;font-size:11px;color:#888;}"
+        ".rca-chat-input{display:flex;align-items:flex-end;gap:6px;"
+        " padding:8px;background:#fff;border-top:1px solid #e5e5e5;}"
+        ".rca-chat-input .q-textarea{flex:1 1 auto;}"
         "</style>"
     )
 
@@ -190,56 +272,64 @@ async def _render_case_picker(settings: UISettings) -> None:
 
 
 async def _render_case_chat(*, case_id: str, settings: UISettings) -> None:
-    # ─── header bar ──────────────────────────────────────────────────
-    with ui.row().classes(
-        "w-full items-center gap-3 px-4 py-2 bg-white border-b border-slate-200"
-    ).style("box-shadow: 0 1px 2px rgba(15,23,42,0.04);"):
-        ui.button(icon="arrow_back", on_click=lambda: ui.navigate.to("/")).props(
-            "flat dense round color=grey-8"
-        )
-        title_label = ui.label("loading…").classes(
-            "font-medium text-slate-900 truncate"
-        )
-        ui.space()
-        status_label = ui.label("").classes("text-xs text-slate-500")
-        close_btn = ui.button("Close").props(
-            "flat dense no-caps color=grey-7 icon=logout"
-        )
+    # ─── root flex column (titlebar + body) ─────────────────────────
+    with ui.element("div").classes("rca-root"):
 
-    # ─── body: splitter (chat | files) ───────────────────────────────
-    with ui.splitter(value=64, limits=(30, 85)).classes("w-full bg-white").style(
-        "height: calc(100vh - 53px);"
-    ) as splitter:
-        with splitter.before:
-            with ui.column().classes("w-full h-full gap-0 bg-slate-50"):
+        # ─── title bar ─────────────────────────────────────────────
+        with ui.element("div").classes("rca-titlebar"):
+            ui.button(icon="arrow_back", on_click=lambda: ui.navigate.to("/")).props(
+                "flat dense round size=sm color=grey-9"
+            )
+            title_label = ui.label("loading…").classes("title")
+            ui.element("div").style("flex:1 1 auto;")
+            status_label = ui.label("").classes("status")
+            close_btn = (
+                ui.button(icon="logout")
+                .props("flat dense round size=sm color=grey-8")
+                .tooltip("Close session")
+            )
+
+        # ─── body row (sidebar | editor | chat) ────────────────────
+        with ui.element("div").classes("rca-body"):
+
+            # LEFT: file tree
+            with ui.element("div").classes("rca-sidebar"):
+                with ui.element("div").classes(
+                    "rca-section-title"
+                ).style("display:flex;align-items:center;justify-content:space-between;"):
+                    ui.label("Explorer")
+                    refresh_btn = (
+                        ui.element("div")
+                        .classes("toolbtn")
+                        .tooltip("Refresh (after the agent writes new files)")
+                    )
+                    with refresh_btn:
+                        ui.icon("refresh").style("font-size:16px;")
+                tree_container = ui.element("div").classes("rca-tree")
+
+            # CENTER: editor with tabs (populated after open_case)
+            editor_container = ui.element("div").classes("rca-editor")
+
+            # RIGHT: chat panel
+            with ui.element("div").classes("rca-chat"):
+                with ui.element("div").classes("rca-section-title"):
+                    ui.label("Chat")
                 chat_scroll = (
                     ui.scroll_area()
-                    .classes("w-full px-6 py-4")
-                    .style("flex: 1 1 auto; min-height: 0;")
+                    .classes("rca-chat-scroll")
                 )
                 with chat_scroll:
-                    chat_box = ui.column().classes(
-                        "w-full max-w-3xl mx-auto gap-3"
-                    )
-                typing_label = ui.label("").classes(
-                    "text-xs text-slate-400 px-6 py-1"
-                )
-                with ui.row().classes(
-                    "w-full items-end gap-2 px-4 py-3 bg-white "
-                    "border-t border-slate-200"
-                ):
+                    chat_box = ui.element("div").classes("rca-chat-list")
+                typing_label = ui.label("").classes("rca-chat-typing")
+                with ui.element("div").classes("rca-chat-input"):
                     input_field = (
-                        ui.textarea(placeholder="Type a message — Enter to send")
-                        .props("autogrow rows=1 outlined dense")
-                        .classes("flex-grow")
+                        ui.textarea(placeholder="Ask the agent…")
+                        .props("autogrow rows=1 outlined dense borderless")
                     )
-                    send_btn = ui.button(icon="send").props(
-                        "color=primary unelevated round"
+                    send_btn = (
+                        ui.button(icon="send")
+                        .props("color=primary unelevated dense round size=sm")
                     )
-        with splitter.after:
-            files_container = ui.column().classes(
-                "w-full h-full gap-0 bg-white border-l border-slate-200"
-            )
 
     # ─── load case + activate session ────────────────────────────────
     try:
@@ -261,9 +351,24 @@ async def _render_case_chat(*, case_id: str, settings: UISettings) -> None:
 
     status_label.set_text("ready (agent boots on first message)")
 
-    # ─── build the file panel inside the right splitter pane ─────────
-    with files_container:
-        _build_file_panel(workspace)
+    # ─── editor + file tree wiring ───────────────────────────────────
+    with editor_container:
+        editor = _EditorTabs(workspace)
+
+    tree = _FileTree(
+        workspace=workspace,
+        container=tree_container,
+        on_open=editor.open_file,
+        is_active=lambda p: editor.active_path() == p,
+    )
+    editor.set_on_active_changed(tree.refresh)
+    tree.refresh()
+    refresh_btn.on("click", lambda _e: tree.refresh())
+
+    # Auto-open CASE.md so the editor isn't empty
+    case_md = workspace / "CASE.md"
+    if case_md.exists():
+        editor.open_file(case_md)
 
     # ─── replay transcript into chat box ─────────────────────────────
     for entry in read_transcript(workspace):
@@ -271,6 +376,7 @@ async def _render_case_chat(*, case_id: str, settings: UISettings) -> None:
         content = entry.get("content") or ""
         if role in ("user", "assistant") and content:
             _render_bubble(chat_box, role, content)
+    chat_scroll.scroll_to(percent=1.0)
 
     # ─── send handler ────────────────────────────────────────────────
     sending_lock = asyncio.Lock()
@@ -305,6 +411,9 @@ async def _render_case_chat(*, case_id: str, settings: UISettings) -> None:
         status_label.set_text("ready")
         return runtime
 
+    def _scroll_bottom() -> None:
+        chat_scroll.scroll_to(percent=1.0)
+
     async def _send() -> None:
         if sending_lock.locked():
             return
@@ -316,8 +425,9 @@ async def _render_case_chat(*, case_id: str, settings: UISettings) -> None:
             send_btn.disable()
             typing_label.set_text("agent thinking…")
             _render_bubble(chat_box, "user", text)
+            _scroll_bottom()
             await append_transcript(active, {"role": "user", "content": text})
-            view = _AssistantStream(chat_box)
+            view = _AssistantStream(chat_box, on_update=_scroll_bottom)
             final_output = ""
             try:
                 runtime = await _ensure_runtime()
@@ -344,6 +454,7 @@ async def _render_case_chat(*, case_id: str, settings: UISettings) -> None:
                 )
             typing_label.set_text("")
             send_btn.enable()
+            _scroll_bottom()
 
     send_btn.on_click(_send)
     input_field.on(
@@ -376,53 +487,55 @@ def _render_bubble(parent: Any, role: str, content: str) -> None:
 class _AssistantStream:
     """Incremental renderer for one streamed assistant turn.
 
-    Lays the turn out top-to-bottom in the chat column:
+    Appends items into the chat-list flex column in order:
       🔧 tool-call pill (one per call)
       ↳  tool-output line (one per result, indented)
       [assistant bubble] — appended-to as text deltas arrive
 
     A tool call closes the current text bubble, so subsequent text deltas
-    start a fresh bubble below it. This way the order in which the agent
-    interleaves reasoning, tools, and replies is preserved visually.
+    start a fresh bubble below it. Order of interleaving is preserved.
     """
 
     _MAX_ARG_LEN = 240
     _MAX_OUT_LEN = 360
 
-    def __init__(self, parent: Any) -> None:
+    def __init__(
+        self, parent: Any, *, on_update: Callable[[], None] | None = None
+    ) -> None:
         self._parent = parent
+        self._on_update = on_update
         self._text_md: Any = None
         self._text_buf: list[str] = []
 
     def add_text_delta(self, delta: str) -> None:
         if self._text_md is None:
             with self._parent:
-                with ui.row().classes("w-full justify-start"):
-                    with ui.element("div").classes("rca-bubble assistant").style(
-                        "max-width: min(80%, 720px);"
-                    ):
-                        self._text_md = ui.markdown("")
+                with ui.element("div").classes("rca-bubble assistant"):
+                    self._text_md = ui.markdown("")
             self._text_buf = []
         self._text_buf.append(delta)
         self._text_md.set_content("".join(self._text_buf))
+        if self._on_update:
+            self._on_update()
 
     def add_tool_call(self, name: str, arguments: str) -> None:
-        # Close current text run so the next text delta opens a fresh bubble.
         self._text_md = None
         self._text_buf = []
         args = _truncate(arguments, self._MAX_ARG_LEN)
         with self._parent:
-            with ui.row().classes("w-full justify-start"):
-                with ui.element("div").classes("rca-tool"):
-                    ui.icon("build").classes("text-slate-500").style("font-size:14px;")
-                    ui.label(f"{name}({args})")
+            with ui.element("div").classes("rca-tool"):
+                ui.icon("build").style("font-size:14px;color:#666;")
+                ui.label(f"{name}({args})")
+        if self._on_update:
+            self._on_update()
 
     def add_tool_output(self, name: str, output: str) -> None:
         prefix = f"↳ {name}: " if name else "↳ "
         with self._parent:
-            with ui.row().classes("w-full justify-start"):
-                with ui.element("div").classes("rca-tool output"):
-                    ui.label(prefix + _truncate(output, self._MAX_OUT_LEN))
+            with ui.element("div").classes("rca-tool output"):
+                ui.label(prefix + _truncate(output, self._MAX_OUT_LEN))
+        if self._on_update:
+            self._on_update()
 
 
 def _truncate(s: str, n: int) -> str:
@@ -490,85 +603,191 @@ def _detect_lang(path: Path) -> str | None:
     return _LANG_BY_SUFFIX.get(path.suffix.lower())
 
 
-def _build_file_panel(workspace: Path) -> None:
-    """Right-side splitter pane: file list (top) + codemirror editor + actions.
-    Caller must be inside an `ui.column` that has `flex: 1 1 auto`-style
-    height so the editor fills the available space.
+class _FileTree:
+    """VSCode-style left sidebar: flat list of files under the workspace.
+    Click a row → `on_open(path)`. Active row (the one currently open in
+    the editor) gets the `selected` class."""
+
+    def __init__(
+        self,
+        *,
+        workspace: Path,
+        container: Any,
+        on_open: Callable[[Path], None],
+        is_active: Callable[[Path], bool],
+    ) -> None:
+        self._workspace = workspace
+        self._container = container
+        self._on_open = on_open
+        self._is_active = is_active
+
+    def refresh(self) -> None:
+        self._container.clear()
+        with self._container:
+            for f in _list_workspace_files(self._workspace):
+                rel = str(f.relative_to(self._workspace))
+                cls = "rca-file-row" + (" selected" if self._is_active(f) else "")
+                row = ui.element("div").classes(cls)
+                with row:
+                    ui.icon(_icon_for(f)).classes("row-icon")
+                    ui.label(rel).classes("name")
+                row.on("click", lambda _e, p=f: self._on_open(p))
+
+
+def _icon_for(p: Path) -> str:
+    suf = p.suffix.lower()
+    if suf in (".json", ".jsonl"):
+        return "data_object"
+    if suf == ".py":
+        return "code"
+    if suf in (".md", ".markdown"):
+        return "article"
+    return "insert_drive_file"
+
+
+class _EditorTabs:
+    """Center pane: VSCode-style tab bar over one codemirror.
+
+    Each open file has an in-memory text buffer; switching tabs flushes
+    the editor's current value back into the active buffer and loads the
+    next buffer. Save writes the buffer to disk and clears the dirty mark.
+
+    Caller must be inside an `ui.element("div").classes("rca-editor")`
+    column that fills available height.
     """
-    current: dict[str, Path | None] = {"path": None}
 
-    ui.label("Files").classes("text-sm font-semibold")
-    file_list = ui.column().classes("w-full gap-0").style(
-        "max-height: 30vh; overflow-y: auto;"
-    )
-    ui.separator().classes("my-1")
-    editor_label = ui.label("(no file selected)").classes(
-        "text-xs text-gray-500 truncate font-mono"
-    )
-    editor = (
-        ui.codemirror(value="", line_wrapping=True)
-        .classes("w-full")
-        .style("flex: 1 1 auto; min-height: 200px;")
-    )
-    with ui.row().classes("w-full justify-end items-center gap-2"):
-        save_btn = ui.button("Save").props("color=primary dense")
-        refresh_btn = ui.button(icon="refresh").props("flat dense").tooltip(
-            "Refresh file list (use after the agent writes new files)"
-        )
-    save_btn.disable()
+    def __init__(self, workspace: Path) -> None:
+        self._workspace = workspace
+        self._open: list[Path] = []
+        self._active: Path | None = None
+        self._buffers: dict[Path, str] = {}
+        self._disk: dict[Path, str] = {}
+        self._on_active_changed: Callable[[], None] | None = None
 
-    def _load(path: Path) -> None:
-        try:
-            content = path.read_text(encoding="utf-8")
-            editable = True
-        except (UnicodeDecodeError, OSError) as exc:
-            content = f"(unreadable: {exc.__class__.__name__}: {exc})"
-            editable = False
-        current["path"] = path if editable else None
-        editor.value = content
+        # Tab bar
+        self._tab_bar = ui.element("div").classes("rca-tabbar")
+        # Editor host (codemirror or empty placeholder)
+        self._host = ui.element("div").classes("rca-editor-host")
+        with self._host:
+            self._empty = ui.element("div").classes("rca-editor-empty")
+            with self._empty:
+                ui.label("Select a file from the Explorer.")
+            self._editor = (
+                ui.codemirror(value="", line_wrapping=True, theme="vscodeLight")
+                .style("font-size:13px;")
+            )
+            self._editor.visible = False
+        # Status bar
+        self._statusbar = ui.element("div").classes("rca-statusbar")
+        with self._statusbar:
+            self._path_label = ui.label("")
+            self._lang_label = ui.label("").style(
+                "margin-left:auto;color:rgba(255,255,255,0.85);"
+            )
+            self._save_link = ui.element("div").classes("savebtn")
+            with self._save_link:
+                ui.icon("save").style("font-size:14px;")
+                ui.label("Save")
+            self._save_link.on("click", lambda _e: self._save())
+        self._statusbar.visible = False
+
+    def set_on_active_changed(self, fn: Callable[[], None]) -> None:
+        self._on_active_changed = fn
+
+    def active_path(self) -> Path | None:
+        return self._active
+
+    def open_file(self, path: Path) -> None:
+        if path not in self._open:
+            try:
+                text = path.read_text(encoding="utf-8")
+                editable = True
+            except (UnicodeDecodeError, OSError) as exc:
+                text = f"(unreadable: {exc.__class__.__name__}: {exc})"
+                editable = False
+            self._buffers[path] = text
+            self._disk[path] = text if editable else "\0__binary__\0"  # never matches
+            self._open.append(path)
+        self._activate(path)
+
+    def _activate(self, path: Path) -> None:
+        # Flush previous tab's editor content into its buffer
+        if self._active is not None and self._active in self._buffers:
+            self._buffers[self._active] = self._editor.value
+        self._active = path
+        self._empty.visible = False
+        self._editor.visible = True
+        self._statusbar.visible = True
+        self._editor.value = self._buffers[path]
         lang = _detect_lang(path)
         try:
-            editor.language = lang  # type: ignore[assignment]
+            self._editor.language = lang  # type: ignore[assignment]
         except (AttributeError, ValueError):
             pass
-        rel = path.relative_to(workspace)
-        editor_label.set_text(str(rel) + ("" if editable else "  (read-only)"))
-        if editable:
-            save_btn.enable()
-        else:
-            save_btn.disable()
+        rel = path.relative_to(self._workspace)
+        self._path_label.set_text(str(rel))
+        self._lang_label.set_text(lang or "Plain Text")
+        self._refresh_tabs()
+        if self._on_active_changed:
+            self._on_active_changed()
 
-    def _refresh() -> None:
-        file_list.clear()
-        with file_list:
-            for f in _list_workspace_files(workspace):
-                rel = str(f.relative_to(workspace))
-                is_current = current["path"] == f
-                row = ui.row().classes(
-                    "w-full items-center gap-1 cursor-pointer px-1 py-0.5 "
-                    + ("bg-blue-50" if is_current else "hover:bg-gray-100")
-                )
-                with row:
-                    ui.icon("description").classes("text-xs text-gray-400")
-                    ui.label(rel).classes("text-xs flex-grow truncate font-mono")
-                row.on("click", lambda _e, p=f: _load(p))
-
-    def _save() -> None:
-        p = current["path"]
-        if p is None:
-            ui.notify("no file selected", type="warning")
+    def _close(self, path: Path) -> None:
+        if path not in self._open:
             return
+        idx = self._open.index(path)
+        self._open.remove(path)
+        self._buffers.pop(path, None)
+        self._disk.pop(path, None)
+        if self._active == path:
+            if self._open:
+                self._activate(self._open[min(idx, len(self._open) - 1)])
+            else:
+                self._active = None
+                self._editor.visible = False
+                self._statusbar.visible = False
+                self._empty.visible = True
+                self._refresh_tabs()
+                if self._on_active_changed:
+                    self._on_active_changed()
+        else:
+            self._refresh_tabs()
+
+    def _save(self) -> None:
+        p = self._active
+        if p is None:
+            return
+        # Flush editor content into buffer first
+        self._buffers[p] = self._editor.value
         try:
-            p.write_text(editor.value, encoding="utf-8")
-            ui.notify(f"saved {p.relative_to(workspace)}", type="positive")
+            p.write_text(self._buffers[p], encoding="utf-8")
         except OSError as exc:
             ui.notify(f"save failed: {exc}", type="negative")
+            return
+        self._disk[p] = self._buffers[p]
+        ui.notify(f"saved {p.relative_to(self._workspace)}", type="positive")
+        self._refresh_tabs()
 
-    save_btn.on_click(_save)
-    refresh_btn.on_click(_refresh)
-    _refresh()
+    def _is_dirty(self, p: Path) -> bool:
+        if p == self._active:
+            return self._editor.value != self._disk.get(p)
+        return self._buffers.get(p) != self._disk.get(p)
 
-    # Auto-load CASE.md on open so the panel isn't empty
-    case_md = workspace / "CASE.md"
-    if case_md.exists():
-        _load(case_md)
+    def _refresh_tabs(self) -> None:
+        self._tab_bar.clear()
+        with self._tab_bar:
+            for p in self._open:
+                is_active = p == self._active
+                cls = "rca-tab" + (" active" if is_active else "") + (
+                    " dirty" if self._is_dirty(p) else ""
+                )
+                tab = ui.element("div").classes(cls)
+                with tab:
+                    ui.icon(_icon_for(p)).classes("tab-icon")
+                    ui.label(p.name).classes("tab-name")
+                    close = ui.element("div").classes("close")
+                    with close:
+                        ui.icon("close")
+                    close.on(
+                        "click", lambda _e, x=p: self._close(x)
+                    ).props('@click.stop')
+                tab.on("click", lambda _e, x=p: self._activate(x))
