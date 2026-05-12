@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 460" font-family="sans-serif" font-size="12">
+  <title>Loading Effect & Iso-Dense Bias、ARDE</title>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <text x="500" y="22" text-anchor="middle" font-weight="bold" font-size="15">Loading Effect：同一 wafer 上不同 pattern 密度的蝕刻差異</text>
+
+  <!-- ============ Panel 1: Pattern Density Loading ============ -->
+  <g transform="translate(40, 50)">
+    <rect x="0" y="0" width="450" height="200" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="225" y="22" text-anchor="middle" font-weight="bold" font-size="13">① Pattern Density Loading（疏密差異）</text>
+
+    <!-- Iso region (left) -->
+    <text x="80" y="44" text-anchor="middle" font-size="11" fill="#1b5e20" font-weight="bold">Iso 區（孤立）</text>
+
+    <line x1="20" y1="60" x2="140" y2="60" stroke="#37474f"/>
+    <rect x="60" y="60" width="40" height="80" fill="none" stroke="#0d47a1" stroke-width="2"/>
+    <rect x="20" y="60" width="40" height="80" fill="#bbdefb" opacity="0.5"/>
+    <rect x="100" y="60" width="40" height="80" fill="#bbdefb" opacity="0.5"/>
+
+    <!-- Iso region: deeper trench (etch faster) -->
+    <text x="80" y="105" text-anchor="middle" font-size="9" fill="#0d47a1">深</text>
+
+    <text x="80" y="160" text-anchor="middle" font-size="10" fill="#1b5e20">CD = 22 nm</text>
+    <text x="80" y="176" text-anchor="middle" font-size="9" fill="#666">Etch 較快</text>
+    <text x="80" y="190" text-anchor="middle" font-size="9" fill="#666">→ 開口偏寬</text>
+
+    <!-- Divider -->
+    <line x1="225" y1="40" x2="225" y2="195" stroke="#bbb" stroke-dasharray="3,2"/>
+
+    <!-- Dense region (right) -->
+    <text x="345" y="44" text-anchor="middle" font-size="11" fill="#bf360c" font-weight="bold">Dense 區（密集）</text>
+
+    <line x1="245" y1="60" x2="425" y2="60" stroke="#37474f"/>
+
+    <!-- Dense: 4 trenches close together -->
+    <rect x="265" y="60" width="20" height="65" fill="none" stroke="#0d47a1" stroke-width="2"/>
+    <rect x="305" y="60" width="20" height="65" fill="none" stroke="#0d47a1" stroke-width="2"/>
+    <rect x="345" y="60" width="20" height="65" fill="none" stroke="#0d47a1" stroke-width="2"/>
+    <rect x="385" y="60" width="20" height="65" fill="none" stroke="#0d47a1" stroke-width="2"/>
+
+    <rect x="245" y="60" width="20" height="80" fill="#bbdefb" opacity="0.5"/>
+    <rect x="285" y="60" width="20" height="80" fill="#bbdefb" opacity="0.5"/>
+    <rect x="325" y="60" width="20" height="80" fill="#bbdefb" opacity="0.5"/>
+    <rect x="365" y="60" width="20" height="80" fill="#bbdefb" opacity="0.5"/>
+    <rect x="405" y="60" width="20" height="80" fill="#bbdefb" opacity="0.5"/>
+
+    <text x="345" y="160" text-anchor="middle" font-size="10" fill="#bf360c">CD = 18 nm</text>
+    <text x="345" y="176" text-anchor="middle" font-size="9" fill="#666">Etch 較慢</text>
+    <text x="345" y="190" text-anchor="middle" font-size="9" fill="#666">→ 開口偏窄</text>
+
+    <!-- Bottom of trench drawn shallower for dense -->
+    <line x1="265" y1="125" x2="285" y2="125" stroke="#0d47a1" stroke-width="2"/>
+    <line x1="305" y1="125" x2="325" y2="125" stroke="#0d47a1" stroke-width="2"/>
+    <line x1="345" y1="125" x2="365" y2="125" stroke="#0d47a1" stroke-width="2"/>
+    <line x1="385" y1="125" x2="405" y2="125" stroke="#0d47a1" stroke-width="2"/>
+
+    <!-- Iso bottom -->
+    <line x1="60" y1="140" x2="100" y2="140" stroke="#0d47a1" stroke-width="2"/>
+  </g>
+
+  <!-- ============ Panel 2: ARDE ============ -->
+  <g transform="translate(510, 50)">
+    <rect x="0" y="0" width="450" height="200" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="225" y="22" text-anchor="middle" font-weight="bold" font-size="13">② ARDE（Aspect Ratio Dependent Etching）</text>
+
+    <text x="100" y="44" text-anchor="middle" font-size="11" fill="#1b5e20" font-weight="bold">Low AR（淺 trench）</text>
+
+    <line x1="40" y1="60" x2="180" y2="60" stroke="#37474f"/>
+    <rect x="80" y="60" width="60" height="35" fill="none" stroke="#0d47a1" stroke-width="2"/>
+    <rect x="40" y="60" width="40" height="80" fill="#bbdefb" opacity="0.5"/>
+    <rect x="140" y="60" width="40" height="80" fill="#bbdefb" opacity="0.5"/>
+
+    <!-- Bottom -->
+    <line x1="80" y1="95" x2="140" y2="95" stroke="#0d47a1" stroke-width="2"/>
+    <text x="110" y="80" text-anchor="middle" font-size="9" fill="#0d47a1">完成</text>
+
+    <text x="110" y="160" text-anchor="middle" font-size="10" fill="#1b5e20">AR = 1:1 → 容易蝕到底</text>
+
+    <!-- Divider -->
+    <line x1="225" y1="40" x2="225" y2="195" stroke="#bbb" stroke-dasharray="3,2"/>
+
+    <text x="350" y="44" text-anchor="middle" font-size="11" fill="#bf360c" font-weight="bold">High AR（深 trench）</text>
+
+    <line x1="280" y1="60" x2="420" y2="60" stroke="#37474f"/>
+    <rect x="320" y="60" width="60" height="120" fill="none" stroke="#0d47a1" stroke-width="2"/>
+    <rect x="280" y="60" width="40" height="120" fill="#bbdefb" opacity="0.5"/>
+    <rect x="380" y="60" width="40" height="120" fill="#bbdefb" opacity="0.5"/>
+
+    <!-- Polymer at top (necking starts) -->
+    <ellipse cx="325" cy="68" rx="5" ry="3" fill="#ffe0b2" stroke="#bf360c" stroke-width="0.5"/>
+    <ellipse cx="375" cy="68" rx="5" ry="3" fill="#ffe0b2" stroke="#bf360c" stroke-width="0.5"/>
+
+    <!-- Bottom not fully etched -->
+    <line x1="320" y1="170" x2="380" y2="170" stroke="#d32f2f" stroke-width="2" stroke-dasharray="3,2"/>
+    <text x="395" y="173" font-size="9" fill="#d32f2f">未蝕到底</text>
+
+    <text x="350" y="190" text-anchor="middle" font-size="10" fill="#bf360c">AR = 5:1 → 蝕刻速率慢</text>
+    <text x="350" y="205" text-anchor="middle" font-size="9" fill="#666">同時間 over-etch 可能傷淺 trench</text>
+  </g>
+
+  <!-- ============ Bottom: explanation ============ -->
+  <g transform="translate(40, 270)">
+    <rect x="0" y="0" width="920" height="170" fill="#f3e5f5" stroke="#6a1b9a"/>
+    <text x="10" y="22" font-size="13" font-weight="bold" fill="#4a148c">物理機制與 RCA 重點</text>
+
+    <text x="10" y="48" font-size="11" fill="#444"><tspan font-weight="bold">為什麼 dense 區 etch 較慢：</tspan></text>
+    <text x="20" y="64" font-size="10" fill="#666">▶ 反應氣體被周圍 pattern「吸走」→ 局部濃度低</text>
+    <text x="20" y="78" font-size="10" fill="#666">▶ 蝕刻 byproduct 較難從 dense 區排出</text>
+    <text x="20" y="92" font-size="10" fill="#666">▶ Polymer 在 dense 區更易累積</text>
+
+    <text x="475" y="48" font-size="11" fill="#444"><tspan font-weight="bold">SPC 監控指標：</tspan></text>
+    <text x="485" y="64" font-size="10" fill="#666">▶ <tspan font-weight="bold">Iso-Dense Bias</tspan> = CD(iso) − CD(dense)</text>
+    <text x="485" y="78" font-size="10" fill="#666">▶ 理想 = 0；實務上常 1–5 nm</text>
+    <text x="485" y="92" font-size="10" fill="#666">▶ Bias 飄變 → chamber polymer 累積或耗材老化</text>
+
+    <text x="10" y="118" font-size="11" font-weight="bold" fill="#4a148c">對策：</text>
+    <text x="20" y="134" font-size="10" fill="#666">▶ <tspan font-weight="bold">OPC 預先補償</tspan>：mask 上 dense 區的 line 略寬，補償 etch 速率慢</text>
+    <text x="20" y="148" font-size="10" fill="#666">▶ <tspan font-weight="bold">Dummy fill</tspan>：在 iso 區插入虛擬圖形使密度均勻</text>
+    <text x="20" y="162" font-size="10" fill="#666">▶ <tspan font-weight="bold">Etch chamber 配方</tspan>：對不同 AR / 密度的 selectivity 微調</text>
+  </g>
+</svg>

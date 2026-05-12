@@ -1,0 +1,142 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 580" font-family="sans-serif" font-size="12">
+  <title>MD Trench Contact 布局 + Etch Profile 四種缺陷</title>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <text x="550" y="24" text-anchor="middle" font-weight="bold" font-size="16">MD：trench contact 布局與 etch profile 缺陷</text>
+
+  <!-- ============ Top: Top-view comparison ============ -->
+  <text x="550" y="58" text-anchor="middle" font-weight="bold" font-size="13" fill="#37474f">俯視（top view）：trench contact vs. point contact</text>
+
+  <!-- Left: Point Contact (legacy planar) -->
+  <g transform="translate(60, 80)">
+    <rect x="0" y="0" width="430" height="170" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="215" y="20" text-anchor="middle" font-weight="bold" font-size="12" fill="#c62828">Point Contact（早期 planar）</text>
+
+    <!-- Gates (horizontal stripes covered by SAC cap) -->
+    <rect x="20" y="40" width="390" height="14" fill="#aed581" stroke="#1b5e20"/>
+    <text x="22" y="51" font-size="8" fill="#1b5e20">gate（SAC cap 蓋住）</text>
+    <rect x="20" y="100" width="390" height="14" fill="#aed581" stroke="#1b5e20"/>
+
+    <!-- Fins (vertical) -->
+    <g fill="#bcaaa4" stroke="#5d4037">
+      <rect x="80" y="35" width="6" height="24"/>
+      <rect x="160" y="35" width="6" height="24"/>
+      <rect x="240" y="35" width="6" height="24"/>
+      <rect x="320" y="35" width="6" height="24"/>
+      <rect x="80" y="95" width="6" height="24"/>
+      <rect x="160" y="95" width="6" height="24"/>
+      <rect x="240" y="95" width="6" height="24"/>
+      <rect x="320" y="95" width="6" height="24"/>
+    </g>
+
+    <!-- Point contacts (one per fin per S/D row) -->
+    <g fill="#9e9e9e" stroke="#212121">
+      <circle cx="83" cy="74" r="6"/>
+      <circle cx="163" cy="74" r="6"/>
+      <circle cx="243" cy="74" r="6"/>
+      <circle cx="323" cy="74" r="6"/>
+      <circle cx="83" cy="135" r="6"/>
+      <circle cx="163" cy="135" r="6"/>
+      <circle cx="243" cy="135" r="6"/>
+      <circle cx="323" cy="135" r="6"/>
+    </g>
+    <text x="350" y="78" font-size="10" fill="#37474f">每 fin 一個圓 contact</text>
+    <text x="215" y="160" text-anchor="middle" font-size="10" fill="#c62828">→ Pitch 收緊到 30 nm 以下時，圓形 contact 吃掉太多空間</text>
+  </g>
+
+  <!-- Right: Trench Contact (FinFET/GAA) -->
+  <g transform="translate(560, 80)">
+    <rect x="0" y="0" width="480" height="170" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="240" y="20" text-anchor="middle" font-weight="bold" font-size="12" fill="#1b5e20">Trench Contact（FinFET / GAA 主流）⭐</text>
+
+    <!-- Gates -->
+    <rect x="20" y="40" width="440" height="14" fill="#aed581" stroke="#1b5e20"/>
+    <text x="22" y="51" font-size="8" fill="#1b5e20">gate（SAC cap 蓋住）</text>
+    <rect x="20" y="100" width="440" height="14" fill="#aed581" stroke="#1b5e20"/>
+
+    <!-- Fins -->
+    <g fill="#bcaaa4" stroke="#5d4037">
+      <rect x="80" y="35" width="6" height="24"/>
+      <rect x="160" y="35" width="6" height="24"/>
+      <rect x="240" y="35" width="6" height="24"/>
+      <rect x="320" y="35" width="6" height="24"/>
+      <rect x="80" y="95" width="6" height="24"/>
+      <rect x="160" y="95" width="6" height="24"/>
+      <rect x="240" y="95" width="6" height="24"/>
+      <rect x="320" y="95" width="6" height="24"/>
+    </g>
+
+    <!-- Trench contacts (long bars across fins) -->
+    <rect x="50" y="66" width="350" height="16" fill="#9e9e9e" stroke="#212121"/>
+    <text x="225" y="78" text-anchor="middle" font-size="10" fill="#fff" font-weight="bold">MD trench（跨越多顆 fin）</text>
+    <rect x="50" y="127" width="350" height="16" fill="#9e9e9e" stroke="#212121"/>
+    <text x="225" y="139" text-anchor="middle" font-size="10" fill="#fff" font-weight="bold">MD trench</text>
+
+    <text x="240" y="162" text-anchor="middle" font-size="10" fill="#1b5e20">→ 接觸面積大、Rc 低、layout 省空間。代價：trench 蝕刻更難</text>
+  </g>
+
+  <!-- ============ Middle: warning about trench risk ============ -->
+  <g transform="translate(60, 270)">
+    <rect x="0" y="0" width="980" height="32" fill="#fff8e1" stroke="#f9a825"/>
+    <text x="490" y="20" text-anchor="middle" font-size="11" fill="#5d4037">⚠ Trench 與 gate 平行延伸 —— 任何 trench 牆壁失守 → 一次 short 多顆 gate</text>
+  </g>
+
+  <!-- ============ Bottom: 4 profile defects ============ -->
+  <text x="550" y="328" text-anchor="middle" font-weight="bold" font-size="13" fill="#37474f">Etch Profile：理想垂直 vs. 四種缺陷</text>
+
+  <!-- Ideal -->
+  <g transform="translate(60, 345)">
+    <rect x="0" y="0" width="180" height="190" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="90" y="18" text-anchor="middle" font-weight="bold" font-size="11" fill="#1b5e20">理想（垂直）</text>
+    <!-- ILD0 -->
+    <rect x="20" y="30" width="140" height="150" fill="#bbdefb" stroke="#1976d2"/>
+    <text x="40" y="50" font-size="9" fill="#0d47a1">ILD</text>
+    <!-- Trench (vertical sides) -->
+    <rect x="70" y="30" width="40" height="150" fill="#fff" stroke="#1b5e20" stroke-width="2"/>
+    <text x="90" y="100" text-anchor="middle" font-size="10" fill="#1b5e20" font-weight="bold">trench</text>
+    <text x="90" y="195" text-anchor="middle" font-size="9" fill="#666">垂直壁 → fill 容易、Rc 低</text>
+  </g>
+
+  <!-- Necking -->
+  <g transform="translate(260, 345)">
+    <rect x="0" y="0" width="180" height="190" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="90" y="18" text-anchor="middle" font-weight="bold" font-size="11" fill="#c62828">Necking（上窄）</text>
+    <rect x="20" y="30" width="140" height="150" fill="#bbdefb" stroke="#1976d2"/>
+    <!-- Necking shape -->
+    <polygon points="73,30 107,30 107,40 100,50 100,170 110,180 70,180 80,170 80,50 73,40"
+             fill="#fff" stroke="#c62828" stroke-width="1.8"/>
+    <text x="90" y="195" text-anchor="middle" font-size="9" fill="#c62828">polymer 開口堵塞 → ion 進不去</text>
+  </g>
+
+  <!-- Bowing -->
+  <g transform="translate(460, 345)">
+    <rect x="0" y="0" width="180" height="190" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="90" y="18" text-anchor="middle" font-weight="bold" font-size="11" fill="#c62828">Bowing（中胖）</text>
+    <rect x="20" y="30" width="140" height="150" fill="#bbdefb" stroke="#1976d2"/>
+    <!-- Bowing shape -->
+    <path d="M 73 30 L 107 30 L 107 60 Q 122 105 107 150 L 107 180 L 73 180 L 73 150 Q 58 105 73 60 Z"
+          fill="#fff" stroke="#c62828" stroke-width="1.8"/>
+    <text x="90" y="195" text-anchor="middle" font-size="9" fill="#c62828">側壁 sputter 過度 → 中段擴大</text>
+  </g>
+
+  <!-- Tapered -->
+  <g transform="translate(660, 345)">
+    <rect x="0" y="0" width="180" height="190" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="90" y="18" text-anchor="middle" font-weight="bold" font-size="11" fill="#c62828">Tapered（上寬下窄）</text>
+    <rect x="20" y="30" width="140" height="150" fill="#bbdefb" stroke="#1976d2"/>
+    <polygon points="60,30 120,30 95,180 85,180" fill="#fff" stroke="#c62828" stroke-width="1.8"/>
+    <text x="90" y="195" text-anchor="middle" font-size="9" fill="#c62828">底部 ion 衰減 → 開不夠</text>
+  </g>
+
+  <!-- Re-entrant -->
+  <g transform="translate(860, 345)">
+    <rect x="0" y="0" width="180" height="190" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="90" y="18" text-anchor="middle" font-weight="bold" font-size="11" fill="#c62828">Re-entrant（上窄下寬）</text>
+    <rect x="20" y="30" width="140" height="150" fill="#bbdefb" stroke="#1976d2"/>
+    <polygon points="85,30 95,30 120,180 60,180" fill="#fff" stroke="#c62828" stroke-width="1.8"/>
+    <text x="90" y="195" text-anchor="middle" font-size="9" fill="#c62828">早期 stage 過頭 → 上方先擴大</text>
+  </g>
+
+  <!-- Footer -->
+  <text x="550" y="565" text-anchor="middle" font-size="10" fill="#666">每種 profile 是 chamber 的「指紋」—— 同 chamber 跑出來的 wafer 形狀有自己的特色</text>
+</svg>

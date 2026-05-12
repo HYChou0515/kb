@@ -1,0 +1,178 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 460" font-family="sans-serif" font-size="12">
+  <title>GAA Inner Spacer Formation Flow</title>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Title -->
+  <text x="440" y="22" text-anchor="middle" font-weight="bold" font-size="14">GAA Inner Spacer 形成流程（4 步）</text>
+  <text x="440" y="40" text-anchor="middle" font-size="11" fill="#666">把 SiGe 兩端橫向縮回，用絕緣材料填回，隔離 gate 與 S/D</text>
+
+  <!-- Step 1: Initial state -->
+  <g transform="translate(20, 60)">
+    <text x="100" y="0" text-anchor="middle" font-weight="bold" font-size="12">① 初始 stack</text>
+    <text x="100" y="15" text-anchor="middle" font-size="10" fill="#666">Dummy 拆完，露 stack</text>
+
+    <!-- Substrate -->
+    <rect x="20" y="220" width="160" height="20" fill="#cfd8dc" stroke="#37474f"/>
+
+    <!-- Stack of Si/SiGe alternating layers between two ILD blocks -->
+    <rect x="0" y="40" width="20" height="180" fill="#bbdefb" stroke="#0d47a1"/>
+    <text x="10" y="135" text-anchor="middle" font-size="9" fill="#0d47a1" transform="rotate(-90 10 135)">ILD</text>
+
+    <rect x="180" y="40" width="20" height="180" fill="#bbdefb" stroke="#0d47a1"/>
+    <text x="190" y="135" text-anchor="middle" font-size="9" fill="#0d47a1" transform="rotate(-90 190 135)">ILD</text>
+
+    <!-- SiGe layers (will be sacrificial) -->
+    <rect x="20" y="40" width="160" height="20" fill="#e1bee7" stroke="#4a148c"/>
+    <rect x="20" y="80" width="160" height="20" fill="#e1bee7" stroke="#4a148c"/>
+    <rect x="20" y="120" width="160" height="20" fill="#e1bee7" stroke="#4a148c"/>
+    <rect x="20" y="160" width="160" height="20" fill="#e1bee7" stroke="#4a148c"/>
+    <rect x="20" y="200" width="160" height="20" fill="#e1bee7" stroke="#4a148c"/>
+
+    <!-- Si layers (will become channel) -->
+    <rect x="20" y="60" width="160" height="20" fill="#ffe082" stroke="#bf360c"/>
+    <rect x="20" y="100" width="160" height="20" fill="#ffe082" stroke="#bf360c"/>
+    <rect x="20" y="140" width="160" height="20" fill="#ffe082" stroke="#bf360c"/>
+    <rect x="20" y="180" width="160" height="20" fill="#ffe082" stroke="#bf360c"/>
+
+    <text x="100" y="55" text-anchor="middle" font-size="9" fill="#fff">SiGe</text>
+    <text x="100" y="75" text-anchor="middle" font-size="9" fill="#bf360c">Si</text>
+    <text x="100" y="95" text-anchor="middle" font-size="9" fill="#fff">SiGe</text>
+    <text x="100" y="115" text-anchor="middle" font-size="9" fill="#bf360c">Si</text>
+    <text x="100" y="135" text-anchor="middle" font-size="9" fill="#fff">SiGe</text>
+
+    <text x="100" y="270" text-anchor="middle" font-size="9" fill="#666">交替 Si / SiGe</text>
+  </g>
+
+  <!-- Step 2: SiGe lateral recess -->
+  <g transform="translate(240, 60)">
+    <text x="100" y="0" text-anchor="middle" font-weight="bold" font-size="12">② SiGe 橫向 recess</text>
+    <text x="100" y="15" text-anchor="middle" font-size="10" fill="#666">selective etch SiGe 兩端</text>
+
+    <!-- Substrate -->
+    <rect x="20" y="220" width="160" height="20" fill="#cfd8dc" stroke="#37474f"/>
+
+    <rect x="0" y="40" width="20" height="180" fill="#bbdefb" stroke="#0d47a1"/>
+    <rect x="180" y="40" width="20" height="180" fill="#bbdefb" stroke="#0d47a1"/>
+
+    <!-- SiGe RECESSED (narrower) -->
+    <rect x="40" y="40" width="120" height="20" fill="#e1bee7" stroke="#4a148c"/>
+    <rect x="40" y="80" width="120" height="20" fill="#e1bee7" stroke="#4a148c"/>
+    <rect x="40" y="120" width="120" height="20" fill="#e1bee7" stroke="#4a148c"/>
+    <rect x="40" y="160" width="120" height="20" fill="#e1bee7" stroke="#4a148c"/>
+    <rect x="40" y="200" width="120" height="20" fill="#e1bee7" stroke="#4a148c"/>
+
+    <!-- Si stays full width -->
+    <rect x="20" y="60" width="160" height="20" fill="#ffe082" stroke="#bf360c"/>
+    <rect x="20" y="100" width="160" height="20" fill="#ffe082" stroke="#bf360c"/>
+    <rect x="20" y="140" width="160" height="20" fill="#ffe082" stroke="#bf360c"/>
+    <rect x="20" y="180" width="160" height="20" fill="#ffe082" stroke="#bf360c"/>
+
+    <!-- Highlight pockets where SiGe receded -->
+    <rect x="20" y="40" width="20" height="20" fill="none" stroke="#d32f2f" stroke-width="1.5" stroke-dasharray="2,2"/>
+    <rect x="160" y="40" width="20" height="20" fill="none" stroke="#d32f2f" stroke-width="1.5" stroke-dasharray="2,2"/>
+    <rect x="20" y="120" width="20" height="20" fill="none" stroke="#d32f2f" stroke-width="1.5" stroke-dasharray="2,2"/>
+    <rect x="160" y="120" width="20" height="20" fill="none" stroke="#d32f2f" stroke-width="1.5" stroke-dasharray="2,2"/>
+    <rect x="20" y="200" width="20" height="20" fill="none" stroke="#d32f2f" stroke-width="1.5" stroke-dasharray="2,2"/>
+    <rect x="160" y="200" width="20" height="20" fill="none" stroke="#d32f2f" stroke-width="1.5" stroke-dasharray="2,2"/>
+
+    <text x="100" y="270" text-anchor="middle" font-size="9" fill="#d32f2f">紅框：留下凹槽（pocket）</text>
+  </g>
+
+  <!-- Step 3: Conformal ALD spacer fill -->
+  <g transform="translate(460, 60)">
+    <text x="100" y="0" text-anchor="middle" font-weight="bold" font-size="12">③ Conformal ALD 填充</text>
+    <text x="100" y="15" text-anchor="middle" font-size="10" fill="#666">SiOC / SiN 包覆所有表面</text>
+
+    <!-- Substrate -->
+    <rect x="20" y="220" width="160" height="20" fill="#cfd8dc" stroke="#37474f"/>
+
+    <rect x="0" y="40" width="20" height="180" fill="#bbdefb" stroke="#0d47a1"/>
+    <rect x="180" y="40" width="20" height="180" fill="#bbdefb" stroke="#0d47a1"/>
+
+    <!-- ALD spacer covering everything (drawn around stack) -->
+    <rect x="20" y="40" width="160" height="180" fill="#80cbc4" fill-opacity="0.5"/>
+
+    <!-- SiGe RECESSED -->
+    <rect x="40" y="40" width="120" height="20" fill="#e1bee7" stroke="#4a148c"/>
+    <rect x="40" y="80" width="120" height="20" fill="#e1bee7" stroke="#4a148c"/>
+    <rect x="40" y="120" width="120" height="20" fill="#e1bee7" stroke="#4a148c"/>
+    <rect x="40" y="160" width="120" height="20" fill="#e1bee7" stroke="#4a148c"/>
+    <rect x="40" y="200" width="120" height="20" fill="#e1bee7" stroke="#4a148c"/>
+
+    <!-- Si -->
+    <rect x="20" y="60" width="160" height="20" fill="#ffe082" stroke="#bf360c"/>
+    <rect x="20" y="100" width="160" height="20" fill="#ffe082" stroke="#bf360c"/>
+    <rect x="20" y="140" width="160" height="20" fill="#ffe082" stroke="#bf360c"/>
+    <rect x="20" y="180" width="160" height="20" fill="#ffe082" stroke="#bf360c"/>
+
+    <!-- Spacer in pockets, drawn solid -->
+    <rect x="20" y="40" width="20" height="20" fill="#26a69a" stroke="#004d40"/>
+    <rect x="160" y="40" width="20" height="20" fill="#26a69a" stroke="#004d40"/>
+    <rect x="20" y="120" width="20" height="20" fill="#26a69a" stroke="#004d40"/>
+    <rect x="160" y="120" width="20" height="20" fill="#26a69a" stroke="#004d40"/>
+    <rect x="20" y="200" width="20" height="20" fill="#26a69a" stroke="#004d40"/>
+    <rect x="160" y="200" width="20" height="20" fill="#26a69a" stroke="#004d40"/>
+
+    <text x="100" y="270" text-anchor="middle" font-size="9" fill="#004d40">綠色：填入 inner spacer 材料</text>
+  </g>
+
+  <!-- Step 4: Directional etch + nanosheet release -->
+  <g transform="translate(680, 60)">
+    <text x="100" y="0" text-anchor="middle" font-weight="bold" font-size="12">④ 方向性 etch + release</text>
+    <text x="100" y="15" text-anchor="middle" font-size="10" fill="#666">清掉表面多餘 + 抽 SiGe</text>
+
+    <!-- Substrate -->
+    <rect x="20" y="220" width="160" height="20" fill="#cfd8dc" stroke="#37474f"/>
+
+    <rect x="0" y="40" width="20" height="180" fill="#bbdefb" stroke="#0d47a1"/>
+    <rect x="180" y="40" width="20" height="180" fill="#bbdefb" stroke="#0d47a1"/>
+
+    <!-- After release: SiGe gone, only Si nanosheets + inner spacers at ends -->
+    <rect x="20" y="60" width="160" height="20" fill="#ffe082" stroke="#bf360c"/>
+    <rect x="20" y="100" width="160" height="20" fill="#ffe082" stroke="#bf360c"/>
+    <rect x="20" y="140" width="160" height="20" fill="#ffe082" stroke="#bf360c"/>
+    <rect x="20" y="180" width="160" height="20" fill="#ffe082" stroke="#bf360c"/>
+
+    <!-- Inner spacers remain at ends only -->
+    <rect x="20" y="40" width="20" height="20" fill="#26a69a" stroke="#004d40"/>
+    <rect x="160" y="40" width="20" height="20" fill="#26a69a" stroke="#004d40"/>
+    <rect x="20" y="80" width="20" height="20" fill="#26a69a" stroke="#004d40"/>
+    <rect x="160" y="80" width="20" height="20" fill="#26a69a" stroke="#004d40"/>
+    <rect x="20" y="120" width="20" height="20" fill="#26a69a" stroke="#004d40"/>
+    <rect x="160" y="120" width="20" height="20" fill="#26a69a" stroke="#004d40"/>
+    <rect x="20" y="160" width="20" height="20" fill="#26a69a" stroke="#004d40"/>
+    <rect x="160" y="160" width="20" height="20" fill="#26a69a" stroke="#004d40"/>
+    <rect x="20" y="200" width="20" height="20" fill="#26a69a" stroke="#004d40"/>
+    <rect x="160" y="200" width="20" height="20" fill="#26a69a" stroke="#004d40"/>
+
+    <!-- Empty spaces between sheets where gate will go -->
+    <text x="100" y="55" text-anchor="middle" font-size="9" fill="#999">(後填入 gate)</text>
+    <text x="100" y="95" text-anchor="middle" font-size="9" fill="#999">(後填入 gate)</text>
+    <text x="100" y="135" text-anchor="middle" font-size="9" fill="#999">(後填入 gate)</text>
+
+    <text x="100" y="270" text-anchor="middle" font-size="9" fill="#004d40">Inner spacer 隔離 gate ↔ S/D</text>
+  </g>
+
+  <!-- Bottom legend / summary -->
+  <g transform="translate(20, 360)">
+    <rect x="0" y="0" width="840" height="80" fill="#f3e5f5" stroke="#6a1b9a" stroke-width="1"/>
+    <text x="10" y="20" font-size="12" font-weight="bold" fill="#4a148c">Inner Spacer 的功能與失效</text>
+    <text x="10" y="38" font-size="11" fill="#444">• <tspan font-weight="bold">隔離 gate 與 S/D</tspan>：避免 gate 一路延伸接到 S/D（→ 短路 / 寄生電容暴增）</text>
+    <text x="10" y="54" font-size="11" fill="#444">• <tspan font-weight="bold">提供結構支撐</tspan>：sheet release 後 nanosheet 懸空，inner spacer 在 sheet 端點提供機械固定點</text>
+    <text x="10" y="70" font-size="11" fill="#d32f2f">• <tspan font-weight="bold">失效模式</tspan>：spacer 太薄 → gate-S/D leakage、寄生電容；spacer 過厚 → 通道有效長度變動、Vt 飄</text>
+  </g>
+
+  <!-- Color legend -->
+  <g transform="translate(20, 320)">
+    <rect x="0" y="0" width="14" height="14" fill="#ffe082" stroke="#bf360c"/>
+    <text x="20" y="11" font-size="10">Si (channel)</text>
+    <rect x="100" y="0" width="14" height="14" fill="#e1bee7" stroke="#4a148c"/>
+    <text x="120" y="11" font-size="10">SiGe (sacrificial)</text>
+    <rect x="220" y="0" width="14" height="14" fill="#26a69a" stroke="#004d40"/>
+    <text x="240" y="11" font-size="10">Inner spacer (SiOC/SiN)</text>
+    <rect x="380" y="0" width="14" height="14" fill="#bbdefb" stroke="#0d47a1"/>
+    <text x="400" y="11" font-size="10">ILD</text>
+    <rect x="440" y="0" width="14" height="14" fill="#cfd8dc" stroke="#37474f"/>
+    <text x="460" y="11" font-size="10">Si Substrate</text>
+  </g>
+</svg>

@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 540" font-family="sans-serif" font-size="12">
+  <title>CMP（Chemical Mechanical Polishing）架構與 Defect</title>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <text x="500" y="22" text-anchor="middle" font-weight="bold" font-size="15">CMP：化學軟化 + 機械研磨的精密平衡</text>
+
+  <!-- Left: setup schematic -->
+  <g transform="translate(40, 60)">
+    <rect x="0" y="0" width="430" height="280" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="215" y="22" text-anchor="middle" font-weight="bold" font-size="13">機台架構（剖面）</text>
+
+    <!-- Carrier head with wafer underneath -->
+    <rect x="120" y="50" width="200" height="40" rx="6" fill="#5d4037" stroke="#3e2723" stroke-width="1.5"/>
+    <text x="220" y="74" text-anchor="middle" font-size="11" fill="#fff" font-weight="bold">Carrier Head</text>
+
+    <!-- Wafer (face down) -->
+    <rect x="140" y="90" width="160" height="14" fill="#cfd8dc" stroke="#37474f"/>
+    <text x="220" y="100" text-anchor="middle" font-size="10" fill="#263238" font-weight="bold">Wafer（朝下）</text>
+
+    <!-- Down force arrows -->
+    <line x1="160" y1="42" x2="160" y2="50" stroke="#d32f2f" stroke-width="1.5" marker-end="url(#arrR5)"/>
+    <line x1="220" y1="42" x2="220" y2="50" stroke="#d32f2f" stroke-width="1.5" marker-end="url(#arrR5)"/>
+    <line x1="280" y1="42" x2="280" y2="50" stroke="#d32f2f" stroke-width="1.5" marker-end="url(#arrR5)"/>
+    <text x="345" y="48" font-size="10" fill="#d32f2f">下壓力</text>
+
+    <!-- Pad (rotating) -->
+    <rect x="40" y="120" width="350" height="40" fill="#90a4ae" stroke="#37474f" stroke-width="1.5"/>
+    <text x="215" y="144" text-anchor="middle" font-size="11" fill="#fff" font-weight="bold">Polishing Pad（旋轉）</text>
+
+    <!-- Slurry on pad -->
+    <circle cx="80" cy="115" r="4" fill="#bbdefb" stroke="#0d47a1"/>
+    <circle cx="100" cy="115" r="4" fill="#bbdefb" stroke="#0d47a1"/>
+    <circle cx="120" cy="115" r="4" fill="#bbdefb" stroke="#0d47a1"/>
+    <text x="80" y="106" font-size="9" fill="#0d47a1">slurry</text>
+
+    <!-- Slurry inlet -->
+    <text x="60" y="100" font-size="9" fill="#0d47a1">Slurry inlet →</text>
+
+    <!-- Rotation arrows -->
+    <path d="M 220 70 A 25 8 0 1 1 220 75" fill="none" stroke="#fdd835" stroke-width="2" marker-end="url(#arrY3)"/>
+    <text x="270" y="78" font-size="9" fill="#bf8f00">wafer 自轉</text>
+
+    <path d="M 215 145 A 50 12 0 0 1 270 145" fill="none" stroke="#fdd835" stroke-width="2" marker-end="url(#arrY3)"/>
+    <text x="290" y="155" font-size="9" fill="#bf8f00">pad 公轉</text>
+
+    <!-- Conditioning disk -->
+    <rect x="320" y="115" width="60" height="14" fill="#bf360c" stroke="#000"/>
+    <text x="350" y="125" text-anchor="middle" font-size="9" fill="#fff" font-weight="bold">Conditioner</text>
+
+    <!-- Endpoint detector -->
+    <text x="50" y="200" font-size="11" font-weight="bold" fill="#0d47a1">Endpoint 偵測：</text>
+    <text x="50" y="216" font-size="10" fill="#444">▶ Optical（反射光譜變化）</text>
+    <text x="50" y="232" font-size="10" fill="#444">▶ Friction（摩擦力 torque）</text>
+    <text x="50" y="248" font-size="10" fill="#444">▶ Time（簡單 CMP 用）</text>
+
+    <text x="50" y="270" font-size="10" fill="#666" font-style="italic">→ 知道何時磨到目標厚度，立即停止</text>
+  </g>
+
+  <!-- Right: dishing/erosion defects -->
+  <g transform="translate(490, 60)">
+    <rect x="0" y="0" width="470" height="280" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="235" y="22" text-anchor="middle" font-weight="bold" font-size="13">主要 Defect：Dishing 與 Erosion</text>
+
+    <!-- Ideal -->
+    <text x="100" y="48" text-anchor="middle" font-size="11" fill="#1b5e20" font-weight="bold">理想（平整）</text>
+    <rect x="40" y="55" width="120" height="16" fill="#cfd8dc" stroke="#37474f"/>
+    <rect x="50" y="55" width="20" height="16" fill="#ff7043"/>
+    <rect x="80" y="55" width="20" height="16" fill="#ff7043"/>
+    <rect x="110" y="55" width="20" height="16" fill="#ff7043"/>
+    <rect x="140" y="55" width="20" height="16" fill="#ff7043"/>
+    <line x1="40" y1="55" x2="160" y2="55" stroke="#1b5e20" stroke-width="1.5"/>
+
+    <!-- Dishing -->
+    <text x="350" y="48" text-anchor="middle" font-size="11" fill="#d32f2f" font-weight="bold">Dishing（軟金屬凹陷）</text>
+    <rect x="280" y="55" width="120" height="16" fill="#cfd8dc" stroke="#37474f"/>
+    <path d="M 290,55 Q 295,68 300,68 L 305,68 Q 310,68 315,55"
+          fill="#ff7043" stroke="#bf360c"/>
+    <path d="M 320,55 Q 325,68 330,68 L 335,68 Q 340,68 345,55"
+          fill="#ff7043" stroke="#bf360c"/>
+    <path d="M 350,55 Q 355,68 360,68 L 365,68 Q 370,68 375,55"
+          fill="#ff7043" stroke="#bf360c"/>
+    <line x1="280" y1="55" x2="400" y2="55" stroke="#37474f" stroke-width="1.5"/>
+
+    <!-- Erosion -->
+    <text x="100" y="118" text-anchor="middle" font-size="11" fill="#d32f2f" font-weight="bold">Erosion（dense 區整體下凹）</text>
+    <rect x="40" y="125" width="120" height="20" fill="#cfd8dc" stroke="#37474f"/>
+    <!-- Sparse area on left -->
+    <rect x="50" y="125" width="20" height="20" fill="#ff7043"/>
+    <line x1="40" y1="125" x2="80" y2="125" stroke="#37474f" stroke-width="1.5"/>
+    <!-- Dense area on right - dipped down -->
+    <line x1="80" y1="125" x2="90" y2="135" stroke="#37474f" stroke-width="1.5"/>
+    <line x1="90" y1="135" x2="160" y2="135" stroke="#37474f" stroke-width="1.5"/>
+    <rect x="92" y="135" width="14" height="10" fill="#ff7043"/>
+    <rect x="110" y="135" width="14" height="10" fill="#ff7043"/>
+    <rect x="128" y="135" width="14" height="10" fill="#ff7043"/>
+    <text x="100" y="158" font-size="9" fill="#666">→ dense 區凹</text>
+
+    <!-- Scratch -->
+    <text x="350" y="118" text-anchor="middle" font-size="11" fill="#d32f2f" font-weight="bold">Scratch（刮痕）</text>
+    <rect x="280" y="125" width="120" height="20" fill="#cfd8dc" stroke="#37474f"/>
+    <rect x="280" y="120" width="120" height="3" fill="#cfd8dc" stroke="#37474f"/>
+    <line x1="290" y1="120" x2="320" y2="125" stroke="#d32f2f" stroke-width="2"/>
+    <line x1="340" y1="120" x2="380" y2="125" stroke="#d32f2f" stroke-width="2"/>
+    <text x="350" y="158" font-size="9" fill="#666">→ slurry 顆粒 / pad 雜質</text>
+
+    <!-- Causes -->
+    <text x="20" y="195" font-size="11" font-weight="bold" fill="#37474f">主要成因：</text>
+    <text x="30" y="215" font-size="10" fill="#444">▶ Down force 不均勻、過大</text>
+    <text x="30" y="230" font-size="10" fill="#444">▶ Slurry 化學失衡</text>
+    <text x="30" y="245" font-size="10" fill="#444">▶ Pattern density 不均（dummy fill 不夠）</text>
+    <text x="30" y="260" font-size="10" fill="#444">▶ Pad wear（pad 壽命已過）</text>
+  </g>
+
+  <!-- Bottom: applications -->
+  <g transform="translate(40, 370)">
+    <rect x="0" y="0" width="920" height="150" fill="#e3f2fd" stroke="#0d47a1"/>
+    <text x="10" y="22" font-size="13" font-weight="bold" fill="#0d47a1">CMP 在 fab 內的應用範圍（一片 wafer 跑 ~15 次 CMP）</text>
+
+    <text x="20" y="48" font-size="11" font-weight="bold" fill="#444">FEOL：</text>
+    <text x="80" y="48" font-size="10" fill="#666">STI CMP、ILD0 CMP、Gate CMP、CMG CMP</text>
+
+    <text x="20" y="68" font-size="11" font-weight="bold" fill="#444">MOL：</text>
+    <text x="80" y="68" font-size="10" fill="#666">SAC cap CMP、MD CMP、MP CMP</text>
+
+    <text x="20" y="88" font-size="11" font-weight="bold" fill="#444">BEOL：</text>
+    <text x="80" y="88" font-size="10" fill="#666">每層 metal 都做 1 次 Cu CMP（M0 到 M15+，共 12–16 次）</text>
+
+    <text x="20" y="118" font-size="10" fill="#0d47a1" font-style="italic">→ 每次 CMP 都是一次 yield 風險點。Cu CMP 特別敏感（Cu 軟、low-k 脆、barrier 硬，三材料 selectivity 平衡困難）。</text>
+    <text x="20" y="135" font-size="10" fill="#0d47a1" font-style="italic">→ Cu CMP 的「**dishing → V0 對位飄 → 後段 short**」是 BEOL 常見因果鏈。</text>
+  </g>
+
+  <defs>
+    <marker id="arrR5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#d32f2f"/>
+    </marker>
+    <marker id="arrY3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#fdd835"/>
+    </marker>
+  </defs>
+</svg>

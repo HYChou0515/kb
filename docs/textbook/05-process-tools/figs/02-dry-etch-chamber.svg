@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 540" font-family="sans-serif" font-size="12">
+  <title>Dry Etch Chamber：Plasma + Ion + Chemistry</title>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <text x="450" y="22" text-anchor="middle" font-weight="bold" font-size="15">Dry Etch Chamber：化學 + 物理混合機制</text>
+
+  <!-- Chamber outline -->
+  <g transform="translate(180, 60)">
+    <rect x="80" y="40" width="380" height="280" fill="#fafafa" stroke="#37474f" stroke-width="2"/>
+    <text x="270" y="32" text-anchor="middle" font-size="11" font-weight="bold" fill="#37474f">Chamber（真空環境）</text>
+
+    <!-- Top: Gas inlet -->
+    <rect x="240" y="40" width="60" height="20" fill="#0d47a1"/>
+    <text x="270" y="54" text-anchor="middle" font-size="10" fill="#fff" font-weight="bold">Gas Inlet</text>
+
+    <text x="350" y="46" font-size="9" fill="#0d47a1">CFx + Ar + O2</text>
+
+    <!-- RF Coil (around chamber, source) -->
+    <rect x="80" y="80" width="380" height="20" fill="none" stroke="#bf360c" stroke-width="2" stroke-dasharray="4,2"/>
+    <text x="475" y="93" font-size="9" fill="#bf360c">RF Coil（電漿源）</text>
+
+    <!-- Plasma region -->
+    <ellipse cx="270" cy="170" rx="160" ry="50" fill="#ce93d8" fill-opacity="0.5" stroke="#4a148c" stroke-dasharray="2,2"/>
+    <text x="270" y="148" text-anchor="middle" font-size="11" fill="#4a148c" font-weight="bold">Plasma（電漿區）</text>
+    <text x="270" y="164" text-anchor="middle" font-size="9" fill="#4a148c">CFx → 自由基 + 離子</text>
+
+    <!-- Random plasma symbols -->
+    <text x="200" y="178" font-size="11" fill="#7b1fa2">+</text>
+    <text x="240" y="190" font-size="11" fill="#7b1fa2">·</text>
+    <text x="280" y="178" font-size="11" fill="#7b1fa2">+</text>
+    <text x="320" y="190" font-size="11" fill="#7b1fa2">·</text>
+    <text x="220" y="200" font-size="11" fill="#7b1fa2">·</text>
+    <text x="300" y="200" font-size="11" fill="#7b1fa2">+</text>
+
+    <!-- Ion bombardment arrows down -->
+    <line x1="220" y1="220" x2="220" y2="260" stroke="#d32f2f" stroke-width="1.5" marker-end="url(#arrR3)"/>
+    <line x1="270" y1="220" x2="270" y2="260" stroke="#d32f2f" stroke-width="1.5" marker-end="url(#arrR3)"/>
+    <line x1="320" y1="220" x2="320" y2="260" stroke="#d32f2f" stroke-width="1.5" marker-end="url(#arrR3)"/>
+    <text x="380" y="240" font-size="10" fill="#d32f2f" font-weight="bold">Ion 垂直入射</text>
+
+    <!-- Wafer -->
+    <rect x="120" y="265" width="300" height="20" fill="#cfd8dc" stroke="#37474f"/>
+    <text x="270" y="279" text-anchor="middle" font-size="11" fill="#263238" font-weight="bold">Wafer（要被蝕刻）</text>
+
+    <!-- Bias electrode beneath wafer -->
+    <rect x="120" y="285" width="300" height="20" fill="#5d4037"/>
+    <text x="270" y="299" text-anchor="middle" font-size="10" fill="#fff">Bias Electrode（吸引離子方向性）</text>
+
+    <!-- Exhaust -->
+    <rect x="80" y="305" width="60" height="14" fill="#37474f"/>
+    <text x="110" y="316" text-anchor="middle" font-size="9" fill="#fff">Exhaust</text>
+    <line x1="80" y1="312" x2="50" y2="312" stroke="#37474f" stroke-width="2" marker-end="url(#arrG3)"/>
+
+    <!-- Byproducts going down/out -->
+    <text x="190" y="335" font-size="9" fill="#666">→ 副產物揮發排出</text>
+  </g>
+
+  <!-- Right: control parameters -->
+  <g transform="translate(620, 80)" font-size="10">
+    <text x="0" y="0" font-size="13" font-weight="bold" fill="#37474f">關鍵參數</text>
+
+    <text x="0" y="28" font-weight="bold" fill="#bf360c">▶ RF Power</text>
+    <text x="10" y="44" fill="#666">Plasma density、ion 能量</text>
+
+    <text x="0" y="72" font-weight="bold" fill="#bf360c">▶ Bias Power</text>
+    <text x="10" y="88" fill="#666">Ion 方向性、垂直 profile</text>
+
+    <text x="0" y="116" font-weight="bold" fill="#bf360c">▶ Pressure</text>
+    <text x="10" y="132" fill="#666">Plasma 密度、polymer 形成</text>
+
+    <text x="0" y="160" font-weight="bold" fill="#bf360c">▶ Gas Ratio</text>
+    <text x="10" y="176" fill="#666">CFx : Ar : O2</text>
+    <text x="10" y="190" fill="#666">化學選擇性</text>
+
+    <text x="0" y="218" font-weight="bold" fill="#bf360c">▶ Endpoint</text>
+    <text x="10" y="234" fill="#666">何時停止（OES / 雷射干涉）</text>
+  </g>
+
+  <!-- Bottom: typical defects -->
+  <g transform="translate(60, 400)">
+    <rect x="0" y="0" width="780" height="120" fill="#fff8e1" stroke="#f57f17"/>
+    <text x="10" y="22" font-size="13" font-weight="bold" fill="#bf360c">Dry Etch 好發 Defect</text>
+
+    <text x="20" y="48" font-size="10" fill="#444"><tspan font-weight="bold">Profile 異常</tspan>：necking、bowing、tapered → RF/bias/chemistry 偏</text>
+    <text x="20" y="64" font-size="10" fill="#444"><tspan font-weight="bold">Footing</tspan>（底部殘留）→ endpoint 不夠</text>
+    <text x="20" y="80" font-size="10" fill="#444"><tspan font-weight="bold">Polymer Residue</tspan>→ chamber 內累積，post-etch clean 不足</text>
+    <text x="20" y="96" font-size="10" fill="#444"><tspan font-weight="bold">Loading Effect / Iso-Dense Bias</tspan>→ pattern 密度造成蝕刻速率不均</text>
+    <text x="420" y="48" font-size="10" fill="#444"><tspan font-weight="bold">Tool Fingerprint</tspan>：</text>
+    <text x="430" y="64" font-size="10" fill="#666">▶ 同心圓：plasma center-edge 不均</text>
+    <text x="430" y="80" font-size="10" fill="#666">▶ 半月：RF coil 不對稱</text>
+    <text x="430" y="96" font-size="10" fill="#666">▶ Chamber-fingerprint：polymer 累積</text>
+  </g>
+
+  <defs>
+    <marker id="arrR3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#d32f2f"/>
+    </marker>
+    <marker id="arrG3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#37474f"/>
+    </marker>
+  </defs>
+</svg>

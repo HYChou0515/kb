@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 540" font-family="sans-serif" font-size="12">
+  <title>檢測工具 3 軸：解析度 / 速度 / 是否 destructive</title>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <text x="450" y="22" text-anchor="middle" font-weight="bold" font-size="15">檢測工具 3 軸定位圖</text>
+  <text x="450" y="40" text-anchor="middle" font-size="11" fill="#555">解析度（Y）vs 覆蓋速度（X）；圓圈大小 = cost；填充色 = 是否 destructive</text>
+
+  <!-- Axes -->
+  <line x1="80" y1="450" x2="820" y2="450" stroke="#37474f" stroke-width="2"/>
+  <line x1="80" y1="80" x2="80" y2="450" stroke="#37474f" stroke-width="2"/>
+
+  <!-- X label -->
+  <text x="450" y="490" text-anchor="middle" font-size="12" font-weight="bold" fill="#37474f">Throughput / Coverage（速度與覆蓋範圍）</text>
+  <text x="100" y="475" font-size="10" fill="#666">慢 / 樣品級</text>
+  <text x="800" y="475" text-anchor="end" font-size="10" fill="#666">快 / 整 wafer</text>
+
+  <!-- Y label -->
+  <text x="30" y="265" text-anchor="middle" font-size="12" font-weight="bold" fill="#37474f" transform="rotate(-90 30 265)">Resolution（解析度）</text>
+  <text x="65" y="100" text-anchor="end" font-size="10" fill="#666">atomic</text>
+  <text x="65" y="265" text-anchor="end" font-size="10" fill="#666">nm 級</text>
+  <text x="65" y="440" text-anchor="end" font-size="10" fill="#666">µm 級</text>
+
+  <!-- Grid lines -->
+  <line x1="80" y1="170" x2="820" y2="170" stroke="#ddd" stroke-dasharray="2,2"/>
+  <line x1="80" y1="265" x2="820" y2="265" stroke="#ddd" stroke-dasharray="2,2"/>
+  <line x1="80" y1="360" x2="820" y2="360" stroke="#ddd" stroke-dasharray="2,2"/>
+  <line x1="280" y1="80" x2="280" y2="450" stroke="#ddd" stroke-dasharray="2,2"/>
+  <line x1="450" y1="80" x2="450" y2="450" stroke="#ddd" stroke-dasharray="2,2"/>
+  <line x1="650" y1="80" x2="650" y2="450" stroke="#ddd" stroke-dasharray="2,2"/>
+
+  <!-- Tool dots -->
+  <!-- TEM: top, slow, destructive (red), expensive (large) -->
+  <circle cx="180" cy="115" r="22" fill="#ef5350" stroke="#000" stroke-width="0.8"/>
+  <text x="180" y="118" text-anchor="middle" font-size="11" font-weight="bold" fill="#fff">TEM</text>
+  <text x="180" y="148" text-anchor="middle" font-size="9" fill="#444">atomic 級、極慢、貴</text>
+
+  <!-- SEM (CD-SEM, DR-SEM): high res, medium speed -->
+  <circle cx="380" cy="200" r="16" fill="#42a5f5" stroke="#000" stroke-width="0.6"/>
+  <text x="380" y="203" text-anchor="middle" font-size="10" font-weight="bold" fill="#fff">SEM</text>
+  <text x="380" y="228" text-anchor="middle" font-size="9" fill="#444">CD-SEM / DR-SEM</text>
+
+  <!-- X-SEM (FIB-SEM): same res as SEM, slow, destructive -->
+  <circle cx="220" cy="200" r="14" fill="#ef5350" stroke="#000" stroke-width="0.6"/>
+  <text x="220" y="203" text-anchor="middle" font-size="10" font-weight="bold" fill="#fff">X-SEM</text>
+
+  <!-- E-beam Inspection: medium-high res, slow, NON-destructive (blue) -->
+  <circle cx="290" cy="230" r="15" fill="#42a5f5" stroke="#000" stroke-width="0.6"/>
+  <text x="290" y="233" text-anchor="middle" font-size="10" font-weight="bold" fill="#fff">E-beam</text>
+  <text x="290" y="258" text-anchor="middle" font-size="9" fill="#444">Inspection</text>
+
+  <!-- AFM: very high Z res, very slow, non-destructive -->
+  <circle cx="180" cy="195" r="13" fill="#42a5f5" stroke="#000" stroke-width="0.6"/>
+  <text x="180" y="198" text-anchor="middle" font-size="10" font-weight="bold" fill="#fff">AFM</text>
+
+  <!-- OCD: medium res, fast, non-destructive, cheap-ish -->
+  <circle cx="700" cy="285" r="14" fill="#42a5f5" stroke="#000" stroke-width="0.6"/>
+  <text x="700" y="288" text-anchor="middle" font-size="10" font-weight="bold" fill="#fff">OCD</text>
+
+  <!-- Optical KLA BF/DF: medium-low res, very fast -->
+  <circle cx="750" cy="345" r="16" fill="#42a5f5" stroke="#000" stroke-width="0.6"/>
+  <text x="750" y="348" text-anchor="middle" font-size="10" font-weight="bold" fill="#fff">KLA</text>
+  <text x="750" y="372" text-anchor="middle" font-size="9" fill="#444">BF/DF</text>
+
+  <!-- SIMS: high res depth profile, slow, destructive -->
+  <circle cx="200" cy="155" r="13" fill="#ef5350" stroke="#000" stroke-width="0.6"/>
+  <text x="200" y="158" text-anchor="middle" font-size="10" font-weight="bold" fill="#fff">SIMS</text>
+
+  <!-- XRF / XRD: medium speed, sample-level, non-destructive, low res -->
+  <circle cx="500" cy="320" r="13" fill="#42a5f5" stroke="#000" stroke-width="0.6"/>
+  <text x="500" y="323" text-anchor="middle" font-size="10" font-weight="bold" fill="#fff">XRF</text>
+
+  <circle cx="450" cy="290" r="11" fill="#42a5f5" stroke="#000" stroke-width="0.6"/>
+  <text x="450" y="293" text-anchor="middle" font-size="9" font-weight="bold" fill="#fff">XRD</text>
+
+  <!-- XPS -->
+  <circle cx="430" cy="180" r="12" fill="#42a5f5" stroke="#000" stroke-width="0.6"/>
+  <text x="430" y="183" text-anchor="middle" font-size="9" font-weight="bold" fill="#fff">XPS</text>
+
+  <!-- Legend -->
+  <g transform="translate(550, 80)">
+    <rect x="0" y="0" width="280" height="120" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="10" y="20" font-size="12" font-weight="bold" fill="#37474f">圖例</text>
+
+    <circle cx="20" cy="40" r="8" fill="#42a5f5" stroke="#000" stroke-width="0.6"/>
+    <text x="40" y="44" font-size="11" fill="#444">Non-destructive</text>
+
+    <circle cx="160" cy="40" r="8" fill="#ef5350" stroke="#000" stroke-width="0.6"/>
+    <text x="180" y="44" font-size="11" fill="#444">Destructive</text>
+
+    <circle cx="20" cy="68" r="6" fill="#42a5f5"/>
+    <text x="40" y="72" font-size="10" fill="#666">小</text>
+    <circle cx="80" cy="68" r="11" fill="#42a5f5"/>
+    <text x="100" y="72" font-size="10" fill="#666">中</text>
+    <circle cx="160" cy="68" r="16" fill="#42a5f5"/>
+    <text x="190" y="72" font-size="10" fill="#666">大（cost↑）</text>
+
+    <text x="10" y="105" font-size="10" fill="#666">圓大小 = 機台 / 樣品 cost</text>
+  </g>
+
+  <!-- Selection guidance -->
+  <g transform="translate(550, 220)">
+    <rect x="0" y="0" width="280" height="220" fill="#e3f2fd" stroke="#0d47a1"/>
+    <text x="10" y="20" font-size="12" font-weight="bold" fill="#0d47a1">選工具的 4 個問題</text>
+    <text x="20" y="48" font-size="10" fill="#444">1. 表面 還是 buried defect？</text>
+    <text x="40" y="64" font-size="9" fill="#666">表面 → optical / SEM / AFM</text>
+    <text x="40" y="78" font-size="9" fill="#666">Buried → e-beam / X-SEM / TEM</text>
+
+    <text x="20" y="100" font-size="10" fill="#444">2. 形貌 還是 組成？</text>
+    <text x="40" y="116" font-size="9" fill="#666">形貌 → SEM / TEM / AFM / OCD</text>
+    <text x="40" y="130" font-size="9" fill="#666">組成 → EDS / EELS / XRF / XPS / SIMS</text>
+
+    <text x="20" y="152" font-size="10" fill="#444">3. inline 全 wafer 還是 抽樣？</text>
+    <text x="40" y="168" font-size="9" fill="#666">Inline → KLA / OCD / CD-SEM</text>
+    <text x="40" y="182" font-size="9" fill="#666">抽樣 → 其他</text>
+
+    <text x="20" y="204" font-size="10" fill="#444">4. 解析度需求多高？</text>
+  </g>
+</svg>

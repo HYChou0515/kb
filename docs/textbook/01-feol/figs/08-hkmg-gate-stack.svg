@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 380" font-family="sans-serif" font-size="12">
+  <title>HKMG gate stack — 各層由下而上</title>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Title -->
+  <text x="360" y="22" text-anchor="middle" font-weight="bold" font-size="14">HKMG Gate Stack（由下而上）</text>
+
+  <!-- Stack layers in trench -->
+  <!-- Channel (Si fin) at the bottom -->
+  <g transform="translate(120, 50)">
+    <!-- Trench walls (sides) - simplified -->
+    <rect x="-15" y="0" width="15" height="280" fill="#eceff1" stroke="#90a4ae" stroke-dasharray="3,3"/>
+    <rect x="280" y="0" width="15" height="280" fill="#eceff1" stroke="#90a4ae" stroke-dasharray="3,3"/>
+    <text x="-22" y="280" text-anchor="end" font-size="10" fill="#607d8b">spacer</text>
+    <text x="320" y="280" font-size="10" fill="#607d8b">spacer</text>
+
+    <!-- Layer 1: Channel (Si) -->
+    <rect x="0" y="270" width="280" height="20" fill="#ffe082" stroke="#bf360c"/>
+    <text x="140" y="285" text-anchor="middle" font-size="11" fill="#bf360c">Channel (Si fin / nanosheet)</text>
+
+    <!-- Layer 2: IL -->
+    <rect x="0" y="252" width="280" height="18" fill="#fff9c4" stroke="#f57f17"/>
+    <text x="140" y="265" text-anchor="middle" font-size="11" fill="#f57f17">① Interfacial Layer (IL) · ~0.5–1 nm SiO₂/SiON</text>
+
+    <!-- Layer 3: High-k -->
+    <rect x="0" y="220" width="280" height="32" fill="#a5d6a7" stroke="#1b5e20"/>
+    <text x="140" y="235" text-anchor="middle" font-size="11" fill="#1b5e20">② High-k Dielectric · ~1.5–2 nm HfO₂</text>
+    <text x="140" y="248" text-anchor="middle" font-size="10" fill="#1b5e20" font-style="italic">(ALD 沉積)</text>
+
+    <!-- Layer 4: Cap -->
+    <rect x="0" y="200" width="280" height="20" fill="#80deea" stroke="#006064"/>
+    <text x="140" y="215" text-anchor="middle" font-size="11" fill="#006064">③ Cap Layer · TaN / TiN, 幾 Å</text>
+
+    <!-- Layer 5: WFM -->
+    <rect x="0" y="170" width="280" height="30" fill="#ce93d8" stroke="#4a148c"/>
+    <text x="140" y="187" text-anchor="middle" font-size="11" fill="#4a148c">④ Work Function Metal · 5–20 Å</text>
+    <text x="140" y="198" text-anchor="middle" font-size="10" fill="#4a148c" font-style="italic">(NMOS: TiAl · PMOS: TiN)</text>
+
+    <!-- Layer 6: Gate fill -->
+    <rect x="0" y="0" width="280" height="170" fill="#bcaaa4" stroke="#3e2723"/>
+    <text x="140" y="90" text-anchor="middle" font-size="13" fill="#3e2723" font-weight="bold">⑤ Gate Fill Metal</text>
+    <text x="140" y="108" text-anchor="middle" font-size="11" fill="#3e2723">W / Co / Ru</text>
+    <text x="140" y="124" text-anchor="middle" font-size="10" fill="#3e2723">填滿 trench 剩餘空間</text>
+  </g>
+
+  <!-- Right side annotation: function of each layer -->
+  <g transform="translate(440, 50)">
+    <text x="0" y="0" font-size="12" font-weight="bold">每層的功能</text>
+
+    <text x="0" y="22" font-size="11" font-weight="bold" fill="#f57f17">① IL：</text>
+    <text x="40" y="22" font-size="11">Si 與 high-k 之間的緩衝</text>
+    <text x="0" y="37" font-size="10" fill="#666">介面態低，避免 high-k 直接接矽</text>
+
+    <text x="0" y="60" font-size="11" font-weight="bold" fill="#1b5e20">② High-k：</text>
+    <text x="55" y="60" font-size="11">取代 SiO₂ 當 gate 介電</text>
+    <text x="0" y="75" font-size="10" fill="#666">k≈25, EOT 等效 0.3 nm</text>
+    <text x="0" y="90" font-size="10" fill="#666">物理厚, 抑制量子穿隧漏電</text>
+
+    <text x="0" y="115" font-size="11" font-weight="bold" fill="#006064">③ Cap：</text>
+    <text x="40" y="115" font-size="11">高溫熱穩定 + 微調 EWF</text>
+
+    <text x="0" y="138" font-size="11" font-weight="bold" fill="#4a148c">④ WFM：</text>
+    <text x="50" y="138" font-size="11">調 effective work function</text>
+    <text x="0" y="153" font-size="10" fill="#666">→ 決定 NMOS / PMOS Vt</text>
+    <text x="0" y="168" font-size="10" fill="#666">→ Multi-Vt 工程的核心</text>
+
+    <text x="0" y="193" font-size="11" font-weight="bold" fill="#3e2723">⑤ Fill：</text>
+    <text x="40" y="193" font-size="11">低阻金屬, 提供 gate 主導電</text>
+    <text x="0" y="208" font-size="10" fill="#666">W/Co/Ru 各有 trade-off</text>
+
+    <text x="0" y="240" font-size="11" font-weight="bold" fill="#d32f2f">關鍵 Metric：EOT</text>
+    <text x="0" y="255" font-size="10" fill="#666">EOT = t_phys × (k_SiO₂ / k_HK)</text>
+    <text x="0" y="270" font-size="10" fill="#666">= 物理厚度的等效 SiO₂ 厚</text>
+  </g>
+
+  <!-- Bottom note -->
+  <text x="360" y="370" text-anchor="middle" font-size="10" fill="#666" font-style="italic">註：圖中各層厚度為示意比例放大；實際 high-k ~2 nm, gate fill 可達數十 nm</text>
+</svg>

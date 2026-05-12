@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 500" font-family="sans-serif" font-size="12">
+  <title>SEM 物理原理</title>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <text x="500" y="22" text-anchor="middle" font-weight="bold" font-size="15">SEM（Scanning Electron Microscope）物理</text>
+
+  <!-- Schematic -->
+  <g transform="translate(200, 60)">
+    <rect x="0" y="0" width="280" height="380" fill="#fafafa" stroke="#bdbdbd"/>
+
+    <!-- Electron gun -->
+    <ellipse cx="140" cy="40" rx="50" ry="25" fill="#37474f"/>
+    <text x="140" y="38" text-anchor="middle" font-size="10" fill="#fff" font-weight="bold">Electron Gun</text>
+    <text x="140" y="54" text-anchor="middle" font-size="9" fill="#fff">FEG（field emission）</text>
+
+    <!-- Electron beam down -->
+    <line x1="140" y1="65" x2="140" y2="120" stroke="#1565c0" stroke-width="2.5" marker-end="url(#arrB3)"/>
+
+    <!-- Electromagnetic lens 1 -->
+    <ellipse cx="140" cy="130" rx="60" ry="10" fill="#bbdefb" stroke="#0d47a1" stroke-width="1.5"/>
+    <text x="220" y="134" font-size="9" fill="#0d47a1">電磁透鏡</text>
+
+    <!-- Beam continues -->
+    <line x1="140" y1="140" x2="140" y2="190" stroke="#1565c0" stroke-width="2" marker-end="url(#arrB3)"/>
+
+    <!-- Lens 2 (objective) -->
+    <ellipse cx="140" cy="200" rx="50" ry="8" fill="#bbdefb" stroke="#0d47a1" stroke-width="1.5"/>
+    <text x="200" y="203" font-size="9" fill="#0d47a1">objective</text>
+
+    <!-- Scanning beam -->
+    <line x1="140" y1="208" x2="120" y2="290" stroke="#1565c0" stroke-width="1.5"/>
+    <line x1="140" y1="208" x2="160" y2="290" stroke="#1565c0" stroke-width="1.5"/>
+    <line x1="140" y1="208" x2="140" y2="290" stroke="#1565c0" stroke-width="2"/>
+    <text x="60" y="248" font-size="9" fill="#0d47a1" font-weight="bold">Scan</text>
+
+    <!-- SE detector (off to side) -->
+    <rect x="20" y="260" width="50" height="30" rx="4" fill="#1b5e20"/>
+    <text x="45" y="278" text-anchor="middle" font-size="9" fill="#fff" font-weight="bold">SE Detector</text>
+
+    <!-- SE arrows from sample to detector -->
+    <line x1="130" y1="295" x2="75" y2="278" stroke="#1b5e20" stroke-width="1.2" marker-end="url(#arrG4)"/>
+    <line x1="135" y1="295" x2="75" y2="282" stroke="#1b5e20" stroke-width="1.2" marker-end="url(#arrG4)"/>
+    <text x="80" y="305" font-size="9" fill="#1b5e20">SE 散射</text>
+
+    <!-- Sample -->
+    <rect x="30" y="295" width="220" height="20" fill="#cfd8dc" stroke="#37474f"/>
+    <text x="140" y="309" text-anchor="middle" font-size="11" font-weight="bold" fill="#263238">Wafer Sample</text>
+
+    <!-- Sample stage -->
+    <rect x="50" y="315" width="180" height="14" fill="#90a4ae" stroke="#37474f"/>
+    <text x="140" y="326" text-anchor="middle" font-size="9" fill="#fff">Sample Stage</text>
+  </g>
+
+  <!-- Right side: physics -->
+  <g transform="translate(530, 80)" font-size="10">
+    <text x="0" y="0" font-size="13" font-weight="bold" fill="#37474f">物理機制</text>
+
+    <text x="0" y="28" font-weight="bold" fill="#0d47a1">▶ 電子加速</text>
+    <text x="10" y="44" fill="#666">幾 keV 到幾十 keV</text>
+    <text x="10" y="58" fill="#666">波長 &lt; 0.01 nm（極短）</text>
+
+    <text x="0" y="86" font-weight="bold" fill="#0d47a1">▶ 表面交互作用</text>
+    <text x="10" y="102" fill="#666">電子撞擊樣品 → 產生：</text>
+    <text x="20" y="116" fill="#666">- Secondary Electrons (SE)</text>
+    <text x="20" y="130" fill="#666">- Backscattered Electrons (BSE)</text>
+    <text x="20" y="144" fill="#666">- 特徵 X-ray（用於 EDS）</text>
+
+    <text x="0" y="172" font-weight="bold" fill="#0d47a1">▶ 影像形成</text>
+    <text x="10" y="188" fill="#666">SE 強度與 spot 位置對應</text>
+    <text x="10" y="202" fill="#666">→ 邊緣 / 凹凸更亮</text>
+
+    <text x="0" y="230" font-weight="bold" fill="#0d47a1">▶ 解析度</text>
+    <text x="10" y="246" fill="#666">~ 1–2 nm（現代 SEM）</text>
+    <text x="10" y="260" fill="#666">受 spot size + interaction 限制</text>
+
+    <text x="0" y="288" font-weight="bold" fill="#bf360c">▶ Charge 議題</text>
+    <text x="10" y="304" fill="#666">絕緣樣品累積負電 → 影像扭曲</text>
+    <text x="10" y="318" fill="#666">→ 對策：低 landing energy</text>
+  </g>
+
+  <!-- Bottom: applications -->
+  <g transform="translate(40, 460)">
+    <text x="460" y="0" text-anchor="middle" font-size="10" fill="#666" font-style="italic">→ 兩種主要 inline 應用：CD-SEM（量 CD）+ DR-SEM（defect 確認）。詳見 [Inspection Ch 3]</text>
+  </g>
+
+  <defs>
+    <marker id="arrB3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1565c0"/>
+    </marker>
+    <marker id="arrG4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1b5e20"/>
+    </marker>
+  </defs>
+</svg>

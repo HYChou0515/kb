@@ -1,0 +1,201 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 460" font-family="sans-serif" font-size="12">
+  <title>Ch 7 ILD0 + Dummy Removal Sequence — 4 panels</title>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Master title -->
+  <text x="500" y="22" text-anchor="middle" font-weight="bold" font-size="15">Ch 7 製程序列：S/D Epi → ILD0 → CMP → Dummy Removal</text>
+  <text x="500" y="40" text-anchor="middle" font-size="11" fill="#555">每一步剖面變化（沿通道方向）</text>
+
+  <!-- Common dimensions for each panel -->
+  <!-- Panel width: 230, height: 320, gap: 10 -->
+
+  <!-- ============= PANEL 1: After S/D Epi (Ch 7 起點) ============= -->
+  <g transform="translate(15, 60)">
+    <rect x="0" y="0" width="240" height="340" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="120" y="20" text-anchor="middle" font-weight="bold" font-size="13">① S/D Epi 完成</text>
+    <text x="120" y="36" text-anchor="middle" font-size="10" fill="#555">（Ch 7 的起始狀態）</text>
+
+    <!-- Substrate -->
+    <rect x="20" y="270" width="200" height="50" fill="#cfd8dc" stroke="#37474f"/>
+    <text x="120" y="298" text-anchor="middle" font-size="10" fill="#263238">Si Substrate</text>
+
+    <!-- Fin (centered) -->
+    <rect x="113" y="220" width="14" height="50" fill="#ffe082" stroke="#bf360c"/>
+
+    <!-- Spacers (SiN) on sides of dummy gate -->
+    <rect x="80" y="100" width="14" height="170" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="146" y="100" width="14" height="170" fill="#ffe0b2" stroke="#bf360c"/>
+
+    <!-- Dummy gate (poly) -->
+    <rect x="94" y="120" width="52" height="150" fill="#90caf9" stroke="#0d47a1"/>
+    <text x="120" y="180" text-anchor="middle" font-size="10" fill="#0d47a1" font-weight="bold">Dummy</text>
+    <text x="120" y="195" text-anchor="middle" font-size="10" fill="#0d47a1">Poly</text>
+
+    <!-- Hard mask on top of dummy -->
+    <rect x="94" y="100" width="52" height="20" fill="#ce93d8" stroke="#4a148c"/>
+    <text x="120" y="115" text-anchor="middle" font-size="9" fill="#4a148c">HM</text>
+
+    <!-- S/D epi diamonds on either side -->
+    <polygon points="50,210 80,240 50,260 20,240" fill="#b39ddb" stroke="#311b92"/>
+    <text x="50" y="244" text-anchor="middle" font-size="9" fill="#fff">epi</text>
+
+    <polygon points="190,210 220,240 190,260 160,240" fill="#b39ddb" stroke="#311b92"/>
+    <text x="190" y="244" text-anchor="middle" font-size="9" fill="#fff">epi</text>
+
+    <!-- Annotations -->
+    <text x="120" y="60" text-anchor="middle" font-size="10" fill="#444">表面凹凸不平</text>
+    <text x="120" y="76" text-anchor="middle" font-size="10" fill="#444">dummy gate 突出 + 菱形 epi</text>
+  </g>
+
+  <!-- ============= PANEL 2: After CESL + ILD0 dep ============= -->
+  <g transform="translate(265, 60)">
+    <rect x="0" y="0" width="240" height="340" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="120" y="20" text-anchor="middle" font-weight="bold" font-size="13">② CESL + ILD0 沉積</text>
+    <text x="120" y="36" text-anchor="middle" font-size="10" fill="#555">（HARP / FCVD 填滿空腔）</text>
+
+    <!-- Substrate -->
+    <rect x="20" y="270" width="200" height="50" fill="#cfd8dc" stroke="#37474f"/>
+    <text x="120" y="298" text-anchor="middle" font-size="10" fill="#263238">Si Substrate</text>
+
+    <!-- ILD0 over everything (light blue, big rect with curve over dummy gate) -->
+    <path d="M 20,270 L 220,270 L 220,80 L 150,80 L 150,55 L 90,55 L 90,80 L 20,80 Z"
+          fill="#bbdefb" fill-opacity="0.95" stroke="#0d47a1" stroke-width="0.5"/>
+    <text x="170" y="200" font-size="11" fill="#0d47a1" font-weight="bold">ILD0</text>
+    <text x="170" y="216" font-size="9" fill="#0d47a1">(SiO₂)</text>
+
+    <!-- CESL line (thin SiN under ILD0) -->
+    <path d="M 20,260 L 80,260 L 80,100 L 94,100 L 94,75 L 146,75 L 146,100 L 160,100 L 160,260 L 220,260"
+          fill="none" stroke="#388e3c" stroke-width="1.5" stroke-dasharray="2,1.5"/>
+    <text x="40" y="252" font-size="9" fill="#388e3c">CESL (SiN)</text>
+
+    <!-- Fin and dummy still inside -->
+    <rect x="113" y="220" width="14" height="50" fill="#ffe082" stroke="#bf360c"/>
+    <rect x="80" y="100" width="14" height="170" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="146" y="100" width="14" height="170" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="94" y="120" width="52" height="150" fill="#90caf9" stroke="#0d47a1"/>
+    <rect x="94" y="100" width="52" height="20" fill="#ce93d8" stroke="#4a148c"/>
+
+    <!-- S/D epi -->
+    <polygon points="50,210 80,240 50,260 20,240" fill="#b39ddb" stroke="#311b92"/>
+    <polygon points="190,210 220,240 190,260 160,240" fill="#b39ddb" stroke="#311b92"/>
+
+    <!-- Annotation -->
+    <text x="120" y="56" text-anchor="middle" font-size="10" fill="#444">ILD0 蓋住整個表面</text>
+    <text x="120" y="72" text-anchor="middle" font-size="10" fill="#444">表面仍有 dummy 形成的隆起</text>
+  </g>
+
+  <!-- ============= PANEL 3: After ILD0 CMP ============= -->
+  <g transform="translate(515, 60)">
+    <rect x="0" y="0" width="240" height="340" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="120" y="20" text-anchor="middle" font-weight="bold" font-size="13">③ ILD0 CMP（磨平）</text>
+    <text x="120" y="36" text-anchor="middle" font-size="10" fill="#555">（停在 hard mask 頂部）</text>
+
+    <!-- Substrate -->
+    <rect x="20" y="270" width="200" height="50" fill="#cfd8dc" stroke="#37474f"/>
+    <text x="120" y="298" text-anchor="middle" font-size="10" fill="#263238">Si Substrate</text>
+
+    <!-- Now ILD0 is flat at top -->
+    <rect x="20" y="100" width="60" height="170" fill="#bbdefb" stroke="#0d47a1"/>
+    <rect x="160" y="100" width="60" height="170" fill="#bbdefb" stroke="#0d47a1"/>
+
+    <text x="50" y="200" text-anchor="middle" font-size="11" fill="#0d47a1" font-weight="bold">ILD0</text>
+    <text x="190" y="200" text-anchor="middle" font-size="11" fill="#0d47a1" font-weight="bold">ILD0</text>
+
+    <!-- CESL traced at fin/epi level -->
+    <path d="M 20,260 L 80,260 L 80,100 M 160,100 L 160,260 L 220,260"
+          fill="none" stroke="#388e3c" stroke-width="1.5" stroke-dasharray="2,1.5"/>
+
+    <!-- Fin -->
+    <rect x="113" y="220" width="14" height="50" fill="#ffe082" stroke="#bf360c"/>
+
+    <!-- Spacers and dummy poly at top, hard mask removed by CMP -->
+    <rect x="80" y="100" width="14" height="170" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="146" y="100" width="14" height="170" fill="#ffe0b2" stroke="#bf360c"/>
+
+    <!-- Dummy poly exposed at top -->
+    <rect x="94" y="100" width="52" height="170" fill="#90caf9" stroke="#0d47a1"/>
+    <text x="120" y="180" text-anchor="middle" font-size="10" fill="#0d47a1" font-weight="bold">Dummy</text>
+    <text x="120" y="195" text-anchor="middle" font-size="10" fill="#0d47a1">Poly</text>
+
+    <!-- S/D epi -->
+    <polygon points="50,210 80,240 50,260 20,240" fill="#b39ddb" stroke="#311b92"/>
+    <polygon points="190,210 220,240 190,260 160,240" fill="#b39ddb" stroke="#311b92"/>
+
+    <!-- Top dashed line indicating planar surface -->
+    <line x1="20" y1="100" x2="220" y2="100" stroke="#d32f2f" stroke-width="1.5" stroke-dasharray="3,2"/>
+    <text x="120" y="56" text-anchor="middle" font-size="10" fill="#444">表面磨成完全平整</text>
+    <text x="120" y="72" text-anchor="middle" font-size="10" fill="#444">露出 dummy poly 頂端</text>
+  </g>
+
+  <!-- ============= PANEL 4: After Dummy Gate Removal ============= -->
+  <g transform="translate(765, 60)">
+    <rect x="0" y="0" width="220" height="340" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="110" y="20" text-anchor="middle" font-weight="bold" font-size="13">④ Dummy Gate 拆除</text>
+    <text x="110" y="36" text-anchor="middle" font-size="10" fill="#555">（wet etch poly + strip oxide）</text>
+
+    <!-- Substrate -->
+    <rect x="20" y="270" width="180" height="50" fill="#cfd8dc" stroke="#37474f"/>
+    <text x="110" y="298" text-anchor="middle" font-size="10" fill="#263238">Si Substrate</text>
+
+    <!-- ILD0 sides remain -->
+    <rect x="20" y="100" width="60" height="170" fill="#bbdefb" stroke="#0d47a1"/>
+    <rect x="140" y="100" width="60" height="170" fill="#bbdefb" stroke="#0d47a1"/>
+    <text x="50" y="200" text-anchor="middle" font-size="11" fill="#0d47a1" font-weight="bold">ILD0</text>
+    <text x="170" y="200" text-anchor="middle" font-size="11" fill="#0d47a1" font-weight="bold">ILD0</text>
+
+    <!-- CESL trace -->
+    <path d="M 20,260 L 80,260 L 80,100 M 140,100 L 140,260 L 200,260"
+          fill="none" stroke="#388e3c" stroke-width="1.5" stroke-dasharray="2,1.5"/>
+
+    <!-- Fin -->
+    <rect x="103" y="220" width="14" height="50" fill="#ffe082" stroke="#bf360c"/>
+
+    <!-- Spacers (poly is gone from between them) -->
+    <rect x="80" y="100" width="14" height="170" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="126" y="100" width="14" height="170" fill="#ffe0b2" stroke="#bf360c"/>
+
+    <!-- The TRENCH - empty space between spacers -->
+    <rect x="94" y="100" width="32" height="120" fill="#ffffff" stroke="#d32f2f" stroke-width="1.5" stroke-dasharray="3,2"/>
+    <text x="110" y="155" text-anchor="middle" font-size="11" fill="#d32f2f" font-weight="bold">Gate</text>
+    <text x="110" y="170" text-anchor="middle" font-size="11" fill="#d32f2f" font-weight="bold">Trench</text>
+    <text x="110" y="184" text-anchor="middle" font-size="9" fill="#d32f2f">(空，等填 HKMG)</text>
+
+    <!-- Fin top exposed at trench bottom -->
+    <line x1="94" y1="220" x2="126" y2="220" stroke="#bf360c" stroke-width="1.5"/>
+
+    <!-- S/D epi -->
+    <polygon points="50,210 80,240 50,260 20,240" fill="#b39ddb" stroke="#311b92"/>
+    <polygon points="170,210 200,240 170,260 140,240" fill="#b39ddb" stroke="#311b92"/>
+
+    <text x="110" y="56" text-anchor="middle" font-size="10" fill="#444">凹槽形成，露出 fin</text>
+    <text x="110" y="72" text-anchor="middle" font-size="10" fill="#444">Ch 8 的 RMG 從這開始</text>
+  </g>
+
+  <!-- ============= Bottom legend ============= -->
+  <g transform="translate(15, 415)">
+    <rect x="0" y="-10" width="970" height="40" fill="#fafafa" stroke="#bdbdbd"/>
+    <rect x="10" y="0" width="14" height="14" fill="#ffe082" stroke="#bf360c"/>
+    <text x="30" y="11" font-size="11" fill="#222">Si fin</text>
+
+    <rect x="100" y="0" width="14" height="14" fill="#ffe0b2" stroke="#bf360c"/>
+    <text x="120" y="11" font-size="11" fill="#222">Spacer (SiN)</text>
+
+    <rect x="220" y="0" width="14" height="14" fill="#90caf9" stroke="#0d47a1"/>
+    <text x="240" y="11" font-size="11" fill="#222">Dummy poly</text>
+
+    <rect x="340" y="0" width="14" height="14" fill="#ce93d8" stroke="#4a148c"/>
+    <text x="360" y="11" font-size="11" fill="#222">Hard mask</text>
+
+    <rect x="450" y="0" width="14" height="14" fill="#bbdefb" stroke="#0d47a1"/>
+    <text x="470" y="11" font-size="11" fill="#222">ILD0 (SiO₂)</text>
+
+    <line x1="560" y1="7" x2="585" y2="7" stroke="#388e3c" stroke-width="1.5" stroke-dasharray="2,1.5"/>
+    <text x="590" y="11" font-size="11" fill="#222">CESL (SiN, etch stop)</text>
+
+    <rect x="730" y="0" width="14" height="14" fill="#b39ddb" stroke="#311b92"/>
+    <text x="750" y="11" font-size="11" fill="#222">S/D epi</text>
+
+    <rect x="820" y="0" width="14" height="14" fill="#cfd8dc" stroke="#37474f"/>
+    <text x="840" y="11" font-size="11" fill="#222">Substrate</text>
+  </g>
+</svg>

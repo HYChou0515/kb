@@ -1,0 +1,146 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 400" font-family="sans-serif" font-size="12">
+  <title>Planar vs FinFET vs GAA gate-channel coverage</title>
+
+  <!-- White background for dark-mode safety -->
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Master title -->
+  <text x="420" y="22" text-anchor="middle" font-weight="bold" font-size="15">Gate 對通道的覆蓋面數演進</text>
+
+  <!-- ===== Panel 1: Planar (1 side) ===== -->
+  <g transform="translate(20, 50)">
+    <!-- Panel border -->
+    <rect x="0" y="0" width="260" height="320" fill="#fafafa" stroke="#bdbdbd" stroke-width="1"/>
+
+    <text x="130" y="22" text-anchor="middle" font-weight="bold" font-size="14">Planar</text>
+    <text x="130" y="40" text-anchor="middle" font-size="11" fill="#555">Gate 從 1 面控制</text>
+
+    <!-- Substrate at bottom -->
+    <rect x="20" y="220" width="220" height="40" fill="#cfd8dc" stroke="#37474f"/>
+    <text x="130" y="245" text-anchor="middle" font-size="11" fill="#263238">Si Substrate</text>
+
+    <!-- S and D regions -->
+    <rect x="40" y="200" width="60" height="20" fill="#90a4ae" stroke="#37474f"/>
+    <text x="70" y="214" text-anchor="middle" font-size="11" fill="#fff" font-weight="bold">S</text>
+
+    <rect x="160" y="200" width="60" height="20" fill="#90a4ae" stroke="#37474f"/>
+    <text x="190" y="214" text-anchor="middle" font-size="11" fill="#fff" font-weight="bold">D</text>
+
+    <!-- Channel between S and D, just below surface -->
+    <rect x="100" y="200" width="60" height="6" fill="#ffe082" stroke="#bf360c" stroke-width="1"/>
+    <text x="130" y="195" text-anchor="middle" font-size="10" fill="#bf360c">channel</text>
+
+    <!-- Gate sits on top of channel -->
+    <rect x="100" y="150" width="60" height="50" fill="#7e57c2" stroke="#311b92" stroke-width="1.5"/>
+    <text x="130" y="180" text-anchor="middle" font-size="12" fill="#fff" font-weight="bold">Gate</text>
+
+    <!-- Coverage indicator: only 1 arrow (top) -->
+    <line x1="130" y1="135" x2="130" y2="148" stroke="#d32f2f" stroke-width="2.5" marker-end="url(#arrR)"/>
+    <text x="130" y="128" text-anchor="middle" font-size="10" fill="#d32f2f">1 面</text>
+
+    <!-- Limits / context -->
+    <text x="130" y="285" text-anchor="middle" font-size="11" fill="#555">適用節點：≥ 28 nm</text>
+    <text x="130" y="302" text-anchor="middle" font-size="10" fill="#555">短通道效應嚴重，無法持續微縮</text>
+  </g>
+
+  <!-- ===== Panel 2: FinFET (3 sides) ===== -->
+  <g transform="translate(290, 50)">
+    <rect x="0" y="0" width="260" height="320" fill="#fafafa" stroke="#bdbdbd" stroke-width="1"/>
+
+    <text x="130" y="22" text-anchor="middle" font-weight="bold" font-size="14">FinFET</text>
+    <text x="130" y="40" text-anchor="middle" font-size="11" fill="#555">Gate 從 3 面（top + 兩側）控制</text>
+
+    <!-- Substrate -->
+    <rect x="20" y="220" width="220" height="40" fill="#cfd8dc" stroke="#37474f"/>
+    <text x="130" y="245" text-anchor="middle" font-size="11" fill="#263238">Si Substrate</text>
+
+    <!-- Gate body (single big rectangle that wraps fins on 3 sides) -->
+    <rect x="40" y="120" width="180" height="100" fill="#7e57c2" fill-opacity="0.85" stroke="#311b92" stroke-width="1.5"/>
+
+    <!-- Fins (drawn ON TOP of gate, showing they sit inside the gate region) -->
+    <rect x="65" y="150" width="14" height="70" fill="#ffe082" stroke="#bf360c"/>
+    <rect x="123" y="150" width="14" height="70" fill="#ffe082" stroke="#bf360c"/>
+    <rect x="181" y="150" width="14" height="70" fill="#ffe082" stroke="#bf360c"/>
+
+    <text x="130" y="135" text-anchor="middle" font-size="11" fill="#fff" font-weight="bold">Gate（包圍 fin 三面）</text>
+
+    <!-- Coverage arrows on middle fin: top, left, right -->
+    <line x1="130" y1="142" x2="130" y2="148" stroke="#d32f2f" stroke-width="2" marker-end="url(#arrR)"/>
+    <line x1="115" y1="170" x2="121" y2="170" stroke="#d32f2f" stroke-width="2" marker-end="url(#arrR)"/>
+    <line x1="145" y1="170" x2="139" y2="170" stroke="#d32f2f" stroke-width="2" marker-end="url(#arrR)"/>
+    <text x="100" y="155" text-anchor="middle" font-size="10" fill="#d32f2f">3 面</text>
+
+    <!-- Fin labels -->
+    <text x="72" y="240" text-anchor="middle" font-size="9" fill="#bf360c">fin</text>
+    <text x="130" y="240" text-anchor="middle" font-size="9" fill="#bf360c">fin</text>
+    <text x="188" y="240" text-anchor="middle" font-size="9" fill="#bf360c">fin</text>
+
+    <text x="130" y="285" text-anchor="middle" font-size="11" fill="#555">適用節點：22 nm – N7</text>
+    <text x="130" y="302" text-anchor="middle" font-size="10" fill="#555">控制力提升，FinFET 撐到 ~5 nm</text>
+  </g>
+
+  <!-- ===== Panel 3: GAA (4 sides) ===== -->
+  <g transform="translate(560, 50)">
+    <rect x="0" y="0" width="260" height="320" fill="#fafafa" stroke="#bdbdbd" stroke-width="1"/>
+
+    <text x="130" y="22" text-anchor="middle" font-weight="bold" font-size="14">GAA Nanosheet</text>
+    <text x="130" y="40" text-anchor="middle" font-size="11" fill="#555">Gate 從 4 面（環繞）控制</text>
+
+    <!-- Substrate -->
+    <rect x="20" y="220" width="220" height="40" fill="#cfd8dc" stroke="#37474f"/>
+    <text x="130" y="245" text-anchor="middle" font-size="11" fill="#263238">Si Substrate</text>
+
+    <!-- Outer gate region (single solid rectangle) -->
+    <rect x="55" y="100" width="150" height="120" fill="#7e57c2" fill-opacity="0.85" stroke="#311b92" stroke-width="1.5"/>
+    <text x="130" y="115" text-anchor="middle" font-size="11" fill="#fff" font-weight="bold">Gate（完全包覆）</text>
+
+    <!-- Three nanosheets inside gate, with visible gate region between them -->
+    <rect x="80" y="135" width="100" height="12" fill="#ffe082" stroke="#bf360c"/>
+    <rect x="80" y="165" width="100" height="12" fill="#ffe082" stroke="#bf360c"/>
+    <rect x="80" y="195" width="100" height="12" fill="#ffe082" stroke="#bf360c"/>
+
+    <text x="60" y="143" font-size="9" fill="#bf360c">NS1</text>
+    <text x="60" y="173" font-size="9" fill="#bf360c">NS2</text>
+    <text x="60" y="203" font-size="9" fill="#bf360c">NS3</text>
+
+    <!-- 4 arrows pointing AT the middle nanosheet from all 4 sides (clear & big) -->
+    <!-- Top -->
+    <line x1="130" y1="152" x2="130" y2="160" stroke="#d32f2f" stroke-width="2.5" marker-end="url(#arrR)"/>
+    <!-- Bottom -->
+    <line x1="130" y1="185" x2="130" y2="178" stroke="#d32f2f" stroke-width="2.5" marker-end="url(#arrR)"/>
+    <!-- Left -->
+    <line x1="72" y1="171" x2="78" y2="171" stroke="#d32f2f" stroke-width="2.5" marker-end="url(#arrR)"/>
+    <!-- Right -->
+    <line x1="188" y1="171" x2="182" y2="171" stroke="#d32f2f" stroke-width="2.5" marker-end="url(#arrR)"/>
+
+    <text x="220" y="173" text-anchor="middle" font-size="10" fill="#d32f2f" font-weight="bold">4 面</text>
+
+    <text x="130" y="285" text-anchor="middle" font-size="11" fill="#555">適用節點：N3 / N2 起</text>
+    <text x="130" y="302" text-anchor="middle" font-size="10" fill="#555">通道完整環繞 + sheet 寬度可調</text>
+  </g>
+
+  <!-- ===== Bottom legend ===== -->
+  <g transform="translate(20, 380)">
+    <rect x="0" y="-10" width="800" height="22" fill="#fafafa" stroke="#bdbdbd"/>
+    <rect x="10" y="-3" width="14" height="14" fill="#ffe082" stroke="#bf360c"/>
+    <text x="30" y="8" font-size="11" fill="#222">Channel (Si)</text>
+
+    <rect x="130" y="-3" width="14" height="14" fill="#7e57c2" fill-opacity="0.85" stroke="#311b92"/>
+    <text x="150" y="8" font-size="11" fill="#222">Gate (HKMG)</text>
+
+    <rect x="260" y="-3" width="14" height="14" fill="#90a4ae" stroke="#37474f"/>
+    <text x="280" y="8" font-size="11" fill="#222">Source / Drain</text>
+
+    <rect x="400" y="-3" width="14" height="14" fill="#cfd8dc" stroke="#37474f"/>
+    <text x="420" y="8" font-size="11" fill="#222">Si Substrate</text>
+
+    <line x1="540" y1="4" x2="554" y2="4" stroke="#d32f2f" stroke-width="2.5" marker-end="url(#arrR)"/>
+    <text x="560" y="8" font-size="11" fill="#222">Gate 對通道的接觸方向</text>
+  </g>
+
+  <defs>
+    <marker id="arrR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#d32f2f"/>
+    </marker>
+  </defs>
+</svg>

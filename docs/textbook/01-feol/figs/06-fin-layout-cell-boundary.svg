@@ -1,0 +1,201 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 500" font-family="sans-serif" font-size="12">
+  <title>Fin layout: 多閘極共用 + cell boundary（SDB / DDB）</title>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Master title -->
+  <text x="500" y="22" text-anchor="middle" font-weight="bold" font-size="15">沿 fin 走一段，會碰到什麼？（俯視）</text>
+  <text x="500" y="40" text-anchor="middle" font-size="11" fill="#555">三種典型情境並列</text>
+
+  <!-- ============ Case 1: Multi-finger (sharing) ============ -->
+  <g transform="translate(15, 60)">
+    <rect x="0" y="0" width="320" height="170" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="160" y="20" text-anchor="middle" font-weight="bold" font-size="13">情況 1：多閘極共用 fin（cell 內部）</text>
+    <text x="160" y="36" text-anchor="middle" font-size="10" fill="#555">相鄰電晶體的 D/S 共用同一塊 epi</text>
+
+    <!-- The fin (horizontal) -->
+    <rect x="20" y="80" width="290" height="20" fill="#ffe082" stroke="#bf360c"/>
+
+    <!-- EPI sections (on fin) -->
+    <rect x="20" y="75" width="40" height="30" fill="#b39ddb" stroke="#311b92"/>
+    <text x="40" y="95" text-anchor="middle" font-size="10" fill="#fff" font-weight="bold">EPI</text>
+
+    <rect x="100" y="75" width="40" height="30" fill="#b39ddb" stroke="#311b92"/>
+    <text x="120" y="95" text-anchor="middle" font-size="10" fill="#fff" font-weight="bold">EPI</text>
+
+    <rect x="180" y="75" width="40" height="30" fill="#b39ddb" stroke="#311b92"/>
+    <text x="200" y="95" text-anchor="middle" font-size="10" fill="#fff" font-weight="bold">EPI</text>
+
+    <rect x="260" y="75" width="50" height="30" fill="#b39ddb" stroke="#311b92"/>
+    <text x="285" y="95" text-anchor="middle" font-size="10" fill="#fff" font-weight="bold">EPI</text>
+
+    <!-- Gates (vertical stripes) crossing fin -->
+    <rect x="60" y="60" width="40" height="60" fill="#7e57c2" fill-opacity="0.85" stroke="#311b92"/>
+    <text x="80" y="85" text-anchor="middle" font-size="10" fill="#fff" font-weight="bold">MG</text>
+    <text x="80" y="55" text-anchor="middle" font-size="9" fill="#311b92">T1</text>
+
+    <rect x="140" y="60" width="40" height="60" fill="#7e57c2" fill-opacity="0.85" stroke="#311b92"/>
+    <text x="160" y="85" text-anchor="middle" font-size="10" fill="#fff" font-weight="bold">MG</text>
+    <text x="160" y="55" text-anchor="middle" font-size="9" fill="#311b92">T2</text>
+
+    <rect x="220" y="60" width="40" height="60" fill="#7e57c2" fill-opacity="0.85" stroke="#311b92"/>
+    <text x="240" y="85" text-anchor="middle" font-size="10" fill="#fff" font-weight="bold">MG</text>
+    <text x="240" y="55" text-anchor="middle" font-size="9" fill="#311b92">T3</text>
+
+    <!-- Spacer indicators -->
+    <rect x="56" y="60" width="4" height="60" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="100" y="60" width="4" height="60" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="136" y="60" width="4" height="60" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="180" y="60" width="4" height="60" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="216" y="60" width="4" height="60" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="260" y="60" width="4" height="60" fill="#ffe0b2" stroke="#bf360c"/>
+
+    <!-- Sharing arrows -->
+    <path d="M 80,135 Q 110,150 120,135" fill="none" stroke="#1b5e20" stroke-width="1" marker-end="url(#arrG3)"/>
+    <text x="100" y="158" text-anchor="middle" font-size="9" fill="#1b5e20">T1 D = T2 S（共用）</text>
+
+    <path d="M 160,135 Q 190,150 200,135" fill="none" stroke="#1b5e20" stroke-width="1" marker-end="url(#arrG3)"/>
+    <text x="180" y="158" text-anchor="middle" font-size="9" fill="#1b5e20">T2 D = T3 S（共用）</text>
+  </g>
+
+  <!-- ============ Case 2: Single Diffusion Break (SDB) ============ -->
+  <g transform="translate(345, 60)">
+    <rect x="0" y="0" width="320" height="170" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="160" y="20" text-anchor="middle" font-weight="bold" font-size="13">情況 2：Single Diffusion Break (SDB)</text>
+    <text x="160" y="36" text-anchor="middle" font-size="10" fill="#555">cell 邊界，fin 在此切斷，STI 填入</text>
+
+    <!-- Cell A boundary annotation -->
+    <text x="80" y="55" text-anchor="middle" font-size="10" fill="#0d47a1">←── Cell A ──→</text>
+    <text x="240" y="55" text-anchor="middle" font-size="10" fill="#0d47a1">←── Cell B ──→</text>
+
+    <!-- Left cell -->
+    <rect x="20" y="80" width="120" height="20" fill="#ffe082" stroke="#bf360c"/>
+    <rect x="20" y="75" width="40" height="30" fill="#b39ddb" stroke="#311b92"/>
+    <text x="40" y="95" text-anchor="middle" font-size="9" fill="#fff" font-weight="bold">EPI</text>
+    <rect x="100" y="75" width="40" height="30" fill="#b39ddb" stroke="#311b92"/>
+    <text x="120" y="95" text-anchor="middle" font-size="9" fill="#fff" font-weight="bold">EPI</text>
+    <rect x="60" y="60" width="40" height="60" fill="#7e57c2" fill-opacity="0.85" stroke="#311b92"/>
+    <text x="80" y="85" text-anchor="middle" font-size="10" fill="#fff" font-weight="bold">MG</text>
+
+    <!-- Fin cut / STI region in middle -->
+    <rect x="140" y="75" width="40" height="30" fill="#cfd8dc" stroke="#37474f" stroke-dasharray="3,2"/>
+    <text x="160" y="91" text-anchor="middle" font-size="11" fill="#d32f2f" font-weight="bold">STI</text>
+    <text x="160" y="103" text-anchor="middle" font-size="8" fill="#d32f2f">(fin cut)</text>
+
+    <!-- Right cell -->
+    <rect x="180" y="80" width="120" height="20" fill="#ffe082" stroke="#bf360c"/>
+    <rect x="180" y="75" width="40" height="30" fill="#b39ddb" stroke="#311b92"/>
+    <text x="200" y="95" text-anchor="middle" font-size="9" fill="#fff" font-weight="bold">EPI</text>
+    <rect x="260" y="75" width="40" height="30" fill="#b39ddb" stroke="#311b92"/>
+    <text x="280" y="95" text-anchor="middle" font-size="9" fill="#fff" font-weight="bold">EPI</text>
+    <rect x="220" y="60" width="40" height="60" fill="#7e57c2" fill-opacity="0.85" stroke="#311b92"/>
+    <text x="240" y="85" text-anchor="middle" font-size="10" fill="#fff" font-weight="bold">MG</text>
+
+    <!-- Spacers -->
+    <rect x="56" y="60" width="4" height="60" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="100" y="60" width="4" height="60" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="216" y="60" width="4" height="60" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="260" y="60" width="4" height="60" fill="#ffe0b2" stroke="#bf360c"/>
+
+    <!-- Highlight the X -->
+    <rect x="138" y="73" width="44" height="34" fill="none" stroke="#d32f2f" stroke-width="2" stroke-dasharray="2,2"/>
+    <text x="160" y="135" text-anchor="middle" font-size="10" fill="#d32f2f" font-weight="bold">「X」= STI</text>
+    <text x="160" y="148" text-anchor="middle" font-size="9" fill="#444">fin 在這裡切斷，STI 取代</text>
+    <text x="160" y="161" text-anchor="middle" font-size="9" fill="#444">先進製程（N5 / N3）主流</text>
+  </g>
+
+  <!-- ============ Case 3: Double Diffusion Break (DDB) ============ -->
+  <g transform="translate(675, 60)">
+    <rect x="0" y="0" width="320" height="170" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="160" y="20" text-anchor="middle" font-weight="bold" font-size="13">情況 3：Double Diffusion Break (DDB)</text>
+    <text x="160" y="36" text-anchor="middle" font-size="10" fill="#555">舊製程；用兩個 dummy gate 隔離，fin 不切</text>
+
+    <text x="60" y="55" text-anchor="middle" font-size="10" fill="#0d47a1">← Cell A</text>
+    <text x="260" y="55" text-anchor="middle" font-size="10" fill="#0d47a1">Cell B →</text>
+
+    <!-- Continuous fin -->
+    <rect x="20" y="80" width="290" height="20" fill="#ffe082" stroke="#bf360c"/>
+
+    <!-- Left active EPI + MG -->
+    <rect x="20" y="75" width="40" height="30" fill="#b39ddb" stroke="#311b92"/>
+    <text x="40" y="95" text-anchor="middle" font-size="9" fill="#fff" font-weight="bold">EPI</text>
+    <rect x="60" y="60" width="40" height="60" fill="#7e57c2" fill-opacity="0.85" stroke="#311b92"/>
+    <text x="80" y="85" text-anchor="middle" font-size="10" fill="#fff" font-weight="bold">MG</text>
+    <rect x="100" y="75" width="40" height="30" fill="#b39ddb" stroke="#311b92"/>
+    <text x="120" y="95" text-anchor="middle" font-size="9" fill="#fff" font-weight="bold">EPI</text>
+
+    <!-- Two dummy gates (no EPI between them) -->
+    <rect x="140" y="60" width="30" height="60" fill="#bcaaa4" stroke="#3e2723" stroke-dasharray="3,2"/>
+    <text x="155" y="85" text-anchor="middle" font-size="9" fill="#3e2723" font-weight="bold">DUM</text>
+
+    <!-- No EPI here; just fin -->
+    <text x="180" y="93" text-anchor="middle" font-size="9" fill="#555" font-style="italic">(no EPI)</text>
+
+    <rect x="190" y="60" width="30" height="60" fill="#bcaaa4" stroke="#3e2723" stroke-dasharray="3,2"/>
+    <text x="205" y="85" text-anchor="middle" font-size="9" fill="#3e2723" font-weight="bold">DUM</text>
+
+    <!-- Right active -->
+    <rect x="220" y="75" width="40" height="30" fill="#b39ddb" stroke="#311b92"/>
+    <text x="240" y="95" text-anchor="middle" font-size="9" fill="#fff" font-weight="bold">EPI</text>
+    <rect x="260" y="60" width="40" height="60" fill="#7e57c2" fill-opacity="0.85" stroke="#311b92"/>
+    <text x="280" y="85" text-anchor="middle" font-size="10" fill="#fff" font-weight="bold">MG</text>
+
+    <!-- Spacers -->
+    <rect x="56" y="60" width="4" height="60" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="100" y="60" width="4" height="60" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="136" y="60" width="4" height="60" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="170" y="60" width="4" height="60" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="186" y="60" width="4" height="60" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="220" y="60" width="4" height="60" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="256" y="60" width="4" height="60" fill="#ffe0b2" stroke="#bf360c"/>
+
+    <!-- Highlight the X -->
+    <rect x="135" y="58" width="90" height="64" fill="none" stroke="#d32f2f" stroke-width="2" stroke-dasharray="2,2"/>
+    <text x="180" y="135" text-anchor="middle" font-size="10" fill="#d32f2f" font-weight="bold">「X」= 兩個 dummy gate</text>
+    <text x="180" y="148" text-anchor="middle" font-size="9" fill="#444">fin 沒切，但中間沒做 epi</text>
+    <text x="180" y="161" text-anchor="middle" font-size="9" fill="#444">N7 之前較常見</text>
+  </g>
+
+  <!-- ============ Bottom legend + summary ============ -->
+  <g transform="translate(15, 250)">
+    <rect x="0" y="0" width="970" height="32" fill="#fafafa" stroke="#bdbdbd"/>
+    <rect x="10" y="9" width="14" height="14" fill="#ffe082" stroke="#bf360c"/>
+    <text x="30" y="20" font-size="11" fill="#222">fin (Si)</text>
+
+    <rect x="100" y="9" width="14" height="14" fill="#b39ddb" stroke="#311b92"/>
+    <text x="120" y="20" font-size="11" fill="#222">S/D EPI（PEPI 或 NEPI）</text>
+
+    <rect x="280" y="9" width="14" height="14" fill="#7e57c2" fill-opacity="0.85" stroke="#311b92"/>
+    <text x="300" y="20" font-size="11" fill="#222">Metal Gate (HKMG)</text>
+
+    <rect x="430" y="9" width="14" height="14" fill="#ffe0b2" stroke="#bf360c"/>
+    <text x="450" y="20" font-size="11" fill="#222">spacer (SiN)</text>
+
+    <rect x="540" y="9" width="14" height="14" fill="#bcaaa4" stroke="#3e2723"/>
+    <text x="560" y="20" font-size="11" fill="#222">Dummy gate (cell 邊界用)</text>
+
+    <rect x="730" y="9" width="14" height="14" fill="#cfd8dc" stroke="#37474f"/>
+    <text x="750" y="20" font-size="11" fill="#222">STI (氧化矽)</text>
+  </g>
+
+  <!-- Summary box -->
+  <g transform="translate(15, 300)">
+    <rect x="0" y="0" width="970" height="180" fill="#e8f5e9" stroke="#1b5e20" stroke-width="1"/>
+    <text x="10" y="22" font-size="13" font-weight="bold" fill="#1b5e20">「沿 fin 走一段，下一個是什麼？」決策樹</text>
+
+    <text x="20" y="50" font-size="12" fill="#0d47a1">
+      <tspan font-weight="bold">Q：</tspan>看你這顆電晶體的位置：
+    </text>
+    <text x="40" y="72" font-size="11" fill="#444">▶ <tspan font-weight="bold">情況 1（cell 內部、多閘極共用）</tspan>：下一段是 spacer → MG → spacer → 下一個 EPI（與下顆電晶體共用）</text>
+    <text x="40" y="92" font-size="11" fill="#444">▶ <tspan font-weight="bold">情況 2（cell 邊界，SDB）</tspan>：下一段是 STI（fin 在這裡被切斷，oxide 取代）</text>
+    <text x="40" y="112" font-size="11" fill="#444">▶ <tspan font-weight="bold">情況 3（cell 邊界，DDB；舊製程）</tspan>：下一段是兩個 dummy gate，中間 fin 不切但沒 EPI</text>
+
+    <text x="10" y="148" font-size="12" font-weight="bold" fill="#bf360c">對 yield 工程師：</text>
+    <text x="20" y="166" font-size="11" fill="#444">cell 邊界（情況 2、3）是 hot pattern 集散地。fin cut、SDB 邊緣、DDB dummy 都是 yield 分析的常客 layout 區域。</text>
+  </g>
+
+  <defs>
+    <marker id="arrG3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1b5e20"/>
+    </marker>
+  </defs>
+</svg>

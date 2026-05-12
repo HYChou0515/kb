@@ -1,0 +1,234 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 600" font-family="sans-serif" font-size="12">
+  <title>EPI 各方向鄰居 — 俯視 + 剖面</title>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Master title -->
+  <text x="500" y="22" text-anchor="middle" font-weight="bold" font-size="15">EPI 在 X / Y / Z 各方向的鄰居（俯視 + 剖面）</text>
+
+  <!-- ============ Top view (left) ============ -->
+  <g transform="translate(20, 50)">
+    <rect x="0" y="0" width="540" height="280" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="270" y="20" text-anchor="middle" font-weight="bold" font-size="13">俯視 (top view)</text>
+
+    <!-- STI background -->
+    <rect x="20" y="40" width="500" height="220" fill="#cfd8dc"/>
+    <text x="30" y="55" font-size="10" fill="#37474f" font-style="italic">STI 背景</text>
+
+    <!-- PMOS OD (top, horizontal strip) -->
+    <rect x="40" y="65" width="270" height="65" fill="#e1bee7" stroke="#4a148c" stroke-width="1.2"/>
+    <text x="50" y="78" font-size="10" fill="#4a148c" font-weight="bold">PMOS OD</text>
+
+    <!-- 3 fins in PMOS active -->
+    <rect x="40" y="85" width="270" height="3" fill="#bf360c"/>
+    <rect x="40" y="100" width="270" height="3" fill="#bf360c"/>
+    <rect x="40" y="115" width="270" height="3" fill="#bf360c"/>
+
+    <!-- STI between fins (within OD) - represented by the visible color showing through -->
+    <rect x="40" y="88" width="270" height="12" fill="#d7bde2" opacity="0.4"/>
+    <rect x="40" y="103" width="270" height="12" fill="#d7bde2" opacity="0.4"/>
+
+    <!-- EPI on PMOS fins -->
+    <ellipse cx="80" cy="86" rx="11" ry="6" fill="#7e57c2" stroke="#311b92"/>
+    <ellipse cx="80" cy="101" rx="11" ry="6" fill="#7e57c2" stroke="#311b92"/>
+    <ellipse cx="80" cy="116" rx="11" ry="6" fill="#7e57c2" stroke="#311b92"/>
+
+    <ellipse cx="170" cy="86" rx="11" ry="6" fill="#7e57c2" stroke="#311b92"/>
+    <ellipse cx="170" cy="101" rx="11" ry="6" fill="#d32f2f" stroke="#311b92" stroke-width="2"/>
+    <ellipse cx="170" cy="116" rx="11" ry="6" fill="#7e57c2" stroke="#311b92"/>
+
+    <ellipse cx="260" cy="86" rx="11" ry="6" fill="#7e57c2" stroke="#311b92"/>
+    <ellipse cx="260" cy="101" rx="11" ry="6" fill="#7e57c2" stroke="#311b92"/>
+    <ellipse cx="260" cy="116" rx="11" ry="6" fill="#7e57c2" stroke="#311b92"/>
+
+    <!-- Highlighted EPI label -->
+    <text x="170" y="98" text-anchor="middle" font-size="9" fill="#fff" font-weight="bold">★</text>
+
+    <!-- Gate stripes crossing PMOS active -->
+    <rect x="115" y="60" width="20" height="75" fill="#7e57c2" fill-opacity="0.6" stroke="#311b92"/>
+    <rect x="205" y="60" width="20" height="75" fill="#7e57c2" fill-opacity="0.6" stroke="#311b92"/>
+
+    <!-- Gate cap labels -->
+    <text x="125" y="56" text-anchor="middle" font-size="9" fill="#311b92">MG</text>
+    <text x="215" y="56" text-anchor="middle" font-size="9" fill="#311b92">MG</text>
+
+    <!-- Spacers -->
+    <rect x="111" y="60" width="4" height="75" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="135" y="60" width="4" height="75" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="201" y="60" width="4" height="75" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="225" y="60" width="4" height="75" fill="#ffe0b2" stroke="#bf360c"/>
+
+    <!-- Cell boundary STI (fin cut) on right side of PMOS active -->
+    <text x="320" y="98" font-size="9" fill="#37474f" font-style="italic">STI (fin cut)</text>
+
+    <!-- NMOS OD (bottom) -->
+    <rect x="40" y="180" width="270" height="65" fill="#bbdefb" stroke="#0d47a1" stroke-width="1.2"/>
+    <text x="50" y="193" font-size="10" fill="#0d47a1" font-weight="bold">NMOS OD</text>
+
+    <rect x="40" y="200" width="270" height="3" fill="#bf360c"/>
+    <rect x="40" y="215" width="270" height="3" fill="#bf360c"/>
+    <rect x="40" y="230" width="270" height="3" fill="#bf360c"/>
+
+    <ellipse cx="80" cy="201" rx="11" ry="6" fill="#1565c0" stroke="#0d47a1"/>
+    <ellipse cx="80" cy="216" rx="11" ry="6" fill="#1565c0" stroke="#0d47a1"/>
+    <ellipse cx="80" cy="231" rx="11" ry="6" fill="#1565c0" stroke="#0d47a1"/>
+
+    <ellipse cx="170" cy="201" rx="11" ry="6" fill="#1565c0" stroke="#0d47a1"/>
+    <ellipse cx="170" cy="216" rx="11" ry="6" fill="#1565c0" stroke="#0d47a1"/>
+    <ellipse cx="170" cy="231" rx="11" ry="6" fill="#1565c0" stroke="#0d47a1"/>
+
+    <ellipse cx="260" cy="201" rx="11" ry="6" fill="#1565c0" stroke="#0d47a1"/>
+    <ellipse cx="260" cy="216" rx="11" ry="6" fill="#1565c0" stroke="#0d47a1"/>
+    <ellipse cx="260" cy="231" rx="11" ry="6" fill="#1565c0" stroke="#0d47a1"/>
+
+    <!-- Gates extending to NMOS -->
+    <rect x="115" y="175" width="20" height="75" fill="#7e57c2" fill-opacity="0.6" stroke="#311b92"/>
+    <rect x="205" y="175" width="20" height="75" fill="#7e57c2" fill-opacity="0.6" stroke="#311b92"/>
+
+    <!-- STI between rows annotation -->
+    <text x="170" y="158" text-anchor="middle" font-size="11" fill="#d32f2f" font-weight="bold">↑ 這條 STI 沿 X 延伸（隔開 P/N row）↑</text>
+
+    <!-- Annotation arrows from highlighted EPI -->
+    <!-- X- arrow -->
+    <line x1="159" y1="101" x2="142" y2="101" stroke="#d32f2f" stroke-width="2" marker-end="url(#arrR2)"/>
+    <text x="124" y="105" font-size="10" fill="#d32f2f" font-weight="bold">X−: spacer→MG</text>
+
+    <!-- X+ arrow -->
+    <line x1="181" y1="101" x2="198" y2="101" stroke="#d32f2f" stroke-width="2" marker-end="url(#arrR2)"/>
+    <text x="216" y="105" font-size="10" fill="#d32f2f" font-weight="bold">X+: spacer→MG</text>
+
+    <!-- Y+ arrow -->
+    <line x1="170" y1="93" x2="170" y2="78" stroke="#1b5e20" stroke-width="2" marker-end="url(#arrG2)"/>
+    <text x="220" y="80" font-size="10" fill="#1b5e20">Y+ 緊鄰: ILD0 (上方)</text>
+
+    <!-- Y+ further -->
+    <line x1="178" y1="86" x2="195" y2="86" stroke="#1b5e20" stroke-width="1" stroke-dasharray="3,2"/>
+    <text x="200" y="89" font-size="10" fill="#1b5e20">↑ 再 Y+: 鄰 fin 的 EPI（同型 PEPI）</text>
+
+    <!-- Y++ all the way to NMOS -->
+    <line x1="170" y1="108" x2="170" y2="195" stroke="#0d47a1" stroke-width="1.5" stroke-dasharray="3,2" marker-end="url(#arrB2)"/>
+    <text x="370" y="170" text-anchor="middle" font-size="10" fill="#0d47a1">穿過：[ILD0 + 同型 EPI ×2] →</text>
+    <text x="370" y="184" text-anchor="middle" font-size="10" fill="#0d47a1">[active 邊 → STI 跨 row] →</text>
+    <text x="370" y="198" text-anchor="middle" font-size="10" fill="#0d47a1">[NMOS active → NEPI（對型）]</text>
+
+    <!-- Right side: cell boundary -->
+    <line x1="310" y1="40" x2="310" y2="260" stroke="#d32f2f" stroke-width="1" stroke-dasharray="3,2"/>
+    <text x="412" y="50" text-anchor="middle" font-size="10" fill="#d32f2f" font-weight="bold">cell 邊界（SDB）</text>
+    <text x="412" y="64" text-anchor="middle" font-size="10" fill="#d32f2f">→ STI 沿 Y 延伸</text>
+    <text x="412" y="78" text-anchor="middle" font-size="10" fill="#d32f2f">（垂直 fin！）</text>
+
+    <!-- Coordinate axes -->
+    <line x1="30" y1="265" x2="65" y2="265" stroke="#888" stroke-width="1.2" marker-end="url(#axis2)"/>
+    <text x="68" y="268" font-size="10" fill="#888">X (沿 fin)</text>
+    <line x1="500" y1="265" x2="500" y2="240" stroke="#888" stroke-width="1.2" marker-end="url(#axis2)"/>
+    <text x="500" y="237" text-anchor="middle" font-size="10" fill="#888">Y</text>
+  </g>
+
+  <!-- ============ Y-Z cross section (right) ============ -->
+  <g transform="translate(580, 50)">
+    <rect x="0" y="0" width="400" height="280" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="200" y="20" text-anchor="middle" font-weight="bold" font-size="13">沿 Y 切剖面（穿過 EPI）</text>
+
+    <!-- Substrate -->
+    <rect x="20" y="240" width="360" height="30" fill="#cfd8dc" stroke="#37474f"/>
+    <text x="200" y="260" text-anchor="middle" font-size="10" fill="#263238">Si Substrate</text>
+
+    <!-- STI everywhere except where fins are -->
+    <rect x="20" y="190" width="360" height="50" fill="#cfd8dc"/>
+    <text x="30" y="220" font-size="10" fill="#37474f">STI（fin 之間下半部 + active 之外）</text>
+
+    <!-- Three fins in PMOS OD -->
+    <!-- Fin 1 -->
+    <rect x="55" y="170" width="14" height="40" fill="#ffe082" stroke="#bf360c"/>
+    <!-- EPI on fin 1 -->
+    <polygon points="62,150 80,180 62,200 44,180" fill="#7e57c2" stroke="#311b92"/>
+
+    <!-- Fin 2 (highlighted) -->
+    <rect x="105" y="170" width="14" height="40" fill="#ffe082" stroke="#bf360c"/>
+    <polygon points="112,150 130,180 112,200 94,180" fill="#d32f2f" stroke="#311b92" stroke-width="2"/>
+    <text x="112" y="183" text-anchor="middle" font-size="11" fill="#fff" font-weight="bold">★</text>
+
+    <!-- Fin 3 -->
+    <rect x="155" y="170" width="14" height="40" fill="#ffe082" stroke="#bf360c"/>
+    <polygon points="162,150 180,180 162,200 144,180" fill="#7e57c2" stroke="#311b92"/>
+
+    <!-- ILD0 on top -->
+    <rect x="20" y="50" width="360" height="100" fill="#bbdefb" fill-opacity="0.7" stroke="#0d47a1"/>
+    <text x="40" y="100" font-size="11" fill="#0d47a1" font-weight="bold">ILD0 (SiO₂)</text>
+
+    <!-- ILD0 between fins (above STI top, between epi diamonds) -->
+    <text x="200" y="118" text-anchor="middle" font-size="10" fill="#0d47a1" font-style="italic">ILD0 在 fin 之間上半部 + 上方</text>
+
+    <!-- CESL line -->
+    <path d="M 20,148 L 44,148 L 62,135 L 80,148 L 94,148 L 112,135 L 130,148 L 144,148 L 162,135 L 180,148 L 380,148"
+          fill="none" stroke="#388e3c" stroke-width="1.5" stroke-dasharray="2,1.5"/>
+    <text x="280" y="142" font-size="9" fill="#388e3c">CESL (SiN)</text>
+
+    <!-- Crossover line: end of PMOS active (x=190 in this view) -->
+    <line x1="190" y1="40" x2="190" y2="270" stroke="#d32f2f" stroke-width="1.2" stroke-dasharray="4,2"/>
+    <text x="190" y="36" text-anchor="middle" font-size="10" fill="#d32f2f">PMOS active 邊界</text>
+
+    <!-- STI crossing region - already part of background since STI fills here -->
+    <text x="240" y="220" font-size="10" fill="#d32f2f" font-weight="bold">↓ active 邊界外是 STI ↓</text>
+
+    <!-- Then NMOS active starts -->
+    <rect x="280" y="170" width="14" height="40" fill="#ffe082" stroke="#bf360c"/>
+    <polygon points="287,150 305,180 287,200 269,180" fill="#1565c0" stroke="#0d47a1"/>
+    <text x="287" y="216" text-anchor="middle" font-size="9" fill="#0d47a1">NEPI</text>
+
+    <rect x="320" y="170" width="14" height="40" fill="#ffe082" stroke="#bf360c"/>
+    <polygon points="327,150 345,180 327,200 309,180" fill="#1565c0" stroke="#0d47a1"/>
+
+    <!-- NMOS active label -->
+    <text x="320" y="40" text-anchor="middle" font-size="10" fill="#0d47a1" font-weight="bold">NMOS OD</text>
+
+    <!-- Annotations -->
+    <!-- Y+ from EPI -->
+    <line x1="118" y1="148" x2="135" y2="148" stroke="#1b5e20" stroke-width="1.5" marker-end="url(#arrG2)"/>
+    <text x="142" y="151" font-size="9" fill="#1b5e20">Y+: ILD0</text>
+
+    <line x1="135" y1="180" x2="148" y2="180" stroke="#1b5e20" stroke-width="1.5" marker-end="url(#arrG2)"/>
+    <text x="155" y="183" font-size="9" fill="#1b5e20">Y+: 同型 EPI (PEPI)</text>
+
+    <line x1="118" y1="200" x2="135" y2="220" stroke="#1b5e20" stroke-width="1.5" marker-end="url(#arrG2)"/>
+    <text x="140" y="225" font-size="9" fill="#1b5e20">Y- 下方：STI（fin 之間下半部）</text>
+
+    <!-- Coordinate -->
+    <line x1="30" y1="275" x2="55" y2="275" stroke="#888" stroke-width="1.2" marker-end="url(#axis2)"/>
+    <text x="60" y="278" font-size="10" fill="#888">Y</text>
+    <line x1="380" y1="275" x2="380" y2="250" stroke="#888" stroke-width="1.2" marker-end="url(#axis2)"/>
+    <text x="380" y="247" text-anchor="middle" font-size="10" fill="#888">Z</text>
+  </g>
+
+  <!-- ============ Bottom: Layered neighbor table ============ -->
+  <g transform="translate(20, 350)">
+    <rect x="0" y="0" width="960" height="230" fill="#f3e5f5" stroke="#6a1b9a" stroke-width="1"/>
+    <text x="10" y="22" font-size="13" font-weight="bold" fill="#4a148c">★ EPI 各方向的「層層鄰居」清單</text>
+
+    <text x="10" y="50" font-size="12" font-weight="bold" fill="#bf360c">X 方向（沿 fin）</text>
+    <text x="20" y="68" font-size="11" fill="#444">緊鄰 → spacer 牆 → MG（gate）→ spacer → 下個 EPI（共用）</text>
+    <text x="20" y="84" font-size="11" fill="#444">到 fin 末端（cell 邊界）→ <tspan font-weight="bold">STI（沿 Y 延伸，垂直 fin）</tspan></text>
+
+    <text x="10" y="116" font-size="12" font-weight="bold" fill="#1b5e20">Y 方向（穿過 fin）</text>
+    <text x="20" y="134" font-size="11" fill="#444">[緊鄰 ILD0] → [鄰 fin 的 EPI（同型）] → [...重複（active 內所有 fin）...]</text>
+    <text x="20" y="150" font-size="11" fill="#444">→ [OD 邊界] → <tspan font-weight="bold">[STI（沿 X 延伸，平行 fin）]</tspan> → [對方 OD] → [對型 EPI]</text>
+
+    <text x="10" y="182" font-size="12" font-weight="bold" fill="#0d47a1">Z 方向（垂直）</text>
+    <text x="20" y="200" font-size="11" fill="#444">Z+（上方）：CESL → ILD0 →（MOL 起）silicide → MD → ... → pad</text>
+    <text x="20" y="216" font-size="11" fill="#444">Z−（下方）：fin 殘餘 Si →（depending on recess depth）substrate Si</text>
+  </g>
+
+  <defs>
+    <marker id="arrR2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#d32f2f"/>
+    </marker>
+    <marker id="arrG2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1b5e20"/>
+    </marker>
+    <marker id="arrB2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#0d47a1"/>
+    </marker>
+    <marker id="axis2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#888"/>
+    </marker>
+  </defs>
+</svg>

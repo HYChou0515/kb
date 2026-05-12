@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 540" font-family="sans-serif" font-size="12">
+  <title>TEM 物理原理：穿透樣品看 atomic 級結構</title>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <text x="500" y="22" text-anchor="middle" font-weight="bold" font-size="15">TEM（Transmission Electron Microscope）：穿透 vs 反射的關鍵差異</text>
+
+  <!-- Left: SEM (reference) -->
+  <g transform="translate(40, 60)">
+    <rect x="0" y="0" width="280" height="380" fill="#fff8e1" stroke="#bf360c"/>
+    <text x="140" y="22" text-anchor="middle" font-weight="bold" font-size="13" fill="#bf360c">SEM（看「**反射**」）</text>
+
+    <!-- Electron source -->
+    <ellipse cx="140" cy="60" rx="40" ry="18" fill="#37474f"/>
+    <text x="140" y="64" text-anchor="middle" font-size="10" fill="#fff" font-weight="bold">e⁻ 槍</text>
+
+    <!-- Beam -->
+    <line x1="140" y1="78" x2="140" y2="200" stroke="#1565c0" stroke-width="2.5" marker-end="url(#arrBp)"/>
+    <text x="155" y="140" font-size="10" fill="#1565c0">5–30 keV</text>
+
+    <!-- Sample (thick) -->
+    <rect x="60" y="200" width="160" height="60" fill="#cfd8dc" stroke="#37474f" stroke-width="1.5"/>
+    <text x="140" y="234" text-anchor="middle" font-size="11" fill="#263238" font-weight="bold">Sample</text>
+    <text x="140" y="248" text-anchor="middle" font-size="9" fill="#666">（厚，電子打不穿）</text>
+
+    <!-- Reflected SE (going up and out) -->
+    <line x1="140" y1="200" x2="100" y2="160" stroke="#1b5e20" stroke-width="1" marker-end="url(#arrGp)"/>
+    <line x1="140" y1="200" x2="180" y2="160" stroke="#1b5e20" stroke-width="1" marker-end="url(#arrGp)"/>
+    <line x1="140" y1="200" x2="120" y2="170" stroke="#1b5e20" stroke-width="1" marker-end="url(#arrGp)"/>
+    <text x="60" y="170" font-size="9" fill="#1b5e20">SE / BSE</text>
+
+    <!-- Detector -->
+    <rect x="20" y="135" width="40" height="20" fill="#1b5e20"/>
+    <text x="40" y="148" text-anchor="middle" font-size="9" fill="#fff">SE det.</text>
+
+    <text x="140" y="290" text-anchor="middle" font-size="11" fill="#bf360c" font-weight="bold">→ 看到「表面」資訊</text>
+    <text x="140" y="310" text-anchor="middle" font-size="10" fill="#666">解析度 1–2 nm</text>
+    <text x="140" y="328" text-anchor="middle" font-size="10" fill="#666">非破壞性（一般 sample 即可）</text>
+    <text x="140" y="346" text-anchor="middle" font-size="10" fill="#666">適合 inline 用</text>
+  </g>
+
+  <!-- Right: TEM -->
+  <g transform="translate(360, 60)">
+    <rect x="0" y="0" width="320" height="380" fill="#e3f2fd" stroke="#0d47a1"/>
+    <text x="160" y="22" text-anchor="middle" font-weight="bold" font-size="13" fill="#0d47a1">TEM（看「**穿透**」）</text>
+
+    <!-- Electron source (high voltage) -->
+    <ellipse cx="160" cy="60" rx="50" ry="18" fill="#37474f"/>
+    <text x="160" y="64" text-anchor="middle" font-size="10" fill="#fff" font-weight="bold">e⁻ 槍（高 keV）</text>
+
+    <!-- Lens -->
+    <ellipse cx="160" cy="100" rx="50" ry="6" fill="#bbdefb" stroke="#0d47a1"/>
+
+    <!-- Beam down -->
+    <line x1="160" y1="106" x2="160" y2="180" stroke="#1565c0" stroke-width="2.5" marker-end="url(#arrBp)"/>
+    <text x="180" y="148" font-size="10" fill="#1565c0">200–300 keV</text>
+    <text x="180" y="162" font-size="9" fill="#666">（高能量穿透）</text>
+
+    <!-- Sample (ultra-thin) -->
+    <rect x="80" y="180" width="160" height="6" fill="#cfd8dc" stroke="#37474f" stroke-width="1.5"/>
+    <text x="160" y="178" text-anchor="middle" font-size="10" fill="#0d47a1" font-weight="bold">Lamella（&lt; 100 nm 超薄）</text>
+
+    <!-- Beam continues through (transmitted) -->
+    <line x1="160" y1="186" x2="160" y2="240" stroke="#1565c0" stroke-width="2.5" marker-end="url(#arrBp)"/>
+    <text x="170" y="215" font-size="9" fill="#1565c0">穿透</text>
+
+    <!-- Lens 2 (objective) -->
+    <ellipse cx="160" cy="250" rx="50" ry="6" fill="#bbdefb" stroke="#0d47a1"/>
+
+    <!-- Down to detector -->
+    <line x1="160" y1="256" x2="160" y2="290" stroke="#1565c0" stroke-width="2"/>
+
+    <!-- Detector -->
+    <rect x="100" y="290" width="120" height="20" fill="#0d47a1"/>
+    <text x="160" y="304" text-anchor="middle" font-size="10" fill="#fff" font-weight="bold">影像偵測器</text>
+
+    <text x="160" y="326" text-anchor="middle" font-size="11" fill="#0d47a1" font-weight="bold">→ 看到 atomic 級結構</text>
+    <text x="160" y="346" text-anchor="middle" font-size="10" fill="#666">解析度 &lt; 0.1 nm</text>
+    <text x="160" y="362" text-anchor="middle" font-size="10" fill="#666">**Destructive**（要切超薄 lamella）</text>
+  </g>
+
+  <!-- Right column: STEM/EDS/EELS notes -->
+  <g transform="translate(720, 80)" font-size="10">
+    <text x="0" y="0" font-size="13" font-weight="bold" fill="#37474f">TEM 衍生工具</text>
+
+    <text x="0" y="28" font-weight="bold" fill="#0d47a1">▶ STEM</text>
+    <text x="10" y="44" fill="#666">混合 SEM 掃描</text>
+    <text x="10" y="58" fill="#666">+ TEM 高解析</text>
+    <text x="10" y="72" fill="#666">→ HAADF 對重元素強</text>
+
+    <text x="0" y="100" font-weight="bold" fill="#0d47a1">▶ EELS</text>
+    <text x="10" y="116" fill="#666">量穿透電子失能量</text>
+    <text x="10" y="130" fill="#666">→ 元素 + 化學狀態</text>
+    <text x="10" y="144" fill="#666">→ 輕元素強</text>
+
+    <text x="0" y="172" font-weight="bold" fill="#0d47a1">▶ EDS</text>
+    <text x="10" y="188" fill="#666">特徵 X-ray 分析</text>
+    <text x="10" y="202" fill="#666">→ 元素 mapping</text>
+    <text x="10" y="216" fill="#666">→ 對重元素準</text>
+
+    <text x="0" y="252" font-size="11" font-weight="bold" fill="#bf360c">何時該用 TEM？</text>
+    <text x="10" y="270" font-size="10" fill="#444">▶ atomic 級結構</text>
+    <text x="10" y="286" font-size="10" fill="#444">▶ HK 厚度 / IL 量測</text>
+    <text x="10" y="302" font-size="10" fill="#444">▶ Cu diffusion 確認</text>
+  </g>
+
+  <!-- Bottom: when SEM not enough -->
+  <g transform="translate(40, 460)">
+    <rect x="0" y="0" width="920" height="60" fill="#f3e5f5" stroke="#6a1b9a"/>
+    <text x="10" y="22" font-size="11" font-weight="bold" fill="#4a148c">SEM vs TEM 工程選擇：</text>
+    <text x="20" y="42" font-size="10" fill="#444">▶ 例行 inline 用 SEM；關鍵 RCA / 新製程驗證才用 TEM</text>
+    <text x="20" y="56" font-size="10" fill="#444">▶ TEM 樣品準備 2–6 hr，cost $1k–$10k 一個 sample，不適合大量</text>
+  </g>
+
+  <defs>
+    <marker id="arrBp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1565c0"/>
+    </marker>
+    <marker id="arrGp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1b5e20"/>
+    </marker>
+  </defs>
+</svg>

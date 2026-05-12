@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 540" font-family="sans-serif" font-size="12">
+  <title>MDMG Short — 五條觸發路徑（RCA 決策樹）</title>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Title -->
+  <text x="440" y="22" text-anchor="middle" font-weight="bold" font-size="15">MDMG Short — 五條觸發路徑（RCA 決策樹）</text>
+
+  <!-- Top: the failure -->
+  <g transform="translate(360, 50)">
+    <rect x="0" y="0" width="160" height="40" rx="8" fill="#ffebee" stroke="#c62828" stroke-width="2"/>
+    <text x="80" y="18" text-anchor="middle" font-size="13" font-weight="bold" fill="#c62828">🔥 MDMG SHORT</text>
+    <text x="80" y="33" text-anchor="middle" font-size="10" fill="#c62828">CP 上看到的失效</text>
+  </g>
+
+  <!-- Five branches converging to the failure -->
+  <line x1="60" y1="180" x2="430" y2="92" stroke="#c62828" stroke-width="1.5" marker-end="url(#arrowFail)"/>
+  <line x1="220" y1="180" x2="440" y2="92" stroke="#c62828" stroke-width="1.5" marker-end="url(#arrowFail)"/>
+  <line x1="440" y1="180" x2="450" y2="92" stroke="#c62828" stroke-width="1.5" marker-end="url(#arrowFail)"/>
+  <line x1="660" y1="180" x2="460" y2="92" stroke="#c62828" stroke-width="1.5" marker-end="url(#arrowFail)"/>
+  <line x1="820" y1="180" x2="470" y2="92" stroke="#c62828" stroke-width="1.5" marker-end="url(#arrowFail)"/>
+
+  <!-- Path A: SAC failure -->
+  <g transform="translate(0, 180)">
+    <rect x="0" y="0" width="120" height="48" rx="6" fill="#fff3e0" stroke="#e65100" stroke-width="1.5"/>
+    <text x="60" y="18" text-anchor="middle" font-size="11" font-weight="bold" fill="#e65100">路徑 A</text>
+    <text x="60" y="34" text-anchor="middle" font-size="10" fill="#e65100">SAC cap 失守</text>
+
+    <!-- Causes -->
+    <rect x="0" y="65" width="120" height="125" fill="#fffde7" stroke="#f9a825" stroke-dasharray="3,3"/>
+    <text x="60" y="82" text-anchor="middle" font-size="10" font-weight="bold" fill="#f57f17">起因</text>
+    <text x="6" y="100" font-size="9" fill="#444">• Cap 太薄</text>
+    <text x="6" y="115" font-size="9" fill="#444">• Cap recess 過深</text>
+    <text x="6" y="130" font-size="9" fill="#444">• Cap CMP 過磨</text>
+    <text x="6" y="145" font-size="9" fill="#444">• ALD step coverage 差</text>
+
+    <text x="6" y="172" font-size="10" font-weight="bold" fill="#1565c0">查哪</text>
+    <text x="6" y="186" font-size="9" fill="#1565c0">SAC cap SPC、CMP 站</text>
+  </g>
+
+  <!-- Path B: MD photo overlay -->
+  <g transform="translate(160, 180)">
+    <rect x="0" y="0" width="120" height="48" rx="6" fill="#fff3e0" stroke="#e65100" stroke-width="1.5"/>
+    <text x="60" y="18" text-anchor="middle" font-size="11" font-weight="bold" fill="#e65100">路徑 B</text>
+    <text x="60" y="34" text-anchor="middle" font-size="10" fill="#e65100">MD photo 對位偏</text>
+
+    <rect x="0" y="65" width="120" height="125" fill="#fffde7" stroke="#f9a825" stroke-dasharray="3,3"/>
+    <text x="60" y="82" text-anchor="middle" font-size="10" font-weight="bold" fill="#f57f17">起因</text>
+    <text x="6" y="100" font-size="9" fill="#444">• Scanner overlay 飄</text>
+    <text x="6" y="115" font-size="9" fill="#444">• Wafer warpage</text>
+    <text x="6" y="130" font-size="9" fill="#444">• Reticle / OPC 誤差</text>
+    <text x="6" y="145" font-size="9" fill="#444">• 前段 topology drift</text>
+
+    <text x="6" y="172" font-size="10" font-weight="bold" fill="#1565c0">查哪</text>
+    <text x="6" y="186" font-size="9" fill="#1565c0">MD photo overlay map</text>
+  </g>
+
+  <!-- Path C: MP photo overlay -->
+  <g transform="translate(320, 180)">
+    <rect x="0" y="0" width="120" height="48" rx="6" fill="#fff3e0" stroke="#e65100" stroke-width="1.5"/>
+    <text x="60" y="18" text-anchor="middle" font-size="11" font-weight="bold" fill="#e65100">路徑 C</text>
+    <text x="60" y="34" text-anchor="middle" font-size="10" fill="#e65100">MP photo 對位偏</text>
+
+    <rect x="0" y="65" width="120" height="125" fill="#fffde7" stroke="#f9a825" stroke-dasharray="3,3"/>
+    <text x="60" y="82" text-anchor="middle" font-size="10" font-weight="bold" fill="#f57f17">起因</text>
+    <text x="6" y="100" font-size="9" fill="#444">• MP 化學會打穿 SiN</text>
+    <text x="6" y="115" font-size="9" fill="#444">• MP 偏向 epi 側</text>
+    <text x="6" y="130" font-size="9" fill="#444">• Spacer 被打穿</text>
+    <text x="6" y="145" font-size="9" fill="#444">• 接到 epi → S/D short</text>
+
+    <text x="6" y="172" font-size="10" font-weight="bold" fill="#1565c0">查哪</text>
+    <text x="6" y="186" font-size="9" fill="#1565c0">MP photo overlay、etch</text>
+  </g>
+
+  <!-- Path D: CMG/CMGCMP residue -->
+  <g transform="translate(480, 180)">
+    <rect x="0" y="0" width="120" height="48" rx="6" fill="#fff3e0" stroke="#e65100" stroke-width="1.5"/>
+    <text x="60" y="18" text-anchor="middle" font-size="11" font-weight="bold" fill="#e65100">路徑 D</text>
+    <text x="60" y="34" text-anchor="middle" font-size="10" fill="#e65100">CMG/CMGCMP 殘留</text>
+
+    <rect x="0" y="65" width="120" height="125" fill="#fffde7" stroke="#f9a825" stroke-dasharray="3,3"/>
+    <text x="60" y="82" text-anchor="middle" font-size="10" font-weight="bold" fill="#f57f17">起因</text>
+    <text x="6" y="100" font-size="9" fill="#444">• CMG etch 殘留</text>
+    <text x="6" y="115" font-size="9" fill="#444">• CMGCMP ox residue</text>
+    <text x="6" y="130" font-size="9" fill="#444">• 改變地形</text>
+    <text x="6" y="145" font-size="9" fill="#444">→ MD photo / etch CD 飄</text>
+
+    <text x="6" y="172" font-size="10" font-weight="bold" fill="#1565c0">查哪</text>
+    <text x="6" y="186" font-size="9" fill="#1565c0">CMG/CMGCMP particle、SPC</text>
+  </g>
+
+  <!-- Path E: V0 punch-through -->
+  <g transform="translate(640, 180)">
+    <rect x="0" y="0" width="120" height="48" rx="6" fill="#fff3e0" stroke="#e65100" stroke-width="1.5"/>
+    <text x="60" y="18" text-anchor="middle" font-size="11" font-weight="bold" fill="#e65100">路徑 E</text>
+    <text x="60" y="34" text-anchor="middle" font-size="10" fill="#e65100">V0 punch-through</text>
+
+    <rect x="0" y="65" width="120" height="125" fill="#fffde7" stroke="#f9a825" stroke-dasharray="3,3"/>
+    <text x="60" y="82" text-anchor="middle" font-size="10" font-weight="bold" fill="#f57f17">起因</text>
+    <text x="6" y="100" font-size="9" fill="#444">• V0 etch 過頭</text>
+    <text x="6" y="115" font-size="9" fill="#444">• 缺 stop layer</text>
+    <text x="6" y="130" font-size="9" fill="#444">• MD CMP dishing</text>
+    <text x="6" y="145" font-size="9" fill="#444">→ 穿過 MD 落到 gate</text>
+
+    <text x="6" y="172" font-size="10" font-weight="bold" fill="#1565c0">查哪</text>
+    <text x="6" y="186" font-size="9" fill="#1565c0">V0 etch chamber、MD CMP</text>
+  </g>
+
+  <!-- Decision flow at the bottom -->
+  <g transform="translate(20, 410)">
+    <text x="420" y="0" text-anchor="middle" font-weight="bold" font-size="13" fill="#0d47a1">RCA 起手式：先觀察 wafer signature 再決定查哪條路徑</text>
+
+    <!-- Signature → path mapping -->
+    <g transform="translate(0, 25)">
+      <rect x="0" y="0" width="200" height="80" fill="#e3f2fd" stroke="#1565c0" stroke-width="1"/>
+      <text x="100" y="18" text-anchor="middle" font-size="11" font-weight="bold" fill="#0d47a1">Signature</text>
+      <text x="100" y="34" text-anchor="middle" font-size="10">同心圓 / center→edge</text>
+      <text x="100" y="48" text-anchor="middle" font-size="10">→ CMP / RTA / CVD</text>
+      <text x="100" y="62" text-anchor="middle" font-size="10">→ 路徑 A 或 D</text>
+    </g>
+
+    <g transform="translate(220, 25)">
+      <rect x="0" y="0" width="200" height="80" fill="#e3f2fd" stroke="#1565c0" stroke-width="1"/>
+      <text x="100" y="18" text-anchor="middle" font-size="11" font-weight="bold" fill="#0d47a1">Signature</text>
+      <text x="100" y="34" text-anchor="middle" font-size="10">Edge ring / wafer 邊緣</text>
+      <text x="100" y="48" text-anchor="middle" font-size="10">→ scanner overlay</text>
+      <text x="100" y="62" text-anchor="middle" font-size="10">→ 路徑 B 或 C</text>
+    </g>
+
+    <g transform="translate(440, 25)">
+      <rect x="0" y="0" width="200" height="80" fill="#e3f2fd" stroke="#1565c0" stroke-width="1"/>
+      <text x="100" y="18" text-anchor="middle" font-size="11" font-weight="bold" fill="#0d47a1">Signature</text>
+      <text x="100" y="34" text-anchor="middle" font-size="10">Chamber-fingerprint</text>
+      <text x="100" y="48" text-anchor="middle" font-size="10">→ 特定 etch chamber</text>
+      <text x="100" y="62" text-anchor="middle" font-size="10">→ 路徑 D 或 E</text>
+    </g>
+
+    <g transform="translate(660, 25)">
+      <rect x="0" y="0" width="180" height="80" fill="#e3f2fd" stroke="#1565c0" stroke-width="1"/>
+      <text x="90" y="18" text-anchor="middle" font-size="11" font-weight="bold" fill="#0d47a1">Signature</text>
+      <text x="90" y="34" text-anchor="middle" font-size="10">Random 散布</text>
+      <text x="90" y="48" text-anchor="middle" font-size="10">→ 顆粒 / 邊際 process</text>
+      <text x="90" y="62" text-anchor="middle" font-size="10">→ 多路徑邊際共病</text>
+    </g>
+  </g>
+
+  <defs>
+    <marker id="arrowFail" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c62828"/>
+    </marker>
+  </defs>
+</svg>

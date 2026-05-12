@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 500" font-family="sans-serif" font-size="12">
+  <title>AFM 物理原理：用尖探針掃出 3D topology</title>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <text x="500" y="22" text-anchor="middle" font-weight="bold" font-size="15">AFM（Atomic Force Microscopy）：用機械力探測 3D 表面</text>
+
+  <!-- Main schematic -->
+  <g transform="translate(80, 60)">
+    <rect x="0" y="0" width="540" height="320" fill="#fafafa" stroke="#bdbdbd"/>
+
+    <!-- Laser source -->
+    <rect x="40" y="40" width="60" height="20" rx="4" fill="#d32f2f" stroke="#000"/>
+    <text x="70" y="54" text-anchor="middle" font-size="10" fill="#fff" font-weight="bold">Laser</text>
+
+    <!-- Laser beam to cantilever tip -->
+    <line x1="100" y1="50" x2="240" y2="120" stroke="#d32f2f" stroke-width="1.5" stroke-dasharray="3,2"/>
+    <text x="155" y="70" font-size="9" fill="#d32f2f">→ 雷射照在 cantilever 反射</text>
+
+    <!-- Cantilever (small, with tip) -->
+    <line x1="180" y1="120" x2="280" y2="120" stroke="#37474f" stroke-width="3"/>
+    <text x="180" y="115" font-size="9" fill="#37474f">Cantilever（懸臂）</text>
+    <!-- Tip below cantilever -->
+    <line x1="280" y1="120" x2="280" y2="160" stroke="#37474f" stroke-width="2"/>
+    <polygon points="280,165 275,160 285,160" fill="#37474f"/>
+    <text x="295" y="155" font-size="9" fill="#37474f">Tip（尖端 &lt; 10 nm）</text>
+
+    <!-- Reflection from cantilever to detector -->
+    <line x1="240" y1="120" x2="380" y2="55" stroke="#d32f2f" stroke-width="1.5" stroke-dasharray="3,2"/>
+
+    <!-- Position-sensitive detector -->
+    <rect x="380" y="40" width="80" height="30" fill="#0d47a1"/>
+    <text x="420" y="58" text-anchor="middle" font-size="10" fill="#fff" font-weight="bold">PSD 偵測器</text>
+
+    <!-- Detector reading: cantilever bend → detect z change -->
+    <text x="420" y="90" text-anchor="middle" font-size="9" fill="#0d47a1">↑ 偏轉位置 → z 軸高度</text>
+
+    <!-- Sample with bumpy surface -->
+    <path d="M 100,200 L 200,200 L 220,170 L 260,170 L 280,165 L 320,200 L 400,200 L 420,180 L 460,180 L 480,200"
+          fill="#cfd8dc" stroke="#37474f" stroke-width="1.5"/>
+    <rect x="100" y="200" width="380" height="30" fill="#cfd8dc" stroke="#37474f"/>
+    <text x="290" y="220" text-anchor="middle" font-size="10" fill="#263238" font-weight="bold">Wafer Surface（凹凸不平）</text>
+
+    <!-- Tip moving along surface -->
+    <text x="320" y="160" font-size="9" fill="#37474f">→</text>
+    <text x="285" y="180" font-size="9" fill="#bf360c">tip 跟隨表面起伏</text>
+
+    <!-- Z movement axis -->
+    <line x1="500" y1="170" x2="500" y2="200" stroke="#1b5e20" stroke-width="2" marker-end="url(#arrGr)"/>
+    <line x1="500" y1="200" x2="500" y2="170" stroke="#1b5e20" stroke-width="2" marker-end="url(#arrGr)"/>
+    <text x="510" y="190" font-size="10" fill="#1b5e20" font-weight="bold">z</text>
+
+    <!-- Scan direction -->
+    <line x1="100" y1="270" x2="480" y2="270" stroke="#fdd835" stroke-width="2" marker-end="url(#arrYy)"/>
+    <text x="290" y="290" text-anchor="middle" font-size="10" fill="#bf8f00" font-weight="bold">Scan 方向（x, y）</text>
+
+    <text x="270" y="310" text-anchor="middle" font-size="10" fill="#666" font-style="italic">→ 掃整片區域得到 (x, y, z) 3D topology map</text>
+  </g>
+
+  <!-- Right: modes -->
+  <g transform="translate(680, 80)" font-size="10">
+    <text x="0" y="0" font-size="13" font-weight="bold" fill="#37474f">三種主要 mode</text>
+
+    <text x="0" y="28" font-weight="bold" fill="#1b5e20">▶ Contact Mode</text>
+    <text x="10" y="44" fill="#666">探針一直接觸表面</text>
+    <text x="10" y="58" fill="#666">訊號強，但磨耗</text>
+
+    <text x="0" y="86" font-weight="bold" fill="#bf360c">▶ Tapping Mode（最常用）</text>
+    <text x="10" y="102" fill="#666">高頻振動，間歇性接觸</text>
+    <text x="10" y="116" fill="#666">對軟材料 / low-k 友善</text>
+
+    <text x="0" y="144" font-weight="bold" fill="#0d47a1">▶ Non-contact Mode</text>
+    <text x="10" y="160" fill="#666">不接觸（van der Waals 力）</text>
+    <text x="10" y="174" fill="#666">最不損傷，訊號弱</text>
+
+    <text x="0" y="208" font-size="11" font-weight="bold" fill="#bf360c">解析度</text>
+    <text x="10" y="226" font-size="10" fill="#444">▶ Z 軸：&lt; 0.1 nm（次原子）</text>
+    <text x="10" y="240" font-size="10" fill="#444">▶ X/Y：~ 5–10 nm</text>
+    <text x="10" y="254" font-size="10" fill="#666" font-style="italic">→ Z 比 X/Y 解析度高</text>
+  </g>
+
+  <!-- Bottom: applications -->
+  <g transform="translate(80, 410)">
+    <rect x="0" y="0" width="840" height="80" fill="#fff8e1" stroke="#f57f17"/>
+    <text x="10" y="22" font-size="13" font-weight="bold" fill="#bf360c">AFM 在 yield 工作的特殊用途</text>
+    <text x="20" y="44" font-size="10" fill="#444">▶ <tspan font-weight="bold">Post-CMP planarity</tspan>：直接量 dishing / erosion / step height</text>
+    <text x="20" y="58" font-size="10" fill="#444">▶ <tspan font-weight="bold">Surface roughness</tspan>：RMS / Ra（影響 mobility）</text>
+    <text x="500" y="44" font-size="10" fill="#444">▶ <tspan font-weight="bold">Fin height inline 監控</tspan>：免 cross-section</text>
+    <text x="500" y="58" font-size="10" fill="#444">▶ <tspan font-weight="bold">C-AFM</tspan>：同時量 leakage current（找介電 weak spot）</text>
+  </g>
+
+  <defs>
+    <marker id="arrGr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1b5e20"/>
+    </marker>
+    <marker id="arrYy" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#fdd835"/>
+    </marker>
+  </defs>
+</svg>

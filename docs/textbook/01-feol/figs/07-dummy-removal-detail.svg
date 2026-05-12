@@ -1,0 +1,181 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 460" font-family="sans-serif" font-size="12">
+  <title>Ch 7 Dummy Gate Removal — 細部步驟</title>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Master title -->
+  <text x="460" y="22" text-anchor="middle" font-weight="bold" font-size="15">Dummy Gate Removal 細部：兩階段 wet etch</text>
+  <text x="460" y="40" text-anchor="middle" font-size="11" fill="#555">露出 fin 表面、為 RMG 高 k 沉積做準備</text>
+
+  <!-- ============= Step 1: ILD0 CMP done — dummy poly exposed ============= -->
+  <g transform="translate(15, 60)">
+    <rect x="0" y="0" width="220" height="340" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="110" y="20" text-anchor="middle" font-weight="bold" font-size="13">Step A：起點</text>
+    <text x="110" y="36" text-anchor="middle" font-size="10" fill="#555">CMP 後，dummy poly 頂端裸露</text>
+
+    <rect x="20" y="270" width="180" height="50" fill="#cfd8dc" stroke="#37474f"/>
+    <text x="110" y="298" text-anchor="middle" font-size="10" fill="#263238">Si Substrate</text>
+
+    <rect x="20" y="100" width="60" height="170" fill="#bbdefb" stroke="#0d47a1"/>
+    <rect x="140" y="100" width="60" height="170" fill="#bbdefb" stroke="#0d47a1"/>
+    <text x="50" y="195" text-anchor="middle" font-size="10" fill="#0d47a1" font-weight="bold">ILD0</text>
+    <text x="170" y="195" text-anchor="middle" font-size="10" fill="#0d47a1" font-weight="bold">ILD0</text>
+
+    <!-- Fin -->
+    <rect x="103" y="220" width="14" height="50" fill="#ffe082" stroke="#bf360c"/>
+
+    <!-- Sacrificial gate oxide (薄薄一層在 fin 上) -->
+    <rect x="94" y="215" width="32" height="6" fill="#fff59d" stroke="#f57f17"/>
+    <text x="170" y="226" font-size="9" fill="#f57f17">sac. ox</text>
+    <line x1="160" y1="220" x2="124" y2="218" stroke="#f57f17" stroke-width="0.5"/>
+
+    <!-- Spacers -->
+    <rect x="80" y="100" width="14" height="170" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="126" y="100" width="14" height="170" fill="#ffe0b2" stroke="#bf360c"/>
+
+    <!-- Dummy poly fully filling between spacers -->
+    <rect x="94" y="100" width="32" height="115" fill="#90caf9" stroke="#0d47a1"/>
+    <text x="110" y="155" text-anchor="middle" font-size="10" fill="#0d47a1" font-weight="bold">Dummy</text>
+    <text x="110" y="170" text-anchor="middle" font-size="10" fill="#0d47a1">Poly</text>
+
+    <!-- S/D epi -->
+    <polygon points="50,210 80,240 50,260 20,240" fill="#b39ddb" stroke="#311b92"/>
+    <polygon points="170,210 200,240 170,260 140,240" fill="#b39ddb" stroke="#311b92"/>
+
+    <!-- Top "exposed" indication -->
+    <line x1="94" y1="100" x2="126" y2="100" stroke="#d32f2f" stroke-width="2"/>
+    <text x="110" y="92" text-anchor="middle" font-size="9" fill="#d32f2f">poly 頂端裸露</text>
+  </g>
+
+  <!-- ============= Step 2: Wet Etch Poly ============= -->
+  <g transform="translate(245, 60)">
+    <rect x="0" y="0" width="220" height="340" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="110" y="20" text-anchor="middle" font-weight="bold" font-size="13">Step B：拆 Dummy Poly</text>
+    <text x="110" y="36" text-anchor="middle" font-size="10" fill="#555">TMAH / NH₄OH，對 poly 高選擇比</text>
+
+    <rect x="20" y="270" width="180" height="50" fill="#cfd8dc" stroke="#37474f"/>
+    <text x="110" y="298" text-anchor="middle" font-size="10" fill="#263238">Si Substrate</text>
+
+    <rect x="20" y="100" width="60" height="170" fill="#bbdefb" stroke="#0d47a1"/>
+    <rect x="140" y="100" width="60" height="170" fill="#bbdefb" stroke="#0d47a1"/>
+    <text x="50" y="195" text-anchor="middle" font-size="10" fill="#0d47a1" font-weight="bold">ILD0</text>
+    <text x="170" y="195" text-anchor="middle" font-size="10" fill="#0d47a1" font-weight="bold">ILD0</text>
+
+    <!-- Fin -->
+    <rect x="103" y="220" width="14" height="50" fill="#ffe082" stroke="#bf360c"/>
+
+    <!-- Sacrificial gate oxide STILL on fin -->
+    <rect x="94" y="215" width="32" height="6" fill="#fff59d" stroke="#f57f17"/>
+
+    <!-- Spacers -->
+    <rect x="80" y="100" width="14" height="170" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="126" y="100" width="14" height="170" fill="#ffe0b2" stroke="#bf360c"/>
+
+    <!-- Empty trench -->
+    <rect x="94" y="100" width="32" height="115" fill="#ffffff" stroke="#aaaaaa" stroke-width="0.5"/>
+
+    <!-- Etchant dripping in -->
+    <text x="110" y="115" text-anchor="middle" font-size="10" fill="#0d47a1">trench</text>
+    <line x1="110" y1="60" x2="110" y2="98" stroke="#1565c0" stroke-width="2.5" marker-end="url(#arrB)"/>
+    <text x="110" y="55" text-anchor="middle" font-size="9" fill="#1565c0">etchant</text>
+
+    <!-- S/D epi -->
+    <polygon points="50,210 80,240 50,260 20,240" fill="#b39ddb" stroke="#311b92"/>
+    <polygon points="170,210 200,240 170,260 140,240" fill="#b39ddb" stroke="#311b92"/>
+
+    <!-- Annotation: sacrificial ox still there -->
+    <text x="110" y="240" text-anchor="middle" font-size="9" fill="#f57f17">sacrificial ox 仍在</text>
+  </g>
+
+  <!-- ============= Step 3: Strip Sacrificial Oxide ============= -->
+  <g transform="translate(475, 60)">
+    <rect x="0" y="0" width="220" height="340" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="110" y="20" text-anchor="middle" font-weight="bold" font-size="13">Step C：拆 Sacrificial Oxide</text>
+    <text x="110" y="36" text-anchor="middle" font-size="10" fill="#555">稀 HF，露出乾淨的 fin 表面</text>
+
+    <rect x="20" y="270" width="180" height="50" fill="#cfd8dc" stroke="#37474f"/>
+    <text x="110" y="298" text-anchor="middle" font-size="10" fill="#263238">Si Substrate</text>
+
+    <rect x="20" y="100" width="60" height="170" fill="#bbdefb" stroke="#0d47a1"/>
+    <rect x="140" y="100" width="60" height="170" fill="#bbdefb" stroke="#0d47a1"/>
+    <text x="50" y="195" text-anchor="middle" font-size="10" fill="#0d47a1" font-weight="bold">ILD0</text>
+    <text x="170" y="195" text-anchor="middle" font-size="10" fill="#0d47a1" font-weight="bold">ILD0</text>
+
+    <!-- Fin (sacrificial ox removed) -->
+    <rect x="103" y="220" width="14" height="50" fill="#ffe082" stroke="#bf360c"/>
+
+    <!-- Spacers -->
+    <rect x="80" y="100" width="14" height="170" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="126" y="100" width="14" height="170" fill="#ffe0b2" stroke="#bf360c"/>
+
+    <!-- Empty trench (now down to fin top with no oxide) -->
+    <rect x="94" y="100" width="32" height="120" fill="#ffffff" stroke="#aaaaaa" stroke-width="0.5"/>
+
+    <text x="110" y="155" text-anchor="middle" font-size="11" fill="#1b5e20" font-weight="bold">乾淨</text>
+    <text x="110" y="170" text-anchor="middle" font-size="11" fill="#1b5e20" font-weight="bold">trench</text>
+
+    <!-- Highlight clean fin top -->
+    <line x1="94" y1="220" x2="126" y2="220" stroke="#1b5e20" stroke-width="2.5"/>
+    <text x="110" y="240" text-anchor="middle" font-size="9" fill="#1b5e20">fin 表面乾淨</text>
+
+    <!-- S/D epi -->
+    <polygon points="50,210 80,240 50,260 20,240" fill="#b39ddb" stroke="#311b92"/>
+    <polygon points="170,210 200,240 170,260 140,240" fill="#b39ddb" stroke="#311b92"/>
+
+    <!-- Time-pressure callout -->
+    <rect x="20" y="55" width="180" height="36" fill="#fff3e0" stroke="#e65100" stroke-width="1"/>
+    <text x="110" y="69" text-anchor="middle" font-size="10" fill="#bf360c" font-weight="bold">⚠ Queue Time 警戒區</text>
+    <text x="110" y="84" text-anchor="middle" font-size="9" fill="#bf360c">空氣中幾秒就會長 native oxide</text>
+  </g>
+
+  <!-- ============= Step 4: Pre-RMG state ============= -->
+  <g transform="translate(705, 60)">
+    <rect x="0" y="0" width="200" height="340" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="100" y="20" text-anchor="middle" font-weight="bold" font-size="13">Step D：進 ALD（Ch 8）</text>
+    <text x="100" y="36" text-anchor="middle" font-size="10" fill="#555">立刻送入 high-k ALD chamber</text>
+
+    <rect x="20" y="270" width="160" height="50" fill="#cfd8dc" stroke="#37474f"/>
+    <text x="100" y="298" text-anchor="middle" font-size="10" fill="#263238">Si Substrate</text>
+
+    <rect x="20" y="100" width="50" height="170" fill="#bbdefb" stroke="#0d47a1"/>
+    <rect x="130" y="100" width="50" height="170" fill="#bbdefb" stroke="#0d47a1"/>
+    <text x="45" y="195" text-anchor="middle" font-size="10" fill="#0d47a1" font-weight="bold">ILD0</text>
+    <text x="155" y="195" text-anchor="middle" font-size="10" fill="#0d47a1" font-weight="bold">ILD0</text>
+
+    <!-- Fin -->
+    <rect x="93" y="220" width="14" height="50" fill="#ffe082" stroke="#bf360c"/>
+
+    <!-- Spacers -->
+    <rect x="70" y="100" width="14" height="170" fill="#ffe0b2" stroke="#bf360c"/>
+    <rect x="116" y="100" width="14" height="170" fill="#ffe0b2" stroke="#bf360c"/>
+
+    <!-- Trench with high-k starting to form (thin green layer at bottom) -->
+    <rect x="84" y="100" width="32" height="120" fill="#ffffff"/>
+    <rect x="84" y="218" width="32" height="3" fill="#a5d6a7" stroke="#1b5e20" stroke-width="0.5"/>
+    <text x="100" y="155" text-anchor="middle" font-size="10" fill="#1b5e20" font-weight="bold">即將</text>
+    <text x="100" y="170" text-anchor="middle" font-size="10" fill="#1b5e20" font-weight="bold">填入 HKMG</text>
+
+    <line x1="100" y1="60" x2="100" y2="98" stroke="#1b5e20" stroke-width="2.5" marker-end="url(#arrG)"/>
+    <text x="100" y="55" text-anchor="middle" font-size="9" fill="#1b5e20">HfO₂</text>
+
+    <!-- S/D epi -->
+    <polygon points="45,210 70,240 45,260 20,240" fill="#b39ddb" stroke="#311b92"/>
+    <polygon points="155,210 180,240 155,260 130,240" fill="#b39ddb" stroke="#311b92"/>
+  </g>
+
+  <!-- Bottom note: GAA addition -->
+  <g transform="translate(15, 415)">
+    <rect x="0" y="-10" width="890" height="40" fill="#f3e5f5" stroke="#6a1b9a" stroke-width="1"/>
+    <text x="10" y="6" font-size="12" font-weight="bold" fill="#4a148c">GAA 補充：</text>
+    <text x="80" y="6" font-size="11" fill="#444">在 Step C 之後、Step D 之前，還會做 channel release：把 Si/SiGe stack 中的 SiGe 用對 SiGe 高選擇比的 etchant 抽掉，</text>
+    <text x="10" y="22" font-size="11" fill="#444">留下懸空的 Si nanosheet。後續 high-k ALD 會把所有 sheet 全包起來，達成 gate-all-around 結構。詳見 Inner Spacer 流程圖。</text>
+  </g>
+
+  <defs>
+    <marker id="arrB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1565c0"/>
+    </marker>
+    <marker id="arrG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1b5e20"/>
+    </marker>
+  </defs>
+</svg>

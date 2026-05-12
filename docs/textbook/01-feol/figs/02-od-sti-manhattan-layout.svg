@@ -1,0 +1,167 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 540" font-family="sans-serif" font-size="12">
+  <title>OD / STI Manhattan grid layout — 為何全部水平矩形</title>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Master title -->
+  <text x="500" y="22" text-anchor="middle" font-weight="bold" font-size="15">OD（Oxide Diffusion，亦稱 active region）與 STI 的形狀規則</text>
+  <text x="500" y="40" text-anchor="middle" font-size="11" fill="#555">Manhattan grid：所有邊只能沿 X 或 Y，沒有斜邊、沒有曲線</text>
+
+  <!-- ============ Panel 1: Allowed shapes ============ -->
+  <g transform="translate(20, 60)">
+    <rect x="0" y="0" width="320" height="240" fill="#e8f5e9" stroke="#1b5e20" stroke-width="1.5"/>
+    <text x="160" y="22" text-anchor="middle" font-weight="bold" font-size="13" fill="#1b5e20">✓ 允許：水平矩形（FinFET/GAA）</text>
+
+    <!-- Show 3 cells in a row -->
+    <text x="50" y="48" text-anchor="middle" font-size="10" fill="#0d47a1">Cell A (NAND)</text>
+    <text x="160" y="48" text-anchor="middle" font-size="10" fill="#0d47a1">Cell B (INV)</text>
+    <text x="265" y="48" text-anchor="middle" font-size="10" fill="#0d47a1">Cell C (FF)</text>
+
+    <!-- Background = STI -->
+    <rect x="15" y="60" width="290" height="160" fill="#cfd8dc" stroke="#37474f" stroke-width="0.5"/>
+    <text x="20" y="75" font-size="9" fill="#37474f" font-style="italic">STI（背景）</text>
+
+    <!-- PMOS OD (horizontal strip, top) -->
+    <rect x="20" y="80" width="280" height="40" fill="#e1bee7" stroke="#4a148c" stroke-width="1.2"/>
+    <text x="160" y="103" text-anchor="middle" font-size="11" fill="#4a148c" font-weight="bold">PMOS Active (P-row OD)</text>
+
+    <!-- Fins inside PMOS OD -->
+    <line x1="20" y1="92" x2="300" y2="92" stroke="#bf360c" stroke-width="1.5"/>
+    <line x1="20" y1="100" x2="300" y2="100" stroke="#bf360c" stroke-width="1.5"/>
+    <line x1="20" y1="108" x2="300" y2="108" stroke="#bf360c" stroke-width="1.5"/>
+
+    <!-- STI gap between P and N rows -->
+    <text x="160" y="135" text-anchor="middle" font-size="10" fill="#37474f">STI（隔開 P/N row）</text>
+
+    <!-- NMOS OD (horizontal strip, bottom) -->
+    <rect x="20" y="150" width="280" height="40" fill="#bbdefb" stroke="#0d47a1" stroke-width="1.2"/>
+    <text x="160" y="173" text-anchor="middle" font-size="11" fill="#0d47a1" font-weight="bold">NMOS Active (N-row OD)</text>
+
+    <!-- Fins inside NMOS OD -->
+    <line x1="20" y1="162" x2="300" y2="162" stroke="#bf360c" stroke-width="1.5"/>
+    <line x1="20" y1="170" x2="300" y2="170" stroke="#bf360c" stroke-width="1.5"/>
+    <line x1="20" y1="178" x2="300" y2="178" stroke="#bf360c" stroke-width="1.5"/>
+
+    <!-- Cell boundaries marked with vertical dashes -->
+    <line x1="100" y1="60" x2="100" y2="220" stroke="#d32f2f" stroke-width="1" stroke-dasharray="3,2"/>
+    <line x1="220" y1="60" x2="220" y2="220" stroke="#d32f2f" stroke-width="1" stroke-dasharray="3,2"/>
+
+    <text x="100" y="232" text-anchor="middle" font-size="9" fill="#d32f2f">cell 邊界</text>
+    <text x="220" y="232" text-anchor="middle" font-size="9" fill="#d32f2f">cell 邊界</text>
+
+    <!-- X / Y axes -->
+    <line x1="20" y1="200" x2="55" y2="200" stroke="#888" stroke-width="1.2" marker-end="url(#axisL1)"/>
+    <text x="58" y="203" font-size="9" fill="#888">X (fin 方向)</text>
+
+    <line x1="305" y1="200" x2="305" y2="170" stroke="#888" stroke-width="1.2" marker-end="url(#axisL1)"/>
+    <text x="306" y="166" font-size="9" fill="#888">Y</text>
+  </g>
+
+  <!-- ============ Panel 2: Disallowed shapes ============ -->
+  <g transform="translate(360, 60)">
+    <rect x="0" y="0" width="320" height="240" fill="#ffebee" stroke="#c62828" stroke-width="1.5"/>
+    <text x="160" y="22" text-anchor="middle" font-weight="bold" font-size="13" fill="#c62828">✗ 不允許（FinFET/GAA）</text>
+
+    <!-- L-shape -->
+    <g transform="translate(20, 50)">
+      <text x="50" y="0" text-anchor="middle" font-size="10" fill="#c62828">L 形 OD</text>
+      <path d="M 0,10 L 60,10 L 60,30 L 100,30 L 100,50 L 0,50 Z"
+            fill="#e1bee7" stroke="#4a148c" stroke-width="1"/>
+      <text x="50" y="65" text-anchor="middle" font-size="9" fill="#666">轉角 etch / CMP 失控</text>
+    </g>
+
+    <!-- Diagonal -->
+    <g transform="translate(140, 50)">
+      <text x="60" y="0" text-anchor="middle" font-size="10" fill="#c62828">斜向 OD</text>
+      <polygon points="0,30 100,10 130,40 30,60" fill="#e1bee7" stroke="#4a148c" stroke-width="1"/>
+      <text x="60" y="80" text-anchor="middle" font-size="9" fill="#666">違反 fin 方向、無法 SADP</text>
+    </g>
+
+    <!-- Vertical (rotated) -->
+    <g transform="translate(40, 140)">
+      <text x="60" y="0" text-anchor="middle" font-size="10" fill="#c62828">垂直 OD</text>
+      <rect x="40" y="10" width="40" height="80" fill="#e1bee7" stroke="#4a148c" stroke-width="1"/>
+      <text x="60" y="105" text-anchor="middle" font-size="9" fill="#666">與 fin 方向衝突</text>
+    </g>
+
+    <!-- Curved -->
+    <g transform="translate(180, 140)">
+      <text x="60" y="0" text-anchor="middle" font-size="10" fill="#c62828">曲線 OD</text>
+      <path d="M 10,40 Q 60,10 110,40 Q 60,70 10,40 Z"
+            fill="#e1bee7" stroke="#4a148c" stroke-width="1"/>
+      <text x="60" y="85" text-anchor="middle" font-size="9" fill="#666">EUV 解析度不行</text>
+    </g>
+  </g>
+
+  <!-- ============ Panel 3: STI fills the background ============ -->
+  <g transform="translate(700, 60)">
+    <rect x="0" y="0" width="280" height="240" fill="#fafafa" stroke="#bdbdbd" stroke-width="1.5"/>
+    <text x="140" y="22" text-anchor="middle" font-weight="bold" font-size="13">STI = 「背景」</text>
+    <text x="140" y="38" text-anchor="middle" font-size="10" fill="#555">所有沒被 active 佔的位置都是 STI</text>
+
+    <!-- Background STI -->
+    <rect x="15" y="50" width="250" height="170" fill="#cfd8dc" stroke="#37474f"/>
+
+    <!-- Multiple ODs floating in STI -->
+    <rect x="25" y="60" width="100" height="20" fill="#e1bee7" stroke="#4a148c"/>
+    <text x="75" y="74" text-anchor="middle" font-size="9" fill="#4a148c">PMOS OD</text>
+
+    <rect x="135" y="60" width="120" height="20" fill="#e1bee7" stroke="#4a148c"/>
+    <text x="195" y="74" text-anchor="middle" font-size="9" fill="#4a148c">PMOS OD</text>
+
+    <rect x="25" y="110" width="100" height="20" fill="#bbdefb" stroke="#0d47a1"/>
+    <text x="75" y="124" text-anchor="middle" font-size="9" fill="#0d47a1">NMOS OD</text>
+
+    <rect x="135" y="110" width="120" height="20" fill="#bbdefb" stroke="#0d47a1"/>
+    <text x="195" y="124" text-anchor="middle" font-size="9" fill="#0d47a1">NMOS OD</text>
+
+    <rect x="25" y="160" width="200" height="20" fill="#e1bee7" stroke="#4a148c"/>
+    <text x="125" y="174" text-anchor="middle" font-size="9" fill="#4a148c">PMOS OD</text>
+
+    <!-- STI annotations -->
+    <text x="140" y="195" text-anchor="middle" font-size="11" fill="#37474f" font-weight="bold">↑ 灰色背景全是 STI ↑</text>
+
+    <text x="140" y="210" text-anchor="middle" font-size="9" fill="#37474f">STI 形狀 = active 的「補集」（負空間）</text>
+
+    <text x="140" y="225" text-anchor="middle" font-size="9" fill="#37474f">設計只畫 active；STI 自動補上</text>
+  </g>
+
+  <!-- ============ Bottom: Why Manhattan + design freedom ============ -->
+  <g transform="translate(20, 320)">
+    <rect x="0" y="0" width="470" height="200" fill="#fff8e1" stroke="#f57f17" stroke-width="1"/>
+    <text x="10" y="22" font-size="13" font-weight="bold" fill="#bf360c">為什麼必須 Manhattan grid + 水平 OD？</text>
+
+    <text x="10" y="50" font-size="11" fill="#444"><tspan font-weight="bold">1. SADP / SAQP fin patterning</tspan>：只能產生等距、單一方向的平行直線</text>
+    <text x="10" y="70" font-size="11" fill="#444"><tspan font-weight="bold">2. Loading effect 控制</tspan>：規律 pattern 的 etch / CMP 行為才好預測</text>
+    <text x="10" y="90" font-size="11" fill="#444"><tspan font-weight="bold">3. EUV OPC 模型</tspan>：規則 grid 的光學鄰近修正最準確</text>
+    <text x="10" y="110" font-size="11" fill="#444"><tspan font-weight="bold">4. DRC 規則可量化</tspan>：min spacing / width / area 只有在 Manhattan 才好定義</text>
+
+    <text x="10" y="140" font-size="11" fill="#1b5e20" font-weight="bold">設計師的自由度（在 Manhattan 限制下）：</text>
+    <text x="20" y="158" font-size="10" fill="#444">▶ Active 多長（X）：依 cell 與電路需求</text>
+    <text x="20" y="176" font-size="10" fill="#444">▶ Active 多寬（Y）= 幾條 fin：1, 2, 3, … 條（fin pitch 整數倍）</text>
+    <text x="20" y="194" font-size="10" fill="#444">▶ Active 在 die 中的位置、在 cell 中的位置</text>
+  </g>
+
+  <!-- Right: process generation comparison -->
+  <g transform="translate(510, 320)">
+    <rect x="0" y="0" width="470" height="200" fill="#e3f2fd" stroke="#0d47a1" stroke-width="1"/>
+    <text x="10" y="22" font-size="13" font-weight="bold" fill="#0d47a1">不同世代的 active 形狀彈性</text>
+
+    <text x="10" y="50" font-size="11" fill="#444"><tspan font-weight="bold">28 nm planar 之前</tspan>：</text>
+    <text x="20" y="68" font-size="10" fill="#666">Active 可以 L 形、T 形、各種矩形組合，方向也較自由</text>
+
+    <text x="10" y="92" font-size="11" fill="#444"><tspan font-weight="bold">22 nm FinFET 起</tspan>：</text>
+    <text x="20" y="110" font-size="10" fill="#666">嚴格水平矩形，pitch 鎖定，cell row 統一高度</text>
+
+    <text x="10" y="134" font-size="11" fill="#444"><tspan font-weight="bold">N3 / N2 GAA</tspan>：</text>
+    <text x="20" y="152" font-size="10" fill="#666">最嚴格，cell height 鎖定為標準值；nanosheet 寬度可調</text>
+
+    <text x="10" y="180" font-size="11" fill="#bf360c" font-style="italic">→ 越先進的 node，設計彈性越低、製程一致性要求越高</text>
+    <text x="10" y="195" font-size="11" fill="#bf360c" font-style="italic">→ 這也是 DTCO（Design-Technology Co-Optimization）興起的原因</text>
+  </g>
+
+  <defs>
+    <marker id="axisL1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#888"/>
+    </marker>
+  </defs>
+</svg>

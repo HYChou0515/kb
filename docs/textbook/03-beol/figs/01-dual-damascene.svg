@@ -1,0 +1,198 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 540" font-family="sans-serif" font-size="12">
+  <title>Dual Damascene 製程流程</title>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <text x="500" y="22" text-anchor="middle" font-weight="bold" font-size="15">Dual Damascene：BEOL 一層 Cu Metal + Via 完整流程</text>
+  <text x="500" y="40" text-anchor="middle" font-size="11" fill="#555">挖介電 → 填 Cu → CMP（與 Al subtractive 相反）</text>
+
+  <!-- Step 1: ESL + low-k dep -->
+  <g transform="translate(15, 60)">
+    <rect x="0" y="0" width="180" height="200" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="90" y="20" text-anchor="middle" font-weight="bold" font-size="12">① ESL + Low-k Dep</text>
+
+    <rect x="20" y="160" width="140" height="20" fill="#cfd8dc" stroke="#37474f"/>
+    <text x="90" y="174" text-anchor="middle" font-size="9" fill="#263238">下層 metal</text>
+
+    <rect x="20" y="155" width="140" height="6" fill="#a5d6a7" stroke="#1b5e20"/>
+    <text x="170" y="160" font-size="9" fill="#1b5e20">ESL</text>
+
+    <rect x="20" y="60" width="140" height="95" fill="#bbdefb" stroke="#0d47a1"/>
+    <text x="90" y="110" text-anchor="middle" font-size="11" fill="#0d47a1">Low-k</text>
+
+    <rect x="20" y="40" width="140" height="20" fill="#ce93d8" stroke="#4a148c"/>
+    <text x="90" y="54" text-anchor="middle" font-size="9" fill="#4a148c">Hard mask</text>
+  </g>
+
+  <!-- Step 2: Via etch -->
+  <g transform="translate(205, 60)">
+    <rect x="0" y="0" width="180" height="200" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="90" y="20" text-anchor="middle" font-weight="bold" font-size="12">② Via Photo + Etch（深）</text>
+
+    <rect x="20" y="160" width="140" height="20" fill="#cfd8dc" stroke="#37474f"/>
+    <rect x="20" y="155" width="140" height="6" fill="#a5d6a7" stroke="#1b5e20"/>
+
+    <rect x="20" y="60" width="140" height="95" fill="#bbdefb" stroke="#0d47a1"/>
+    <rect x="20" y="40" width="140" height="20" fill="#ce93d8" stroke="#4a148c"/>
+
+    <!-- Via hole -->
+    <rect x="78" y="40" width="24" height="115" fill="#ffffff" stroke="#d32f2f" stroke-width="1.5" stroke-dasharray="3,2"/>
+    <text x="90" y="105" text-anchor="middle" font-size="9" fill="#d32f2f">Via</text>
+
+    <!-- Etch arrows -->
+    <line x1="90" y1="25" x2="90" y2="35" stroke="#d32f2f" stroke-width="2" marker-end="url(#arrR)"/>
+  </g>
+
+  <!-- Step 3: Trench etch -->
+  <g transform="translate(395, 60)">
+    <rect x="0" y="0" width="180" height="200" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="90" y="20" text-anchor="middle" font-weight="bold" font-size="12">③ Trench Photo + Etch（淺）</text>
+
+    <rect x="20" y="160" width="140" height="20" fill="#cfd8dc" stroke="#37474f"/>
+    <rect x="20" y="155" width="140" height="6" fill="#a5d6a7" stroke="#1b5e20"/>
+
+    <rect x="20" y="60" width="140" height="95" fill="#bbdefb" stroke="#0d47a1"/>
+    <rect x="20" y="40" width="140" height="20" fill="#ce93d8" stroke="#4a148c"/>
+
+    <!-- Via -->
+    <rect x="78" y="100" width="24" height="55" fill="#ffffff" stroke="#d32f2f" stroke-width="1.5"/>
+    <!-- Trench (wider, on top of via) -->
+    <rect x="50" y="40" width="80" height="60" fill="#ffffff" stroke="#d32f2f" stroke-width="1.5"/>
+
+    <text x="90" y="74" text-anchor="middle" font-size="9" fill="#d32f2f">Trench</text>
+    <text x="90" y="135" text-anchor="middle" font-size="9" fill="#d32f2f">Via</text>
+
+    <text x="20" y="195" font-size="9" fill="#666">→ T 形結構</text>
+  </g>
+
+  <!-- Step 4: Barrier + Cu seed -->
+  <g transform="translate(585, 60)">
+    <rect x="0" y="0" width="180" height="200" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="90" y="20" text-anchor="middle" font-weight="bold" font-size="12">④ Barrier + Cu Seed</text>
+
+    <rect x="20" y="160" width="140" height="20" fill="#cfd8dc" stroke="#37474f"/>
+    <rect x="20" y="155" width="140" height="6" fill="#a5d6a7" stroke="#1b5e20"/>
+    <rect x="20" y="60" width="140" height="95" fill="#bbdefb" stroke="#0d47a1"/>
+    <rect x="20" y="40" width="140" height="20" fill="#ce93d8" stroke="#4a148c"/>
+
+    <!-- Barrier 沿 trench/via 內壁 -->
+    <path d="M 50,40 L 50,100 L 78,100 L 78,155 L 102,155 L 102,100 L 130,100 L 130,40"
+          fill="none" stroke="#3e2723" stroke-width="2"/>
+
+    <!-- Cu seed thin layer -->
+    <path d="M 52,42 L 52,98 L 80,98 L 80,153 L 100,153 L 100,98 L 128,98 L 128,42"
+          fill="none" stroke="#bf360c" stroke-width="1.5" stroke-dasharray="2,1"/>
+
+    <text x="170" y="60" font-size="9" fill="#3e2723">Ta/TaN</text>
+    <text x="170" y="74" font-size="9" fill="#bf360c">Cu seed</text>
+  </g>
+
+  <!-- Step 5: Cu ECP -->
+  <g transform="translate(15, 290)">
+    <rect x="0" y="0" width="180" height="200" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="90" y="20" text-anchor="middle" font-weight="bold" font-size="12">⑤ Cu ECP（電鍍）</text>
+
+    <rect x="20" y="160" width="140" height="20" fill="#cfd8dc" stroke="#37474f"/>
+    <rect x="20" y="155" width="140" height="6" fill="#a5d6a7" stroke="#1b5e20"/>
+    <rect x="20" y="60" width="140" height="95" fill="#bbdefb" stroke="#0d47a1"/>
+    <rect x="20" y="40" width="140" height="20" fill="#ce93d8" stroke="#4a148c"/>
+
+    <!-- Cu fill 把 trench+via 填滿，且 overburden -->
+    <rect x="50" y="30" width="80" height="125" fill="#ff7043" stroke="#bf360c"/>
+    <rect x="78" y="100" width="24" height="55" fill="#ff7043" stroke="#bf360c"/>
+    <rect x="20" y="30" width="140" height="10" fill="#ff7043" stroke="#bf360c"/>
+
+    <text x="90" y="80" text-anchor="middle" font-size="11" fill="#fff" font-weight="bold">Cu</text>
+
+    <text x="20" y="195" font-size="9" fill="#666">→ Cu overburden 多餘</text>
+  </g>
+
+  <!-- Step 6: Cu CMP -->
+  <g transform="translate(205, 290)">
+    <rect x="0" y="0" width="180" height="200" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="90" y="20" text-anchor="middle" font-weight="bold" font-size="12">⑥ Cu CMP</text>
+
+    <rect x="20" y="160" width="140" height="20" fill="#cfd8dc" stroke="#37474f"/>
+    <rect x="20" y="155" width="140" height="6" fill="#a5d6a7" stroke="#1b5e20"/>
+    <rect x="20" y="60" width="140" height="95" fill="#bbdefb" stroke="#0d47a1"/>
+
+    <!-- Cu 只留 trench 內 -->
+    <rect x="50" y="40" width="80" height="60" fill="#ff7043" stroke="#bf360c"/>
+    <rect x="78" y="100" width="24" height="55" fill="#ff7043" stroke="#bf360c"/>
+
+    <text x="90" y="74" text-anchor="middle" font-size="10" fill="#fff" font-weight="bold">Cu line</text>
+    <text x="90" y="130" text-anchor="middle" font-size="9" fill="#fff">via</text>
+
+    <line x1="20" y1="40" x2="160" y2="40" stroke="#1b5e20" stroke-width="1.5" stroke-dasharray="3,2"/>
+    <text x="20" y="195" font-size="9" fill="#1b5e20">→ 表面磨平</text>
+  </g>
+
+  <!-- Step 7: Cap layer -->
+  <g transform="translate(395, 290)">
+    <rect x="0" y="0" width="180" height="200" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="90" y="20" text-anchor="middle" font-weight="bold" font-size="12">⑦ Cap Layer</text>
+
+    <rect x="20" y="160" width="140" height="20" fill="#cfd8dc" stroke="#37474f"/>
+    <rect x="20" y="155" width="140" height="6" fill="#a5d6a7" stroke="#1b5e20"/>
+    <rect x="20" y="60" width="140" height="95" fill="#bbdefb" stroke="#0d47a1"/>
+
+    <rect x="50" y="40" width="80" height="60" fill="#ff7043" stroke="#bf360c"/>
+    <rect x="78" y="100" width="24" height="55" fill="#ff7043" stroke="#bf360c"/>
+
+    <!-- Cap layer on top -->
+    <rect x="20" y="34" width="140" height="6" fill="#a5d6a7" stroke="#1b5e20"/>
+    <text x="170" y="40" font-size="9" fill="#1b5e20">Cap</text>
+
+    <text x="20" y="195" font-size="9" fill="#666">SiCN / Co cap，防 Cu 上方擴散</text>
+  </g>
+
+  <!-- Step 8: Done, ready for next layer -->
+  <g transform="translate(585, 290)">
+    <rect x="0" y="0" width="180" height="200" fill="#fff3e0" stroke="#bf360c"/>
+    <text x="90" y="20" text-anchor="middle" font-weight="bold" font-size="12" fill="#bf360c">⑧ 一層完成</text>
+
+    <rect x="20" y="160" width="140" height="20" fill="#cfd8dc" stroke="#37474f"/>
+    <rect x="20" y="155" width="140" height="6" fill="#a5d6a7" stroke="#1b5e20"/>
+    <rect x="20" y="60" width="140" height="95" fill="#bbdefb" stroke="#0d47a1"/>
+    <rect x="50" y="40" width="80" height="60" fill="#ff7043" stroke="#bf360c"/>
+    <rect x="78" y="100" width="24" height="55" fill="#ff7043" stroke="#bf360c"/>
+    <rect x="20" y="34" width="140" height="6" fill="#a5d6a7" stroke="#1b5e20"/>
+
+    <text x="90" y="195" text-anchor="middle" font-size="10" fill="#bf360c">→ 重複下一層（共 12–16 層）</text>
+  </g>
+
+  <!-- Side annotation: key concept -->
+  <g transform="translate(790, 60)">
+    <rect x="0" y="0" width="200" height="430" fill="#f3e5f5" stroke="#6a1b9a"/>
+    <text x="10" y="20" font-size="13" font-weight="bold" fill="#4a148c">關鍵觀念</text>
+
+    <text x="10" y="46" font-size="11" font-weight="bold" fill="#444">為什麼用 Damascene？</text>
+    <text x="10" y="62" font-size="10" fill="#666">Cu 沒有揮發性氣態化合物，</text>
+    <text x="10" y="76" font-size="10" fill="#666">不能用乾蝕刻。</text>
+    <text x="10" y="90" font-size="10" fill="#666">→ 反過來：先挖介電溝、</text>
+    <text x="10" y="104" font-size="10" fill="#666">　再填 Cu、最後 CMP 磨平</text>
+
+    <text x="10" y="138" font-size="11" font-weight="bold" fill="#444">Dual Damascene</text>
+    <text x="10" y="154" font-size="10" fill="#666">via + trench 一次填，</text>
+    <text x="10" y="168" font-size="10" fill="#666">沒有介面接縫</text>
+
+    <text x="10" y="200" font-size="11" font-weight="bold" fill="#444">每層做 7 個步驟</text>
+    <text x="10" y="216" font-size="10" fill="#666">12–16 層 BEOL</text>
+    <text x="10" y="230" font-size="10" fill="#666">= 80–110 道製程站</text>
+
+    <text x="10" y="262" font-size="11" font-weight="bold" fill="#bf360c">主要 yield 風險點</text>
+    <text x="10" y="278" font-size="10" fill="#666">▶ Cu void / seam（步驟 5）</text>
+    <text x="10" y="292" font-size="10" fill="#666">▶ CMP dishing（步驟 6）</text>
+    <text x="10" y="306" font-size="10" fill="#666">▶ Barrier 不全（步驟 4）</text>
+    <text x="10" y="320" font-size="10" fill="#666">▶ Low-k damage（多步）</text>
+
+    <text x="10" y="356" font-size="11" font-weight="bold" fill="#0d47a1">主要 reliability 風險點</text>
+    <text x="10" y="372" font-size="10" fill="#666">▶ EM（cap 介面）</text>
+    <text x="10" y="386" font-size="10" fill="#666">▶ TDDB（low-k + barrier）</text>
+  </g>
+
+  <defs>
+    <marker id="arrR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#d32f2f"/>
+    </marker>
+  </defs>
+</svg>

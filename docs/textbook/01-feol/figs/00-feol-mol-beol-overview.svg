@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420" font-family="sans-serif" font-size="13">
+  <title>FEOL / MOL / BEOL three-tier overview</title>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Wafer base -->
+  <rect x="40" y="370" width="640" height="20" fill="#cfd8dc" stroke="#37474f" stroke-width="1"/>
+  <text x="360" y="385" text-anchor="middle" font-size="11" fill="#263238">Si Substrate</text>
+
+  <!-- FEOL block -->
+  <rect x="40" y="240" width="640" height="120" fill="#fff8e1" stroke="#8d6e63" stroke-width="1.5"/>
+  <text x="60" y="262" font-weight="bold" fill="#5d4037">FEOL — Front End of Line</text>
+  <text x="60" y="282" font-size="11" fill="#5d4037">蓋電晶體本身：fin / nanosheet · S/D · gate</text>
+  <text x="60" y="300" font-size="11" fill="#5d4037">主要模組：STI · Well · Fin/NS · Dummy gate · S/D epi · ILD0 · RMG · CMG</text>
+  <text x="60" y="318" font-size="11" fill="#5d4037">尺度：fin pitch ~ 25 nm · gate length ~ 10 nm</text>
+
+  <!-- Tiny transistor icons in FEOL -->
+  <g transform="translate(540, 280)">
+    <rect x="0" y="20" width="60" height="6" fill="#8d6e63"/>
+    <rect x="20" y="0" width="20" height="26" fill="#5d4037"/>
+    <text x="30" y="40" text-anchor="middle" font-size="9" fill="#5d4037">Transistor</text>
+  </g>
+
+  <!-- MOL block -->
+  <rect x="40" y="140" width="640" height="90" fill="#e8f5e9" stroke="#388e3c" stroke-width="1.5"/>
+  <text x="60" y="162" font-weight="bold" fill="#1b5e20">MOL — Middle of Line</text>
+  <text x="60" y="182" font-size="11" fill="#1b5e20">把 source / drain / gate 三個端點拉出來，接到 M0</text>
+  <text x="60" y="200" font-size="11" fill="#1b5e20">主要模組：SAC cap · MD · silicide · MP · V0 / VG / VD</text>
+  <text x="60" y="218" font-size="11" fill="#1b5e20">尺度：MD-MG 間距 ~ 15 nm（MDMG short 主戰場）</text>
+
+  <!-- MD/MP icons -->
+  <g transform="translate(540, 175)">
+    <rect x="0" y="0" width="8" height="40" fill="#2e7d32"/>
+    <rect x="14" y="0" width="8" height="40" fill="#2e7d32"/>
+    <rect x="28" y="0" width="8" height="40" fill="#2e7d32"/>
+    <text x="18" y="55" text-anchor="middle" font-size="9" fill="#2e7d32">Contacts</text>
+  </g>
+
+  <!-- BEOL block -->
+  <rect x="40" y="20" width="640" height="110" fill="#e3f2fd" stroke="#1976d2" stroke-width="1.5"/>
+  <text x="60" y="42" font-weight="bold" fill="#0d47a1">BEOL — Back End of Line</text>
+  <text x="60" y="62" font-size="11" fill="#0d47a1">多層金屬連線：M0 → V0 → M1 → V1 → ... → M15 → Pad</text>
+  <text x="60" y="80" font-size="11" fill="#0d47a1">主要模組：Cu damascene · low-k ILD · 各層 via</text>
+  <text x="60" y="98" font-size="11" fill="#0d47a1">尺度：M0 pitch ~ 30 nm · 上層 pitch 隨層次放寬</text>
+
+  <!-- Multilayer interconnect icons -->
+  <g transform="translate(530, 30)">
+    <line x1="0" y1="10" x2="80" y2="10" stroke="#1976d2" stroke-width="2"/>
+    <line x1="0" y1="30" x2="80" y2="30" stroke="#1976d2" stroke-width="2"/>
+    <line x1="0" y1="50" x2="80" y2="50" stroke="#1976d2" stroke-width="2"/>
+    <line x1="0" y1="70" x2="80" y2="70" stroke="#1976d2" stroke-width="2"/>
+    <line x1="20" y1="10" x2="20" y2="30" stroke="#1976d2" stroke-width="2"/>
+    <line x1="60" y1="30" x2="60" y2="50" stroke="#1976d2" stroke-width="2"/>
+    <line x1="40" y1="50" x2="40" y2="70" stroke="#1976d2" stroke-width="2"/>
+    <text x="40" y="90" text-anchor="middle" font-size="9" fill="#1976d2">Interconnect</text>
+  </g>
+
+  <!-- Arrows showing flow -->
+  <line x1="20" y1="380" x2="20" y2="20" stroke="#37474f" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="14" y="200" font-size="10" fill="#37474f" transform="rotate(-90 14 200)">製程順序</text>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#37474f"/>
+    </marker>
+  </defs>
+</svg>

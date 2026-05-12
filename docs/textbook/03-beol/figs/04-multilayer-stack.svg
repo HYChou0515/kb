@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" font-family="sans-serif" font-size="12">
+  <title>BEOL 多層金屬 stack（M0 到 Bond Pad）</title>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <text x="450" y="22" text-anchor="middle" font-weight="bold" font-size="15">BEOL 多層金屬完整堆疊（M0 → Bond Pad）</text>
+  <text x="450" y="40" text-anchor="middle" font-size="11" fill="#555">底層細、頂層粗；底層解析吃重、頂層大電流吃重</text>
+
+  <!-- Center column: stack -->
+  <g transform="translate(280, 60)">
+    <!-- Bond pad / Pass -->
+    <rect x="0" y="0" width="280" height="36" fill="#ffd54f" stroke="#bf360c" stroke-width="1.5"/>
+    <text x="140" y="22" text-anchor="middle" font-size="13" fill="#bf360c" font-weight="bold">Bond Pad（Al）+ Passivation</text>
+
+    <!-- M_top -->
+    <rect x="0" y="36" width="280" height="22" fill="#90caf9" stroke="#0d47a1" stroke-width="1.5"/>
+    <text x="140" y="51" text-anchor="middle" font-size="11" fill="#0d47a1">M_top（M14 / M15）— 粗 pitch（µm）</text>
+
+    <!-- BEOL middle compressed -->
+    <rect x="0" y="58" width="280" height="100" fill="#bbdefb" fill-opacity="0.7" stroke="#0d47a1" stroke-dasharray="3,2"/>
+    <text x="140" y="85" text-anchor="middle" font-size="11" fill="#0d47a1" font-weight="bold">M14 — V13 — M13 — ... — M2 — V1</text>
+    <text x="140" y="105" text-anchor="middle" font-size="10" fill="#0d47a1" font-style="italic">中層 metal（pitch 60–100 nm）</text>
+    <text x="140" y="125" text-anchor="middle" font-size="9" fill="#666">壓縮顯示</text>
+    <text x="140" y="143" text-anchor="middle" font-size="9" fill="#666">~10 層金屬層 + 對應 via 層</text>
+
+    <!-- M1 -->
+    <rect x="0" y="158" width="280" height="22" fill="#90caf9" stroke="#0d47a1" stroke-width="1.5"/>
+    <text x="140" y="173" text-anchor="middle" font-size="11" fill="#0d47a1">M1（pitch ~ 30–50 nm）</text>
+
+    <!-- V1 -->
+    <line x1="140" y1="180" x2="140" y2="195" stroke="#0d47a1" stroke-width="3"/>
+    <text x="155" y="190" font-size="9" fill="#0d47a1">V1</text>
+
+    <!-- M0 -->
+    <rect x="0" y="195" width="280" height="22" fill="#90caf9" stroke="#0d47a1" stroke-width="1.5"/>
+    <text x="140" y="210" text-anchor="middle" font-size="11" fill="#0d47a1">M0（最細 pitch ~30 nm）</text>
+
+    <!-- Boundary -->
+    <line x1="-20" y1="217" x2="300" y2="217" stroke="#1b5e20" stroke-width="0.8" stroke-dasharray="6,3"/>
+    <text x="-25" y="221" text-anchor="end" font-size="10" fill="#1b5e20" font-weight="bold">BEOL ↑ / MOL ↓</text>
+
+    <!-- V0 -->
+    <rect x="115" y="217" width="50" height="20" fill="#a5d6a7" stroke="#1b5e20"/>
+    <text x="140" y="231" text-anchor="middle" font-size="10" fill="#1b5e20" font-weight="bold">V0</text>
+
+    <!-- MD/MP -->
+    <rect x="0" y="237" width="280" height="42" fill="#a5d6a7" fill-opacity="0.5" stroke="#1b5e20" stroke-dasharray="3,2"/>
+    <text x="140" y="262" text-anchor="middle" font-size="11" fill="#1b5e20" font-weight="bold">MD / MP / silicide（MOL）</text>
+
+    <!-- FEOL -->
+    <rect x="0" y="279" width="280" height="50" fill="#fff3e0" stroke="#bf360c" stroke-dasharray="3,2"/>
+    <text x="140" y="305" text-anchor="middle" font-size="11" fill="#bf360c" font-weight="bold">FEOL（電晶體）</text>
+
+    <!-- Substrate -->
+    <rect x="0" y="329" width="280" height="40" fill="#cfd8dc" stroke="#37474f" stroke-width="1.5"/>
+    <text x="140" y="354" text-anchor="middle" font-size="12" fill="#263238" font-weight="bold">Si Substrate（~775 µm）</text>
+  </g>
+
+  <!-- Left annotations: pitch/thickness -->
+  <g transform="translate(20, 60)" font-size="10" fill="#444">
+    <text x="0" y="20" font-weight="bold" fill="#0d47a1">尺寸</text>
+    <text x="0" y="48" font-weight="bold">Pad：</text>
+    <text x="40" y="48">~50–100 µm</text>
+    <text x="0" y="68" font-weight="bold">M_top：</text>
+    <text x="50" y="68">µm 級 pitch</text>
+
+    <text x="0" y="100" font-weight="bold">中層（M2–M14）：</text>
+    <text x="0" y="116">60–100 nm pitch</text>
+    <text x="0" y="132">用於 block / cell 連線</text>
+
+    <text x="0" y="170" font-weight="bold">M1：</text>
+    <text x="35" y="170">~30–50 nm</text>
+
+    <text x="0" y="208" font-weight="bold">M0：</text>
+    <text x="35" y="208">~30 nm</text>
+    <text x="0" y="224">用於 cell 內</text>
+
+    <text x="0" y="260" font-weight="bold">MOL（MD/MP/V0）：</text>
+    <text x="0" y="276">~0.2 µm 厚</text>
+
+    <text x="0" y="304" font-weight="bold">FEOL：</text>
+    <text x="0" y="320">~1 µm 厚</text>
+  </g>
+
+  <!-- Right annotations: function/concerns -->
+  <g transform="translate(580, 60)" font-size="10" fill="#444">
+    <text x="0" y="20" font-weight="bold" fill="#bf360c">主要功能 / 議題</text>
+
+    <text x="0" y="50">▶ 對外接腳</text>
+    <text x="0" y="70">▶ 防外部濕氣 / 機械</text>
+
+    <text x="0" y="105">▶ Power delivery</text>
+    <text x="0" y="121">▶ Long-distance signal</text>
+    <text x="0" y="137">▶ <tspan fill="#bf360c">EM 風險最高</tspan></text>
+
+    <text x="0" y="172">▶ Block 內局部連線</text>
+    <text x="0" y="188">▶ 訊號完整性</text>
+
+    <text x="0" y="220">▶ Cell-to-cell 短連線</text>
+
+    <text x="0" y="252">▶ Cell 內最局部連線</text>
+    <text x="0" y="268">▶ <tspan fill="#bf360c">解析度極限挑戰</tspan></text>
+    <text x="0" y="284">▶ <tspan fill="#bf360c">TDDB margin 最緊</tspan></text>
+
+    <text x="0" y="316">▶ V0 銜接</text>
+  </g>
+
+  <!-- Bottom: layer count evolution -->
+  <g transform="translate(60, 440)">
+    <rect x="0" y="0" width="780" height="140" fill="#fff8e1" stroke="#f57f17"/>
+    <text x="10" y="22" font-size="13" font-weight="bold" fill="#bf360c">節點演進中的 BEOL 層數</text>
+
+    <text x="20" y="48" font-size="11" fill="#444">130 nm：6–7 層</text>
+    <text x="170" y="48" font-size="11" fill="#444">65 nm：8–9 層</text>
+    <text x="320" y="48" font-size="11" fill="#444">28 nm：10–11 層</text>
+    <text x="470" y="48" font-size="11" fill="#444">N7：12–13 層</text>
+    <text x="600" y="48" font-size="11" fill="#bf360c" font-weight="bold">N5/N3：13–16 層</text>
+
+    <text x="20" y="78" font-size="11" fill="#444"><tspan font-weight="bold">層數隨節點增加</tspan>，因為元件密度提高 → 連線複雜度爆炸 → 需要更多繞線空間</text>
+
+    <text x="20" y="102" font-size="11" fill="#444"><tspan font-weight="bold">底層細、頂層粗</tspan>是 BEOL 標準設計原則</text>
+    <text x="30" y="118" font-size="10" fill="#666">▶ 底層 pitch 細 → 解析度挑戰（M0/M1 用 EUV 主力）</text>
+    <text x="30" y="132" font-size="10" fill="#666">▶ 頂層 pitch 粗 → 大電流 → EM / IR drop 為主議題</text>
+  </g>
+</svg>

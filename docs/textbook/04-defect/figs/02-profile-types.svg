@@ -1,0 +1,233 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 540" font-family="sans-serif" font-size="12">
+  <title>6 種 trench profile 異常型態</title>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <text x="500" y="22" text-anchor="middle" font-weight="bold" font-size="15">Trench Profile 異常的 6 種型態</text>
+  <text x="500" y="40" text-anchor="middle" font-size="11" fill="#555">理想是垂直筆直，實務上常見以下偏差</text>
+
+  <!-- ============= IDEAL (reference) ============= -->
+  <g transform="translate(40, 70)">
+    <rect x="0" y="0" width="180" height="220" fill="#e8f5e9" stroke="#1b5e20" stroke-width="1.5"/>
+    <text x="90" y="20" text-anchor="middle" font-weight="bold" font-size="13" fill="#1b5e20">理想（reference）</text>
+
+    <!-- Top surface -->
+    <line x1="20" y1="50" x2="160" y2="50" stroke="#37474f" stroke-width="1"/>
+
+    <!-- Vertical trench walls -->
+    <line x1="70" y1="50" x2="70" y2="180" stroke="#0d47a1" stroke-width="2"/>
+    <line x1="110" y1="50" x2="110" y2="180" stroke="#0d47a1" stroke-width="2"/>
+
+    <!-- Bottom -->
+    <line x1="70" y1="180" x2="110" y2="180" stroke="#0d47a1" stroke-width="2"/>
+
+    <!-- Material (ILD) on sides -->
+    <rect x="20" y="50" width="50" height="130" fill="#bbdefb" opacity="0.5"/>
+    <rect x="110" y="50" width="50" height="130" fill="#bbdefb" opacity="0.5"/>
+
+    <!-- Substrate -->
+    <rect x="20" y="180" width="140" height="20" fill="#cfd8dc" stroke="#37474f"/>
+
+    <!-- Annotations -->
+    <text x="90" y="68" text-anchor="middle" font-size="9" fill="#0d47a1">trench 開口</text>
+    <line x1="60" y1="115" x2="68" y2="115" stroke="#d32f2f" stroke-width="1"/>
+    <text x="50" y="118" text-anchor="end" font-size="9" fill="#d32f2f">side wall</text>
+    <text x="90" y="195" text-anchor="middle" font-size="9" fill="#d32f2f">底部</text>
+
+    <!-- CD measurements -->
+    <line x1="68" y1="40" x2="112" y2="40" stroke="#1b5e20" stroke-width="0.8" marker-start="url(#arrLeft)" marker-end="url(#arrRight)"/>
+    <text x="90" y="36" text-anchor="middle" font-size="9" fill="#1b5e20">Top CD</text>
+
+    <line x1="68" y1="190" x2="112" y2="190" stroke="#1b5e20" stroke-width="0.8" marker-start="url(#arrLeft)" marker-end="url(#arrRight)"/>
+    <text x="90" y="208" text-anchor="middle" font-size="9" fill="#1b5e20">Bottom CD</text>
+
+    <text x="90" y="225" text-anchor="middle" font-size="10" fill="#1b5e20">Top CD = Bottom CD</text>
+    <text x="90" y="240" text-anchor="middle" font-size="10" fill="#1b5e20">側壁垂直 90°</text>
+  </g>
+
+  <!-- ============= NECKING（上窄下寬） ============= -->
+  <g transform="translate(245, 70)">
+    <rect x="0" y="0" width="180" height="220" fill="#fff3e0" stroke="#e65100" stroke-width="1.5"/>
+    <text x="90" y="20" text-anchor="middle" font-weight="bold" font-size="13" fill="#e65100">① Necking（開口收窄）</text>
+
+    <line x1="20" y1="50" x2="160" y2="50" stroke="#37474f" stroke-width="1"/>
+
+    <!-- Necking shape: narrow top, wider middle/bottom -->
+    <path d="M 80,50 Q 80,60 75,75 L 75,180 L 105,180 L 105,75 Q 105,60 100,50 Z"
+          fill="none" stroke="#0d47a1" stroke-width="2"/>
+
+    <rect x="20" y="50" width="60" height="130" fill="#bbdefb" opacity="0.5"/>
+    <rect x="100" y="50" width="60" height="130" fill="#bbdefb" opacity="0.5"/>
+
+    <rect x="20" y="180" width="140" height="20" fill="#cfd8dc" stroke="#37474f"/>
+
+    <!-- Polymer indication at top -->
+    <ellipse cx="78" cy="55" rx="6" ry="4" fill="#ffe0b2" stroke="#bf360c" stroke-width="0.5"/>
+    <ellipse cx="102" cy="55" rx="6" ry="4" fill="#ffe0b2" stroke="#bf360c" stroke-width="0.5"/>
+    <text x="135" y="58" font-size="9" fill="#bf360c">polymer 堆積</text>
+
+    <text x="90" y="225" text-anchor="middle" font-size="10" fill="#e65100">Top CD &lt; Middle CD</text>
+    <text x="90" y="240" text-anchor="middle" font-size="10" fill="#e65100">機制：polymer 開口堵塞</text>
+  </g>
+
+  <!-- ============= BOWING（中段外擴） ============= -->
+  <g transform="translate(450, 70)">
+    <rect x="0" y="0" width="180" height="220" fill="#fff3e0" stroke="#e65100" stroke-width="1.5"/>
+    <text x="90" y="20" text-anchor="middle" font-weight="bold" font-size="13" fill="#e65100">② Bowing（中段外擴）</text>
+
+    <line x1="20" y1="50" x2="160" y2="50" stroke="#37474f" stroke-width="1"/>
+
+    <!-- Bowing shape: wide middle -->
+    <path d="M 75,50 Q 60,115 75,180 L 105,180 Q 120,115 105,50 Z"
+          fill="none" stroke="#0d47a1" stroke-width="2"/>
+
+    <rect x="20" y="50" width="55" height="130" fill="#bbdefb" opacity="0.5"/>
+    <rect x="105" y="50" width="55" height="130" fill="#bbdefb" opacity="0.5"/>
+
+    <rect x="20" y="180" width="140" height="20" fill="#cfd8dc" stroke="#37474f"/>
+
+    <!-- Ion sputter arrows -->
+    <line x1="90" y1="80" x2="68" y2="105" stroke="#d32f2f" stroke-width="1" marker-end="url(#arrR)"/>
+    <line x1="90" y1="80" x2="112" y2="105" stroke="#d32f2f" stroke-width="1" marker-end="url(#arrR)"/>
+    <text x="120" y="80" font-size="9" fill="#d32f2f">ion sputter</text>
+    <text x="120" y="92" font-size="9" fill="#d32f2f">側向蝕刻</text>
+
+    <text x="90" y="225" text-anchor="middle" font-size="10" fill="#e65100">Middle CD &gt; Top, Bottom</text>
+    <text x="90" y="240" text-anchor="middle" font-size="10" fill="#e65100">機制：ion energy 過高</text>
+  </g>
+
+  <!-- ============= TAPERED（上寬下窄 V 形） ============= -->
+  <g transform="translate(655, 70)">
+    <rect x="0" y="0" width="180" height="220" fill="#fff3e0" stroke="#e65100" stroke-width="1.5"/>
+    <text x="90" y="20" text-anchor="middle" font-weight="bold" font-size="13" fill="#e65100">③ Tapered（V 形）</text>
+
+    <line x1="20" y1="50" x2="160" y2="50" stroke="#37474f" stroke-width="1"/>
+
+    <!-- Tapered shape: wide top, narrow bottom -->
+    <path d="M 65,50 L 85,180 L 95,180 L 115,50 Z"
+          fill="none" stroke="#0d47a1" stroke-width="2"/>
+
+    <rect x="20" y="50" width="45" height="130" fill="#bbdefb" opacity="0.5"/>
+    <rect x="115" y="50" width="45" height="130" fill="#bbdefb" opacity="0.5"/>
+
+    <rect x="20" y="180" width="140" height="20" fill="#cfd8dc" stroke="#37474f"/>
+
+    <text x="90" y="225" text-anchor="middle" font-size="10" fill="#e65100">Top CD &gt; Bottom CD</text>
+    <text x="90" y="240" text-anchor="middle" font-size="10" fill="#e65100">機制：ion energy 不足</text>
+  </g>
+
+  <!-- ============= RE-ENTRANT（上窄下寬 Σ 形） ============= -->
+  <g transform="translate(40, 310)">
+    <rect x="0" y="0" width="180" height="220" fill="#fff3e0" stroke="#e65100" stroke-width="1.5"/>
+    <text x="90" y="20" text-anchor="middle" font-weight="bold" font-size="13" fill="#e65100">④ Re-entrant（Σ 形）</text>
+
+    <line x1="20" y1="50" x2="160" y2="50" stroke="#37474f" stroke-width="1"/>
+
+    <!-- Re-entrant shape: narrow top, wide bottom -->
+    <path d="M 80,50 L 65,115 L 75,180 L 105,180 L 115,115 L 100,50 Z"
+          fill="none" stroke="#0d47a1" stroke-width="2"/>
+
+    <rect x="20" y="50" width="60" height="130" fill="#bbdefb" opacity="0.5"/>
+    <rect x="100" y="50" width="60" height="130" fill="#bbdefb" opacity="0.5"/>
+
+    <rect x="20" y="180" width="140" height="20" fill="#cfd8dc" stroke="#37474f"/>
+
+    <text x="90" y="225" text-anchor="middle" font-size="10" fill="#e65100">Top CD &lt; Bottom CD</text>
+    <text x="90" y="240" text-anchor="middle" font-size="10" fill="#e65100">機制：可能刻意（Σ recess）</text>
+    <text x="90" y="252" text-anchor="middle" font-size="9" fill="#666">{111} 面選擇性 etch</text>
+  </g>
+
+  <!-- ============= FOOTING（底部殘留） ============= -->
+  <g transform="translate(245, 310)">
+    <rect x="0" y="0" width="180" height="220" fill="#fff3e0" stroke="#e65100" stroke-width="1.5"/>
+    <text x="90" y="20" text-anchor="middle" font-weight="bold" font-size="13" fill="#e65100">⑤ Footing（底部殘留）</text>
+
+    <line x1="20" y1="50" x2="160" y2="50" stroke="#37474f" stroke-width="1"/>
+
+    <!-- Footing shape: vertical walls but residue at bottom corners -->
+    <path d="M 70,50 L 70,180 L 110,180 L 110,50"
+          fill="none" stroke="#0d47a1" stroke-width="2"/>
+
+    <rect x="20" y="50" width="50" height="130" fill="#bbdefb" opacity="0.5"/>
+    <rect x="110" y="50" width="50" height="130" fill="#bbdefb" opacity="0.5"/>
+
+    <!-- Residue / footing at bottom corners -->
+    <path d="M 70,180 Q 75,170 82,178 L 70,178 Z" fill="#bcaaa4" stroke="#3e2723" stroke-width="1"/>
+    <path d="M 110,180 Q 105,170 98,178 L 110,178 Z" fill="#bcaaa4" stroke="#3e2723" stroke-width="1"/>
+
+    <rect x="20" y="180" width="140" height="20" fill="#cfd8dc" stroke="#37474f"/>
+
+    <!-- Annotation -->
+    <line x1="80" y1="173" x2="60" y2="155" stroke="#d32f2f" stroke-width="0.8"/>
+    <text x="58" y="153" text-anchor="end" font-size="9" fill="#d32f2f">殘料</text>
+
+    <text x="90" y="225" text-anchor="middle" font-size="10" fill="#e65100">底部留「腳跟」</text>
+    <text x="90" y="240" text-anchor="middle" font-size="10" fill="#e65100">機制：endpoint 不足</text>
+  </g>
+
+  <!-- ============= ASYMMETRIC（不對稱） ============= -->
+  <g transform="translate(450, 310)">
+    <rect x="0" y="0" width="180" height="220" fill="#fff3e0" stroke="#e65100" stroke-width="1.5"/>
+    <text x="90" y="20" text-anchor="middle" font-weight="bold" font-size="13" fill="#e65100">⑥ Asymmetric（不對稱）</text>
+
+    <line x1="20" y1="50" x2="160" y2="50" stroke="#37474f" stroke-width="1"/>
+
+    <!-- Asymmetric: left vertical, right slanted -->
+    <path d="M 75,50 L 75,180 L 115,180 L 100,50 Z"
+          fill="none" stroke="#0d47a1" stroke-width="2"/>
+
+    <rect x="20" y="50" width="55" height="130" fill="#bbdefb" opacity="0.5"/>
+    <rect x="115" y="50" width="45" height="130" fill="#bbdefb" opacity="0.5"/>
+
+    <rect x="20" y="180" width="140" height="20" fill="#cfd8dc" stroke="#37474f"/>
+
+    <!-- Annotations -->
+    <text x="65" y="118" text-anchor="end" font-size="9" fill="#0d47a1">垂直</text>
+    <line x1="68" y1="115" x2="74" y2="115" stroke="#0d47a1"/>
+
+    <text x="125" y="118" font-size="9" fill="#d32f2f">傾斜</text>
+    <line x1="118" y1="115" x2="110" y2="115" stroke="#d32f2f"/>
+
+    <text x="90" y="225" text-anchor="middle" font-size="10" fill="#e65100">兩側不一致</text>
+    <text x="90" y="240" text-anchor="middle" font-size="10" fill="#e65100">機制：chamber 不對稱</text>
+    <text x="90" y="252" text-anchor="middle" font-size="9" fill="#666">與 wafer map 半月對應</text>
+  </g>
+
+  <!-- ============= Bottom: legend ============= -->
+  <g transform="translate(655, 310)">
+    <rect x="0" y="0" width="300" height="220" fill="#f3e5f5" stroke="#6a1b9a"/>
+    <text x="10" y="20" font-size="13" font-weight="bold" fill="#4a148c">圖例與術語</text>
+
+    <line x1="10" y1="38" x2="22" y2="38" stroke="#0d47a1" stroke-width="2"/>
+    <text x="28" y="42" font-size="11" fill="#444">Trench 側壁（蝕刻邊界）</text>
+
+    <rect x="10" y="50" width="14" height="14" fill="#bbdefb" opacity="0.5" stroke="#0d47a1"/>
+    <text x="28" y="61" font-size="11" fill="#444">介電層（ILD / SiO₂）</text>
+
+    <rect x="10" y="70" width="14" height="14" fill="#cfd8dc" stroke="#37474f"/>
+    <text x="28" y="81" font-size="11" fill="#444">Substrate / 下層材料</text>
+
+    <ellipse cx="17" cy="98" rx="6" ry="4" fill="#ffe0b2" stroke="#bf360c"/>
+    <text x="28" y="102" font-size="11" fill="#444">Polymer 副產物</text>
+
+    <path d="M 10,114 Q 15,108 22,116 L 10,116 Z" fill="#bcaaa4" stroke="#3e2723"/>
+    <text x="28" y="118" font-size="11" fill="#444">蝕刻殘料</text>
+
+    <text x="10" y="148" font-size="11" font-weight="bold" fill="#4a148c">CD 量測：</text>
+    <text x="20" y="166" font-size="10" fill="#444">▶ Top CD：開口寬度</text>
+    <text x="20" y="182" font-size="10" fill="#444">▶ Middle CD：trench 中段寬度</text>
+    <text x="20" y="198" font-size="10" fill="#444">▶ Bottom CD：底部寬度</text>
+    <text x="20" y="214" font-size="10" fill="#bf360c" font-style="italic">三者比例反映 profile 形狀</text>
+  </g>
+
+  <defs>
+    <marker id="arrLeft" viewBox="0 0 10 10" refX="0" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M10,0 L0,5 L10,10 z" fill="#1b5e20"/>
+    </marker>
+    <marker id="arrRight" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1b5e20"/>
+    </marker>
+    <marker id="arrR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#d32f2f"/>
+    </marker>
+  </defs>
+</svg>

@@ -1,0 +1,206 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 540" font-family="sans-serif" font-size="12">
+  <title>Commonality Cross-table 與 Heatmap</title>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <text x="500" y="22" text-anchor="middle" font-weight="bold" font-size="15">Commonality Analysis：用 cross-table 找共因</text>
+  <text x="500" y="40" text-anchor="middle" font-size="11" fill="#555">Fail wafer 共享什麼處理因子？對照組（pass wafer）是否也共享？</text>
+
+  <!-- Left: raw cross-table -->
+  <g transform="translate(40, 70)">
+    <rect x="0" y="0" width="380" height="280" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="190" y="20" text-anchor="middle" font-weight="bold" font-size="12">原始 Cross-table</text>
+
+    <!-- Header -->
+    <rect x="10" y="35" width="80" height="20" fill="#37474f"/>
+    <text x="50" y="49" text-anchor="middle" font-size="10" fill="#fff">Wafer</text>
+    <rect x="90" y="35" width="60" height="20" fill="#37474f"/>
+    <text x="120" y="49" text-anchor="middle" font-size="10" fill="#fff">Result</text>
+    <rect x="150" y="35" width="60" height="20" fill="#37474f"/>
+    <text x="180" y="49" text-anchor="middle" font-size="10" fill="#fff">Tool</text>
+    <rect x="210" y="35" width="80" height="20" fill="#37474f"/>
+    <text x="250" y="49" text-anchor="middle" font-size="10" fill="#fff">Recipe</text>
+    <rect x="290" y="35" width="80" height="20" fill="#37474f"/>
+    <text x="330" y="49" text-anchor="middle" font-size="10" fill="#fff">Slurry batch</text>
+
+    <!-- Rows -->
+    <g font-size="10">
+      <rect x="10" y="55" width="80" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="50" y="69" text-anchor="middle">W001</text>
+      <rect x="90" y="55" width="60" height="20" fill="#ffcdd2" stroke="#ddd"/>
+      <text x="120" y="69" text-anchor="middle">fail</text>
+      <rect x="150" y="55" width="60" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="180" y="69" text-anchor="middle">C7</text>
+      <rect x="210" y="55" width="80" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="250" y="69" text-anchor="middle">v3.2</text>
+      <rect x="290" y="55" width="80" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="330" y="69" text-anchor="middle">B-2026-04</text>
+
+      <rect x="10" y="75" width="80" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="50" y="89" text-anchor="middle">W002</text>
+      <rect x="90" y="75" width="60" height="20" fill="#ffcdd2" stroke="#ddd"/>
+      <text x="120" y="89" text-anchor="middle">fail</text>
+      <rect x="150" y="75" width="60" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="180" y="89" text-anchor="middle">C7</text>
+      <rect x="210" y="75" width="80" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="250" y="89" text-anchor="middle">v3.2</text>
+      <rect x="290" y="75" width="80" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="330" y="89" text-anchor="middle">B-2026-04</text>
+
+      <rect x="10" y="95" width="80" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="50" y="109" text-anchor="middle">W003</text>
+      <rect x="90" y="95" width="60" height="20" fill="#c8e6c9" stroke="#ddd"/>
+      <text x="120" y="109" text-anchor="middle">pass</text>
+      <rect x="150" y="95" width="60" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="180" y="109" text-anchor="middle">C5</text>
+      <rect x="210" y="95" width="80" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="250" y="109" text-anchor="middle">v3.1</text>
+      <rect x="290" y="95" width="80" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="330" y="109" text-anchor="middle">B-2026-03</text>
+
+      <rect x="10" y="115" width="80" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="50" y="129" text-anchor="middle">W004</text>
+      <rect x="90" y="115" width="60" height="20" fill="#c8e6c9" stroke="#ddd"/>
+      <text x="120" y="129" text-anchor="middle">pass</text>
+      <rect x="150" y="115" width="60" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="180" y="129" text-anchor="middle">C2</text>
+      <rect x="210" y="115" width="80" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="250" y="129" text-anchor="middle">v3.2</text>
+      <rect x="290" y="115" width="80" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="330" y="129" text-anchor="middle">B-2026-04</text>
+
+      <rect x="10" y="135" width="80" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="50" y="149" text-anchor="middle">W005</text>
+      <rect x="90" y="135" width="60" height="20" fill="#ffcdd2" stroke="#ddd"/>
+      <text x="120" y="149" text-anchor="middle">fail</text>
+      <rect x="150" y="135" width="60" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="180" y="149" text-anchor="middle">C7</text>
+      <rect x="210" y="135" width="80" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="250" y="149" text-anchor="middle">v3.1</text>
+      <rect x="290" y="135" width="80" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="330" y="149" text-anchor="middle">B-2026-04</text>
+
+      <rect x="10" y="155" width="80" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="50" y="169" text-anchor="middle">W006</text>
+      <rect x="90" y="155" width="60" height="20" fill="#c8e6c9" stroke="#ddd"/>
+      <text x="120" y="169" text-anchor="middle">pass</text>
+      <rect x="150" y="155" width="60" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="180" y="169" text-anchor="middle">C5</text>
+      <rect x="210" y="155" width="80" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="250" y="169" text-anchor="middle">v3.2</text>
+      <rect x="290" y="155" width="80" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="330" y="169" text-anchor="middle">B-2026-04</text>
+
+      <rect x="10" y="175" width="80" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="50" y="189" text-anchor="middle">W007</text>
+      <rect x="90" y="175" width="60" height="20" fill="#ffcdd2" stroke="#ddd"/>
+      <text x="120" y="189" text-anchor="middle">fail</text>
+      <rect x="150" y="175" width="60" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="180" y="189" text-anchor="middle">C7</text>
+      <rect x="210" y="175" width="80" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="250" y="189" text-anchor="middle">v3.2</text>
+      <rect x="290" y="175" width="80" height="20" fill="#fff" stroke="#ddd"/>
+      <text x="330" y="189" text-anchor="middle">B-2026-04</text>
+    </g>
+
+    <text x="50" y="225" font-size="10" fill="#444">…</text>
+
+    <text x="20" y="260" font-size="10" fill="#666" font-style="italic">→ 看不出 pattern，需要 pivot 統計</text>
+  </g>
+
+  <!-- Right: pivot heatmap -->
+  <g transform="translate(450, 70)">
+    <rect x="0" y="0" width="510" height="280" fill="#fafafa" stroke="#bdbdbd"/>
+    <text x="255" y="20" text-anchor="middle" font-weight="bold" font-size="12">Pivot Heatmap：fail rate per category</text>
+
+    <!-- Header (column headers) -->
+    <rect x="10" y="40" width="120" height="24" fill="#37474f"/>
+    <text x="70" y="56" text-anchor="middle" font-size="10" fill="#fff">維度</text>
+    <rect x="130" y="40" width="120" height="24" fill="#37474f"/>
+    <text x="190" y="56" text-anchor="middle" font-size="10" fill="#fff">分類</text>
+    <rect x="250" y="40" width="100" height="24" fill="#37474f"/>
+    <text x="300" y="56" text-anchor="middle" font-size="10" fill="#fff">Fail rate</text>
+    <rect x="350" y="40" width="150" height="24" fill="#37474f"/>
+    <text x="425" y="56" text-anchor="middle" font-size="10" fill="#fff">嫌疑度</text>
+
+    <!-- Tool rows -->
+    <rect x="10" y="64" width="120" height="20" fill="#e3f2fd" stroke="#ddd"/>
+    <text x="70" y="78" text-anchor="middle" font-size="10">Tool</text>
+    <rect x="130" y="64" width="120" height="20" fill="#fff" stroke="#ddd"/>
+    <text x="190" y="78" text-anchor="middle" font-size="10">C7</text>
+    <rect x="250" y="64" width="100" height="20" fill="#d32f2f" stroke="#ddd"/>
+    <text x="300" y="78" text-anchor="middle" font-size="10" fill="#fff" font-weight="bold">85%</text>
+    <rect x="350" y="64" width="150" height="20" fill="#fff" stroke="#ddd"/>
+    <text x="425" y="78" text-anchor="middle" font-size="10" fill="#d32f2f" font-weight="bold">⚡ 強嫌疑</text>
+
+    <rect x="10" y="84" width="120" height="20" fill="#e3f2fd" stroke="#ddd"/>
+    <rect x="130" y="84" width="120" height="20" fill="#fff" stroke="#ddd"/>
+    <text x="190" y="98" text-anchor="middle" font-size="10">C2</text>
+    <rect x="250" y="84" width="100" height="20" fill="#c8e6c9" stroke="#ddd"/>
+    <text x="300" y="98" text-anchor="middle" font-size="10">5%</text>
+    <rect x="350" y="84" width="150" height="20" fill="#fff" stroke="#ddd"/>
+    <text x="425" y="98" text-anchor="middle" font-size="10" fill="#666">正常</text>
+
+    <rect x="10" y="104" width="120" height="20" fill="#e3f2fd" stroke="#ddd"/>
+    <rect x="130" y="104" width="120" height="20" fill="#fff" stroke="#ddd"/>
+    <text x="190" y="118" text-anchor="middle" font-size="10">C5</text>
+    <rect x="250" y="104" width="100" height="20" fill="#c8e6c9" stroke="#ddd"/>
+    <text x="300" y="118" text-anchor="middle" font-size="10">3%</text>
+    <rect x="350" y="104" width="150" height="20" fill="#fff" stroke="#ddd"/>
+    <text x="425" y="118" text-anchor="middle" font-size="10" fill="#666">正常</text>
+
+    <!-- Recipe rows -->
+    <rect x="10" y="124" width="120" height="20" fill="#fff3e0" stroke="#ddd"/>
+    <text x="70" y="138" text-anchor="middle" font-size="10">Recipe</text>
+    <rect x="130" y="124" width="120" height="20" fill="#fff" stroke="#ddd"/>
+    <text x="190" y="138" text-anchor="middle" font-size="10">v3.2</text>
+    <rect x="250" y="124" width="100" height="20" fill="#fff59d" stroke="#ddd"/>
+    <text x="300" y="138" text-anchor="middle" font-size="10">35%</text>
+    <rect x="350" y="124" width="150" height="20" fill="#fff" stroke="#ddd"/>
+    <text x="425" y="138" text-anchor="middle" font-size="10" fill="#f57f17">中嫌疑（confound？）</text>
+
+    <rect x="10" y="144" width="120" height="20" fill="#fff3e0" stroke="#ddd"/>
+    <rect x="130" y="144" width="120" height="20" fill="#fff" stroke="#ddd"/>
+    <text x="190" y="158" text-anchor="middle" font-size="10">v3.1</text>
+    <rect x="250" y="144" width="100" height="20" fill="#fff59d" stroke="#ddd"/>
+    <text x="300" y="158" text-anchor="middle" font-size="10">28%</text>
+    <rect x="350" y="144" width="150" height="20" fill="#fff" stroke="#ddd"/>
+    <text x="425" y="158" text-anchor="middle" font-size="10" fill="#f57f17">差異不明顯</text>
+
+    <!-- Slurry rows -->
+    <rect x="10" y="164" width="120" height="20" fill="#f3e5f5" stroke="#ddd"/>
+    <text x="70" y="178" text-anchor="middle" font-size="10">Slurry</text>
+    <rect x="130" y="164" width="120" height="20" fill="#fff" stroke="#ddd"/>
+    <text x="190" y="178" text-anchor="middle" font-size="10">B-2026-04</text>
+    <rect x="250" y="164" width="100" height="20" fill="#fff59d" stroke="#ddd"/>
+    <text x="300" y="178" text-anchor="middle" font-size="10">38%</text>
+    <rect x="350" y="164" width="150" height="20" fill="#fff" stroke="#ddd"/>
+    <text x="425" y="178" text-anchor="middle" font-size="10" fill="#f57f17">中（多 wafer 都用）</text>
+
+    <rect x="10" y="184" width="120" height="20" fill="#f3e5f5" stroke="#ddd"/>
+    <rect x="130" y="184" width="120" height="20" fill="#fff" stroke="#ddd"/>
+    <text x="190" y="198" text-anchor="middle" font-size="10">B-2026-03</text>
+    <rect x="250" y="184" width="100" height="20" fill="#c8e6c9" stroke="#ddd"/>
+    <text x="300" y="198" text-anchor="middle" font-size="10">10%</text>
+    <rect x="350" y="184" width="150" height="20" fill="#fff" stroke="#ddd"/>
+    <text x="425" y="198" text-anchor="middle" font-size="10" fill="#666">基線</text>
+
+    <!-- Statistics row -->
+    <rect x="10" y="220" width="490" height="50" fill="#e8f5e9" stroke="#1b5e20"/>
+    <text x="20" y="240" font-size="11" font-weight="bold" fill="#1b5e20">統計顯著性檢定（chi-square）：</text>
+    <text x="30" y="258" font-size="10" fill="#444">▶ Tool C7 vs others：p &lt; 0.001 ⚡ 鎖定 root cause</text>
+  </g>
+
+  <!-- Bottom: tips -->
+  <g transform="translate(40, 380)">
+    <rect x="0" y="0" width="920" height="140" fill="#fff8e1" stroke="#f57f17"/>
+    <text x="10" y="22" font-size="13" font-weight="bold" fill="#bf360c">Cross-table 分析的注意事項</text>
+
+    <text x="20" y="48" font-size="11" font-weight="bold" fill="#444">1. Confounding（混雜變數）：</text>
+    <text x="30" y="64" font-size="10" fill="#666">如果 C7 chamber 只跑 v3.2 recipe，那 v3.2 看起來相關但其實只是因為和 C7 連動</text>
+    <text x="30" y="78" font-size="10" fill="#666">→ 對策：固定一維（如 C7）後，看其他維度是否還有差異</text>
+
+    <text x="20" y="100" font-size="11" font-weight="bold" fill="#444">2. Multiple Comparison（多重檢定）：</text>
+    <text x="30" y="116" font-size="10" fill="#666">同時測 N 個維度，至少有 1 個 p &lt; 0.05 純因運氣</text>
+    <text x="30" y="130" font-size="10" fill="#666">→ Bonferroni 修正：p threshold 改為 0.05/N；或同時看 effect size</text>
+  </g>
+</svg>

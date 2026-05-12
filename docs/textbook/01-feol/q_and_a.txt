@@ -1,0 +1,16 @@
+1. does ALD0 a real word? don't halucinate words, you should provide "general" knowledge? But if it is a real word, please provide a reference so I can tell if it's true.
+2. what is RPG?
+3. <100> , <110>, <111> is?
+4. NMOS, PMOS, CMOS is?
+5. 防止 latch-up（PNPN 寄生 SCR 開通）?
+6. Junction is?
+7. what is sheetend mean? why is it different?
+8. Vt is?
+9. photo lot?
+10. 介電層 is for what?
+11. why epi is 菱形剖面
+12. poly ~= dummy gate?
+13. add svg beside ascii art
+14. HK is to prevent 量子穿隧、漏電? from where to where 漏電?
+15. no need to provide things like "你的工作日常聽到的 **CMG**、**CMGCMP**、**ox residue**、**MDMG short** 全部都在這一章。"
+    you should provide textbook knowledge in these files.

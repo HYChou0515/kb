@@ -1,0 +1,156 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 520" font-family="sans-serif" font-size="12">
+  <title>VG / VD / V0 命名與位置：從 MD/MP 表面拉到 M0</title>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <defs>
+    <pattern id="hSiO2vg" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="6" stroke="#90caf9" stroke-width="2"/>
+    </pattern>
+  </defs>
+
+  <text x="550" y="24" text-anchor="middle" font-weight="bold" font-size="16">VG / VD / V0 的命名與位置：MOL/BEOL 銜接的咽喉</text>
+  <text x="550" y="42" text-anchor="middle" font-size="11" fill="#555">VG 落在 MP 上（接 gate）　VD 落在 MD 上（接 S/D）　V0 通常涵蓋兩者（同一道 mask + etch）</text>
+
+  <!-- ============ Main cross-section ============ -->
+  <g transform="translate(60, 70)">
+    <rect x="0" y="0" width="800" height="380" fill="#fafafa" stroke="#bdbdbd"/>
+
+    <!-- Top: M0 region indicator -->
+    <rect x="20" y="30" width="760" height="40" fill="#fff3e0" stroke="#e65100"/>
+    <text x="400" y="55" text-anchor="middle" font-size="12" fill="#e65100" font-weight="bold">M0（BEOL 第一層金屬，本章不展開）</text>
+
+    <!-- V0 ILD region -->
+    <rect x="20" y="70" width="760" height="80" fill="url(#hSiO2vg)" stroke="#1976d2"/>
+    <text x="35" y="90" font-size="10" fill="#0d47a1">V0 ILD（low-k 開始進場）</text>
+
+    <!-- MD/MP plane (after MD/MP CMP) -->
+    <!-- ILD1 segments -->
+    <rect x="20" y="150" width="120" height="60" fill="url(#hSiO2vg)" stroke="#1976d2"/>
+    <text x="80" y="185" text-anchor="middle" font-size="10" fill="#0d47a1">ILD1</text>
+
+    <!-- MD (left, over S/D) -->
+    <rect x="140" y="150" width="120" height="60" fill="#9e9e9e" stroke="#212121"/>
+    <text x="200" y="178" text-anchor="middle" font-size="12" fill="#fff" font-weight="bold">MD</text>
+    <text x="200" y="194" text-anchor="middle" font-size="9" fill="#fff">(接 S/D)</text>
+
+    <!-- ILD1 between MD and MP -->
+    <rect x="260" y="150" width="80" height="60" fill="url(#hSiO2vg)" stroke="#1976d2"/>
+    <text x="300" y="185" text-anchor="middle" font-size="10" fill="#0d47a1">ILD1</text>
+
+    <!-- MP (over gate) -->
+    <rect x="340" y="150" width="80" height="60" fill="#9e9e9e" stroke="#212121"/>
+    <text x="380" y="178" text-anchor="middle" font-size="12" fill="#fff" font-weight="bold">MP</text>
+    <text x="380" y="194" text-anchor="middle" font-size="9" fill="#fff">(接 gate)</text>
+
+    <!-- ILD1 between MP and next MD -->
+    <rect x="420" y="150" width="80" height="60" fill="url(#hSiO2vg)" stroke="#1976d2"/>
+    <text x="460" y="185" text-anchor="middle" font-size="10" fill="#0d47a1">ILD1</text>
+
+    <!-- MD (right, over S/D) -->
+    <rect x="500" y="150" width="120" height="60" fill="#9e9e9e" stroke="#212121"/>
+    <text x="560" y="178" text-anchor="middle" font-size="12" fill="#fff" font-weight="bold">MD</text>
+    <text x="560" y="194" text-anchor="middle" font-size="9" fill="#fff">(接 S/D)</text>
+
+    <!-- ILD1 right of right MD -->
+    <rect x="620" y="150" width="160" height="60" fill="url(#hSiO2vg)" stroke="#1976d2"/>
+    <text x="700" y="185" text-anchor="middle" font-size="10" fill="#0d47a1">ILD1</text>
+
+    <!-- Below the MD/MP CMP plane: FEOL gate + S/D -->
+    <!-- left S/D under left MD -->
+    <polygon points="160,210 200,220 240,210 240,260 160,260" fill="#fff59d" stroke="#f9a825"/>
+    <text x="200" y="245" text-anchor="middle" font-size="9" fill="#5d4037">S/D + silicide</text>
+    <line x1="160" y1="216" x2="240" y2="216" stroke="#e65100" stroke-width="1.5"/>
+
+    <!-- gate stack under MP -->
+    <rect x="340" y="210" width="10" height="60" fill="#aed581" stroke="#33691e"/>
+    <rect x="350" y="240" width="60" height="30" fill="#ff8a65" stroke="#bf360c"/>
+    <text x="380" y="259" text-anchor="middle" font-size="11" fill="#fff" font-weight="bold">MG</text>
+    <rect x="350" y="210" width="60" height="30" fill="#aed581" stroke="#33691e" stroke-width="1.5"/>
+    <text x="380" y="228" text-anchor="middle" font-size="9" fill="#1b5e20" font-weight="bold">SAC cap（已被 MP 打穿）</text>
+    <rect x="410" y="210" width="10" height="60" fill="#aed581" stroke="#33691e"/>
+
+    <!-- right S/D under right MD -->
+    <polygon points="520,210 560,220 600,210 600,260 520,260" fill="#fff59d" stroke="#f9a825"/>
+    <text x="560" y="245" text-anchor="middle" font-size="9" fill="#5d4037">S/D + silicide</text>
+    <line x1="520" y1="216" x2="600" y2="216" stroke="#e65100" stroke-width="1.5"/>
+
+    <!-- Substrate -->
+    <rect x="20" y="270" width="760" height="40" fill="#e0e0e0" stroke="#616161"/>
+    <text x="400" y="295" text-anchor="middle" font-size="11" fill="#424242">Si substrate / fin</text>
+
+    <!-- ===== VG / VD vias ===== -->
+    <!-- VD (over left MD) -->
+    <rect x="180" y="70" width="40" height="80" fill="#bcaaa4" stroke="#3e2723" stroke-width="2"/>
+    <text x="200" y="118" text-anchor="middle" font-size="12" fill="#fff" font-weight="bold">VD</text>
+
+    <!-- VG (over MP) -->
+    <rect x="360" y="70" width="40" height="80" fill="#bcaaa4" stroke="#3e2723" stroke-width="2"/>
+    <text x="380" y="118" text-anchor="middle" font-size="12" fill="#fff" font-weight="bold">VG</text>
+
+    <!-- VD (over right MD) -->
+    <rect x="540" y="70" width="40" height="80" fill="#bcaaa4" stroke="#3e2723" stroke-width="2"/>
+    <text x="560" y="118" text-anchor="middle" font-size="12" fill="#fff" font-weight="bold">VD</text>
+
+    <!-- Labels for vias -->
+    <line x1="200" y1="68" x2="200" y2="55" stroke="#3e2723"/>
+    <line x1="200" y1="55" x2="120" y2="55" stroke="#3e2723"/>
+    <text x="115" y="58" text-anchor="end" font-size="10" fill="#3e2723" font-weight="bold">VD</text>
+    <text x="115" y="70" text-anchor="end" font-size="8" fill="#666">Via to Drain/Source</text>
+
+    <line x1="380" y1="68" x2="380" y2="20" stroke="#3e2723"/>
+    <text x="380" y="15" text-anchor="middle" font-size="10" fill="#3e2723" font-weight="bold">VG（Via to Gate）</text>
+
+    <line x1="560" y1="68" x2="560" y2="55" stroke="#3e2723"/>
+    <line x1="560" y1="55" x2="680" y2="55" stroke="#3e2723"/>
+    <text x="685" y="58" text-anchor="start" font-size="10" fill="#3e2723" font-weight="bold">VD</text>
+    <text x="685" y="70" text-anchor="start" font-size="8" fill="#666">Via to Drain/Source</text>
+
+    <!-- Surface line indicator -->
+    <line x1="20" y1="150" x2="780" y2="150" stroke="#37474f" stroke-width="0.5" stroke-dasharray="4,2"/>
+    <text x="20" y="146" font-size="8" fill="#37474f">MD/MP CMP 後的平面</text>
+
+    <!-- "Same mask" annotation between VG and VD -->
+    <path d="M 220 120 Q 290 95 360 120" fill="none" stroke="#37474f" stroke-width="0.8" stroke-dasharray="2,2"/>
+    <text x="290" y="93" text-anchor="middle" font-size="9" fill="#37474f">通常同一道 mask + etch，差別只在落點</text>
+
+    <!-- Labels for what each via lands on -->
+    <text x="200" y="225" text-anchor="middle" font-size="9" fill="#37474f">VD → MD → silicide → S/D</text>
+    <text x="380" y="285" text-anchor="middle" font-size="9" fill="#37474f">VG → MP（已穿過 cap）→ gate</text>
+    <text x="560" y="225" text-anchor="middle" font-size="9" fill="#37474f">VD → MD → silicide → S/D</text>
+  </g>
+
+  <!-- ============ Right: naming legend ============ -->
+  <g transform="translate(890, 80)" font-size="11">
+    <text x="0" y="0" font-weight="bold" font-size="13" fill="#37474f">命名對照</text>
+
+    <rect x="0" y="14" width="18" height="14" fill="#bcaaa4" stroke="#3e2723"/>
+    <text x="26" y="25" font-weight="bold" fill="#3e2723">VG</text>
+    <text x="0" y="42" font-size="10" fill="#444">Via to Gate</text>
+    <text x="0" y="56" font-size="10" fill="#666">MP（gate contact）→ M0</text>
+    <text x="0" y="70" font-size="10" fill="#666">別名：V0G、VCG</text>
+
+    <rect x="0" y="86" width="18" height="14" fill="#bcaaa4" stroke="#3e2723"/>
+    <text x="26" y="97" font-weight="bold" fill="#3e2723">VD</text>
+    <text x="0" y="114" font-size="10" fill="#444">Via to Drain/Source</text>
+    <text x="0" y="128" font-size="10" fill="#666">MD（S/D contact）→ M0</text>
+    <text x="0" y="142" font-size="10" fill="#666">別名：V0D、VCD、VCS</text>
+
+    <text x="0" y="170" font-weight="bold" font-size="11" fill="#3e2723">V0</text>
+    <text x="0" y="186" font-size="10" fill="#444">通稱「第 0 層 via」</text>
+    <text x="0" y="200" font-size="10" fill="#666">可能涵蓋 VG + VD</text>
+    <text x="0" y="214" font-size="10" fill="#666">視 fab 命名而定</text>
+
+    <text x="0" y="245" font-weight="bold" font-size="11" fill="#37474f">為什麼通常同一道：</text>
+    <text x="0" y="263" font-size="9" fill="#666">▶ MD / MP CMP 後表面共平</text>
+    <text x="0" y="277" font-size="9" fill="#666">▶ V0 蝕刻深度一致</text>
+    <text x="0" y="291" font-size="9" fill="#666">▶ 只是 layout 上的位置差異</text>
+    <text x="0" y="305" font-size="9" fill="#666">▶ Fill 通常一起做（W 或 Cu）</text>
+  </g>
+
+  <!-- Bottom note -->
+  <g transform="translate(60, 470)">
+    <rect x="0" y="0" width="980" height="40" fill="#fff8e1" stroke="#f9a825"/>
+    <text x="10" y="20" font-size="11" fill="#444"><tspan font-weight="bold">部分先進製程</tspan>沒有獨立的 V0 層，而是直接在 ILD1 上做 V0 + M0 的 dual damascene —— V0 與 M0 一道蝕刻完成。</text>
+    <text x="10" y="35" font-size="10" fill="#666">本圖以「V0 獨立做、再上 M0」的典型情境呈現。各家整合差異大，看脈絡判斷。</text>
+  </g>
+</svg>
