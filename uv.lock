@@ -3813,7 +3813,6 @@ name = "rca-ui"
 version = "1.0.0"
 source = { editable = "packages/rca-ui" }
 dependencies = [
-    { name = "httpx" },
     { name = "mcp" },
     { name = "nicegui" },
     { name = "numpy" },
@@ -3826,7 +3825,6 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "httpx", specifier = ">=0.27" },
     { name = "mcp", specifier = ">=1.2" },
     { name = "nicegui", specifier = ">=2.10" },
     { name = "numpy", specifier = ">=1.26" },

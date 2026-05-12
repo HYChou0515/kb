@@ -13,14 +13,54 @@ Lifecycle:
 
 from __future__ import annotations
 
+import json
 import logging
+from collections.abc import AsyncIterator
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from agents import Agent, RunConfig, Runner
 
 from rca_ui.mcp_setup import build_servers
 
 logger = logging.getLogger(__name__)
+
+
+# ─── streaming event surface ──────────────────────────────────────────────
+
+
+@dataclass
+class TextDeltaEvent:
+    """An incremental chunk of assistant text."""
+
+    delta: str
+
+
+@dataclass
+class ToolCallEvent:
+    """The model requested a tool. `arguments` is the raw JSON string."""
+
+    name: str
+    arguments: str
+
+
+@dataclass
+class ToolOutputEvent:
+    """The tool returned. `output` is stringified for display."""
+
+    name: str
+    output: str
+
+
+@dataclass
+class TurnDoneEvent:
+    """Marks end of turn. Yielded once after history has been persisted."""
+
+    final_output: str
+
+
+StreamEvent = TextDeltaEvent | ToolCallEvent | ToolOutputEvent | TurnDoneEvent
 
 
 _RCA_SYSTEM_PROMPT = """\
@@ -145,6 +185,18 @@ class AgentRuntime:
         self._workspace = workspace
         self._history = []
         ws_abs = str(workspace.resolve())
+        kb_enabled = any(s.name == "kb-mcp" for s in self._mcp_servers)
+        kb_note = (
+            ""
+            if kb_enabled
+            else (
+                "\nKB MODE: kb-mcp is DISABLED for this session. "
+                "Skip step 8 (KB recall filtering); after step 7 stats, "
+                "present the raw candidate list to the user with the caveat "
+                "that false alarms are not filtered. Skip step 9b/9c "
+                "(kb-mcp.remember dual-save) — save only the local report file.\n"
+            )
+        )
         self._agent = Agent(
             name="rca-agent",
             instructions=(
@@ -153,7 +205,8 @@ class AgentRuntime:
                 f"\nCase ID: {case_id}\n"
                 f"\nFilesystem MCP is sandboxed to: {self._workspace_root}\n"
                 f"Your case workspace is: {ws_abs}\n"
-                "\nALWAYS pass absolute paths to filesystem tools.\n"
+                + kb_note
+                + "\nALWAYS pass absolute paths to filesystem tools.\n"
                 "Examples for this session:\n"
                 f"  read_file path={ws_abs}/CASE.md\n"
                 f"  write_file path={ws_abs}/notes.md\n"
@@ -170,30 +223,103 @@ class AgentRuntime:
         # die when rca-ui exits (OS reaps them).
         return
 
-    async def run_user_turn(self, user_input: str) -> str:
-        """Run one turn against the agent. Returns the agent's final text.
+    async def run_user_turn_streamed(
+        self, user_input: str
+    ) -> AsyncIterator[StreamEvent]:
+        """Run one turn with streaming. Yields:
 
-        Conversation memory is held in `self._history`; we pass the entire
-        list back in on each call (Runner.run accepts list of input items)
-        and append the result.to_input_list() output for next time.
+          TextDeltaEvent    — each assistant text chunk
+          ToolCallEvent     — model invoked a tool (name, arguments JSON)
+          ToolOutputEvent   — tool returned (name, stringified output)
+          TurnDoneEvent     — final, exactly once; history is persisted by then
+
+        Conversation memory is held in `self._history`; the entire list is
+        passed in each call, and `result.to_input_list()` rebuilds it at
+        end-of-turn so the agent retains tool-call context across turns.
         """
         if self._agent is None:
             raise RuntimeError("AgentRuntime.start() not called")
         new_input = self._history + [{"role": "user", "content": user_input}]
-        result = await Runner.run(
+        result = Runner.run_streamed(
             starting_agent=self._agent,
             input=new_input,
             max_turns=30,
             run_config=RunConfig(workflow_name=f"rca:{self._case_id}"),
         )
+
+        # Map call_id → tool name so we can label ToolOutputEvent. The
+        # tool_output run-item doesn't always echo the name; we read it from
+        # the matching tool_called item we saw earlier.
+        call_names: dict[str, str] = {}
+
+        async for raw in result.stream_events():
+            if raw.type == "raw_response_event":
+                data = raw.data
+                if getattr(data, "type", "") == "response.output_text.delta":
+                    delta = getattr(data, "delta", "") or ""
+                    if delta:
+                        yield TextDeltaEvent(delta=delta)
+                continue
+
+            if raw.type == "run_item_stream_event":
+                if raw.name == "tool_called":
+                    name, args, call_id = _extract_tool_call(raw.item.raw_item)
+                    if call_id:
+                        call_names[call_id] = name
+                    yield ToolCallEvent(name=name, arguments=args)
+                elif raw.name == "tool_output":
+                    call_id = _extract_call_id(raw.item.raw_item)
+                    name = call_names.get(call_id or "", "")
+                    yield ToolOutputEvent(
+                        name=name, output=_stringify(raw.item.output)
+                    )
+
         self._history = result.to_input_list()
-        return result.final_output or ""
+        yield TurnDoneEvent(final_output=result.final_output or "")
 
     def load_history(self, history: list) -> None:
         """Resume support: rehydrate `self._history` from a prior transcript.
         Caller is responsible for shaping the list as TResponseInputItem
         records (role / content)."""
         self._history = list(history)
+
+
+# ─── helpers ──────────────────────────────────────────────────────────────
+
+
+def _extract_tool_call(raw_item: Any) -> tuple[str, str, str | None]:
+    """Pull (name, arguments, call_id) out of a tool_call raw item.
+
+    raw_item is one of ResponseFunctionToolCall / McpCall / dict / etc.
+    We probe both attribute and mapping access since the union is wide.
+    """
+    name = _attr(raw_item, "name", "") or "?"
+    args = _attr(raw_item, "arguments", "") or ""
+    call_id = _attr(raw_item, "call_id", None) or _attr(raw_item, "id", None)
+    return str(name), str(args), call_id
+
+
+def _extract_call_id(raw_item: Any) -> str | None:
+    return _attr(raw_item, "call_id", None) or _attr(raw_item, "id", None)
+
+
+def _attr(obj: Any, name: str, default: Any) -> Any:
+    if obj is None:
+        return default
+    if isinstance(obj, dict):
+        return obj.get(name, default)
+    return getattr(obj, name, default)
+
+
+def _stringify(x: Any) -> str:
+    if x is None:
+        return ""
+    if isinstance(x, str):
+        return x
+    try:
+        return json.dumps(x, ensure_ascii=False)
+    except (TypeError, ValueError):
+        return str(x)
 
 
 # ─── orphan-MCP backstop ───────────────────────────────────────────────────

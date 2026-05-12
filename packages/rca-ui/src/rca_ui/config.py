@@ -1,8 +1,8 @@
 """rca_ui configuration. Reads env once at process start.
 
-Only the bits rca_ui actually needs — port, kb-api URL, LLM model for the
-agent, paths. Falls back to the LLM_* / OPENCODE_LLM_* / KB_API_* names
-already used by kb-api so a single .env serves both processes.
+Only the bits rca_ui actually needs — port, LLM model for the agent,
+workspace paths. Falls back to the LLM_* / OPENCODE_LLM_* names so a
+single .env can still serve other processes in the repo.
 """
 
 from __future__ import annotations
@@ -35,8 +35,6 @@ _DEFAULT_MODEL_BY_PROVIDER = {
 class UISettings:
     ui_host: str
     ui_port: int
-
-    kb_api_base_url: str
 
     llm_provider: str
     llm_model: str
@@ -84,7 +82,6 @@ def load_ui_settings() -> UISettings:
     return UISettings(
         ui_host=_env("RCA_UI_HOST", "127.0.0.1"),
         ui_port=int(_env("RCA_UI_PORT", "3001")),
-        kb_api_base_url=_env("KB_API_BASE_URL", "http://127.0.0.1:8765"),
         llm_provider=provider,
         llm_model=model,
         openai_api_key=openai_key,

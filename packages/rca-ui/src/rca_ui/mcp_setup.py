@@ -26,13 +26,18 @@ def build_servers(*, workspace: Path, npx_bin: str = "npx") -> list[MCPServerStd
 
     Caller owns the lifecycle: must `await server.connect()` before
     handing to Agent, and `await server.cleanup()` on close.
+
+    Set `RCA_UI_ENABLE_KB_MCP=0` in the env to skip the kb-mcp server —
+    useful for local testing when kb-api / cognee isn't running.
     """
-    return [
+    servers: list[MCPServerStdio] = [
         _filesystem_server(workspace, npx_bin),
-        _kb_mcp_server(),
         _wafer_data_mcp_server(),
         _stats_algo_mcp_server(),
     ]
+    if os.getenv("RCA_UI_ENABLE_KB_MCP", "1") != "0":
+        servers.insert(1, _kb_mcp_server())
+    return servers
 
 
 def _filesystem_server(workspace: Path, npx_bin: str) -> MCPServerStdio:
@@ -91,7 +96,7 @@ def _stats_algo_mcp_server() -> MCPServerStdio:
 
 
 def _inherit_env() -> dict[str, str]:
-    """The MCP servers need our env (PATH, HOME, *_API_KEY, KB_API_BASE_URL,
-    LLM_*, COGNEE_DATA_ROOT, etc.). Forward the whole thing — they're our
-    own subprocesses, not untrusted code."""
+    """The MCP servers need our env (PATH, HOME, *_API_KEY, LLM_*,
+    COGNEE_DATA_ROOT, etc.). Forward the whole thing — they're our own
+    subprocesses, not untrusted code."""
     return dict(os.environ)

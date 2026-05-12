@@ -1,13 +1,12 @@
 [project]
 name = "rca-ui"
 version = "1.0.0"
-description = "NiceGUI chat + OpenAI Agents SDK runtime. Talks to kb-api over HTTP for knowledge ops; spawns four MCP stdio subprocesses for the agent's tools."
+description = "NiceGUI chat + OpenAI Agents SDK runtime. Spawns four MCP stdio subprocesses (filesystem / kb-mcp / wafer-data-mcp / stats-algo-mcp) for the agent's tools."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "nicegui>=2.10",
     "openai-agents>=0.15",
-    "httpx>=0.27",
     "pydantic>=2.7",
     "python-dotenv>=1.0.1",
     "mcp>=1.2",
