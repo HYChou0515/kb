@@ -15,7 +15,7 @@
 
 **實務**：兩者**互補使用**。先 darkfield 抓 particle，再 brightfield 抓 pattern issue。
 
-**參考**：May & Spanos (2006). *Fundamentals of Semiconductor Manufacturing and Process Control*, IEEE Press.
+**參考**：May, G. S. & Spanos, C. J. (2006). *Fundamentals of Semiconductor Manufacturing and Process Control*, IEEE Press / Wiley.
 
 ## A.2 CD-SEM、X-SEM、TEM 差別
 
@@ -201,4 +201,5 @@ EDS 是 RCA 上「**確認材料來源**」的重要工具。
 - May, G. S. & Spanos, C. J. (2006). *Fundamentals of Semiconductor Manufacturing and Process Control*, IEEE Press.（KLA、SPC、commonality 方法論）
 - Mack, C. A. (2008). *Fundamental Principles of Optical Lithography*, Wiley.（OPC、photo 解析度）
 - Quirk, M. & Serda, J. (2001). *Semiconductor Manufacturing Technology*, Prentice Hall.（製程整體與 yield 概念）
-- Vasudev, P. K. (2003). *Yield modeling and statistical process control in semiconductor manufacturing*. (yield modeling)
+- Stapper, C. H. (1976). *LSI Yield Modeling and Process Monitoring*. IBM Journal of Research and Development, 20(3), 228–234.（yield modeling 經典）
+- Stapper, C. H. (1973). *Defect Density Distribution for LSI Yield Calculations*. IEEE Trans. Electron Devices, ED-20, 655.

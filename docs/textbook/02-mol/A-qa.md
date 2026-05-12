@@ -231,7 +231,8 @@ ESL 的功能就是讓 OES 訊號**有清楚的轉折點**：穿過 ILD（SiO₂
 ## 參考文獻
 
 - Sze, S. M. & Ng, K. K. (2006). *Physics of Semiconductor Devices*, 3rd ed., Wiley. (Ch. 3 金屬-半導體接觸)
-- Murarka, S. P. (1995). *Silicide thin films and their applications in microelectronics*. Intermetallics, 3, 173–186.
-- Plummer (2000). *Silicon VLSI Technology*. Ch. 8（接觸與連線）
-- Tu, K. N. (2003). *Recent advances on electromigration in very-large-scale-integration of interconnects*. J. Appl. Phys.
-- Wong, H. & Iwai, H. (2006). *On the scaling issues and high-κ replacement of ultrathin gate dielectrics*. Microelectronic Engineering. (TDDB 相關)
+- Murarka, S. P. (1983). *Silicides for VLSI Applications*. Academic Press.（silicide 工程經典）
+- Murarka, S. P. (1995). *Silicide thin films and their applications in microelectronics*. Intermetallics, 3(3), 173–186.
+- Plummer, J. D., Deal, M. D. & Griffin, P. B. (2000). *Silicon VLSI Technology*. Prentice Hall. Ch. 8（接觸與連線）
+- Tu, K. N. (2003). *Recent advances on electromigration in very-large-scale-integration of interconnects*. J. Appl. Phys., 94(9), 5451–5473.
+- Wong, H. & Iwai, H. (2006). *On the scaling issues and high-κ replacement of ultrathin gate dielectrics for nanoscale MOS transistors*. Microelectronic Engineering, 83, 1867–1904.（TDDB 相關）

@@ -175,8 +175,8 @@ OPC model 不夠準時 → hot pattern。詳見 [Vol 4 附錄 A.8](../04-defect/
 
 - Montgomery, D. C. (2012). *Statistical Quality Control: A Modern Introduction*, 7th ed., Wiley.（SPC 經典）
 - Montgomery, D. C. (2017). *Design and Analysis of Experiments*, 9th ed., Wiley.（DOE / ANOVA 進階）
-- Box, G. E. P., Hunter, J. S., Hunter, W. G. (2005). *Statistics for Experimenters*, Wiley.
-- May, G. S. & Spanos, C. J. (2006). *Fundamentals of Semiconductor Manufacturing and Process Control*, IEEE Press.（fab-specific 應用）
-- Cohen, J. (1988). *Statistical Power Analysis for the Behavioral Sciences*, 2nd ed., Routledge.（effect size 概念）
-- Industry: SEMI documents on SPC standards
-- IRPS / IITC / IEDM proceedings for case studies
+- Box, G. E. P., Hunter, J. S., Hunter, W. G. (2005). *Statistics for Experimenters: Design, Innovation, and Discovery*, 2nd ed., Wiley.
+- May, G. S. & Spanos, C. J. (2006). *Fundamentals of Semiconductor Manufacturing and Process Control*, IEEE Press / Wiley.（fab-specific 應用）
+- Cohen, J. (1988). *Statistical Power Analysis for the Behavioral Sciences*, 2nd ed., Lawrence Erlbaum.（effect size 概念）
+- Stapper, C. H. (1976). *LSI Yield Modeling and Process Monitoring*. IBM J. Res. Dev., 20(3), 228–234.（yield modeling 經典）
+- 產業：SEMI documents on SPC standards；IRPS / IITC / IEDM annual proceedings（case studies）

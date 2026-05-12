@@ -184,6 +184,18 @@ X-SEM / TEM 看 fill 內部空腔或縫
 
 → 詳細 MOL fill 製程見 [MOL Ch 4](../02-mol/04-mp-contact.md)；BEOL Cu damascene fill 見 [BEOL Ch 1](../03-beol/01-damascene.md)。
 
+### N5+ 節點演化趨勢
+
+> Trench AR 隨節點上升 + Cu / W / Co fill 多金屬混用 → fill void / seam 風險增加。
+
+| 節點 | 結構性壓力 |
+|---|---|
+| **N7 / N5** | MD/V0 AR 達 5–10:1，bottom-up fill 是主流；Co 在 lower MD/Mx 開始取代 W；ECP additives 配方更精細 |
+| **N3** | Trench 更窄更深；hybrid metallization（Cu / Co / Ru）使每種金屬都要獨立優化 |
+| **N2** | 同 N3 趨勢 + BSPDN 引入背面 fill 全新體系；emerging |
+
+> 公開資料來源：IITC 2018–2024 Cu/Co/Ru fill 系列；IEDM 2022–2024 advanced interconnect。
+
 ---
 
 ## 6.4b Low-k Crack / Void
@@ -231,6 +243,18 @@ BEOL low-k 介電出現裂縫（crack）或內部空腔（void）。常見於 wa
 4. 加 buffer 層緩衝應力
 
 → 詳細 low-k 物理見 [BEOL Ch 2](../03-beol/02-low-k.md)。
+
+### N5+ 節點演化趨勢
+
+> Low-k 越多孔（k 越低）機械強度越差，crack/void 對節點縮小特別敏感。
+
+| 節點 | 結構性壓力 |
+|---|---|
+| **N7 / N5** | Porous SiCOH（k ~2.4–2.5）成為中段主流；楊氏模數比 SiO2 低一個量級 → CMP / 封裝應力更易引發 crack |
+| **N3** | 部分 fab 試 k < 2.4 ULK / air-gap 結構，機械強度進一步下降；wafer edge die 在 fab end-of-line 失效率升高 |
+| **N2** | 同 N3 趨勢 + BSPDN 在背面額外應力源；emerging |
+
+> 公開資料來源：IITC 2015–2024 low-k mechanical reliability 系列；BEOL packaging stress：IEEE ECTC。
 
 ---
 
@@ -289,6 +313,45 @@ MD（接 S/D 的金屬）與 MG（gate 上方接點）電性連通，造成 sour
 
 → 詳細決策樹見 [MOL Ch 6.3](../02-mol/06-defect-kingdom.md#63-mdmg-short-完整觸發路徑圖)。
 
+### N5+ 節點視角
+
+> 各 fab、各產品的 MDMG short Pareto 不同；以下只列**結構性的工程壓力來源**，不替代 fab 內實際資料。
+
+#### 節點演進帶來的新壓力
+
+| 節點 | 主要架構 | 對 MDMG short 的結構性影響 | 公開資料來源 |
+|---|---|---|---|
+| **N7 / N5**（2018–2020 主流）| FinFET，gate pitch ~50 nm | EUV single patterning 引入後 MD photo 精度提升，但 SAC margin 因 pitch 縮小而變窄；路徑 A（SAC cap）與路徑 B（MD overlay）並列主要嫌疑 | TSMC IEDM 2019（Yeap et al., 5nm platform）|
+| **N3 (FinFET-based)**（~2022–2023）| FinFET，更密 pitch | SAC margin 更窄、路徑 A/B 風險上升；EUV multi-patterning（LELE）增加 photo 變因 | TSMC IEDM / VLSI 2022–2023 |
+| **N3 (GAA, Samsung)**（~2022）| GAA nanosheet | 新風險：**inner spacer 缺陷**——nanosheet 之間需要 ALD 長 SiOC/SiOCN 把 gate 與 S/D 隔開，pinhole / void 直接造成「電性上的 gate-to-S/D short」，與 MDMG short 同訊號但物理 root cause 在 FEOL | Samsung IEDM 2022 GAA 系列發表 |
+| **N2**（2025–2026 ramp）| GAA + BSPDN | **BSPDN 改變 "substrate ground" 拓樸**——VG BVC 訊號的 ground 路徑可能經 backside power rail，VC inspection convention 需要重校 | IEDM 2024 short courses；TSMC / Intel / Samsung 公司公告 |
+
+> ⚠ N2 內容多屬 emerging / 公司公告層級，實際 defect Pareto 變化仍在累積中。
+
+#### 三條跨節點的結構性壓力
+
+1. **SAC margin 是 zero-sum**：cap 越厚對 MD etch margin 越有利，但 MP open 越難（[Vol 2 MOL Ch 4.6](../02-mol/04-mp-contact.md)）。每縮一節 gate pitch，這個 trade-off 越緊。
+2. **GAA inner spacer 是新一條「等效 MDMG short」路徑**：FinFET 沒有這個結構，GAA 才有。失效訊號（VG BVC、Iddq hard short）與 MDMG short 一致，但物理在 FEOL nanosheet release / inner-spacer ALD，不在 MOL。診斷時要把 FEOL nanosheet 模組納入嫌疑。
+3. **BSPDN 改變 grounding 拓樸**：傳統 VG BVC 假設「gate → S/D → bulk substrate → ground」。Backside power 引入後，"ground" 路徑可能經 backside power rail（M0 backside）。Inspection convention（PVC/NVC）的訊號詮釋需要 fab 重新建立。
+
+#### 鑑別線索的節點特異性
+
+| 鑑別線索 | N5（FinFET）| N3（GAA）| N2（GAA + BSPDN）|
+|---|---|---|---|
+| **TEM 切片方向** | 沿 fin / 跨 fin | 沿 nanosheet stack；加做跨 nanosheet 看 inner spacer | 額外要看 BSPDN via 接面 |
+| **Vt / leakage 並行訊號** | NBTI / PBTI | + inner spacer 對 Vt 的影響 | + backside contact / BSPDN via leakage |
+| **Pareto 上的 co-defect** | CMGCMP ox residue、SAC cap 厚度 SPC | + inner spacer void、nanosheet release 殘留 | + BSPDN via fail、backside CMP dishing |
+| **嫌疑模組擴展** | MOL（MD/MP/CMG）+ FEOL（SAC cap）| ↑ 同 + FEOL nanosheet inner-spacer | ↑ 同 + backside power module |
+
+#### 公開資料來源
+
+- TSMC 5nm FinFET：Yeap, G. et al. (2019) IEDM, *5nm CMOS Production Technology Platform Featuring Full-Fledged EUV...*
+- Intel 22nm tri-gate + SAC：Auth, C. et al. (2012) VLSI Symposium, *A 22nm high performance and low-power CMOS technology featuring fully-depleted tri-gate transistors, self-aligned contacts and high density MIM capacitors*
+- IBM stacked nanosheet GAA：Loubet, N. et al. (2017) VLSI Symposium
+- imec stacked nanowire / GAA reliability：Mertens, H. et al. (2016) IEDM；IRPS 2018–2024 GAA reliability sessions（多篇）
+- imec forksheet：Weckx, P. et al. (2019) IEDM
+- N3 / N2 製程平台與 BSPDN：IEDM / VLSI / IRPS 2022–2024 多篇（含 TSMC、Samsung、Intel、imec），具體論文請於 IEEE Xplore 查詢
+
 ---
 
 ## 6.6 Gate-S/D Short
@@ -331,6 +394,18 @@ X-SEM 看 spacer 厚度與完整性
 
 → 詳細 spacer 製程見 [FEOL Ch 5.5](../01-feol/05-dummy-gate-spacer.md#55-spacer自我對準的關鍵)；MP etch 見 [MOL Ch 4](../02-mol/04-mp-contact.md)。
 
+### N5+ 節點演化趨勢
+
+> Gate-S/D short 與 MDMG short 同訊號（VG BVC），但失效幾何在 GAA 上有新變體（inner spacer）。
+
+| 節點 | 結構性壓力 |
+|---|---|
+| **N7 / N5 (FinFET)** | 主要靠 SiN spacer 隔絕，spacer ALD 完整性是 control |
+| **N3 (FinFET)** | Spacer 更薄、MP etch margin 更窄 |
+| **N3 / N2 (GAA)** | **新風險：inner spacer**——nanosheet 之間的 SiOC/SiOCN，需要在 channel release 之間 ALD 進去，缺陷直接造成 gate-S/D short（電性與 MDMG short 同） |
+
+> 公開資料來源：見 6.5 MDMG short 條目；GAA inner spacer：IRPS 2021–2024。
+
 ---
 
 ## 6.7 Via Punch-through
@@ -372,6 +447,18 @@ X-SEM 取 fail die，可看到 V0 穿過 MD 接到下層
 3. 評估加入 dedicated etch stop layer
 
 → 詳細 V0 製程見 [MOL Ch 5](../02-mol/05-vias-to-m0.md)。
+
+### N5+ 節點演化趨勢
+
+> Via AR 上升 + MD CMP dishing 控制更嚴 → punch-through 風險穩定存在。
+
+| 節點 | 結構性壓力 |
+|---|---|
+| **N7 / N5** | V0 AR ~5:1，etch endpoint control 加 ESL 緩衝 |
+| **N3** | AR 進一步上升；部分 fab 走 stop-layer-less 路徑（[MOL Ch 5.5](../02-mol/05-vias-to-m0.md#55-via-etch-的特殊難度)），更倚賴 chamber 穩定度 |
+| **N2** | 同 N3 + BSPDN 引入新 via 拓樸；emerging |
+
+> 公開資料來源：IITC 2018–2024 advanced via etch；IEDM 2022–2024 interconnect 系列。
 
 ---
 
@@ -417,6 +504,18 @@ Cu 原子穿過或繞過 barrier 進入 low-k 介電。**初期看不到**（ato
 4. 反映在 TDDB Weibull tail
 
 → 詳細 BEOL barrier 物理見 [BEOL Ch 3](../03-beol/03-liner-barrier.md)。
+
+### N5+ 節點演化趨勢
+
+> Barrier 厚度被持續壓縮（TaN/Ta 從幾 nm 到次 nm 級）→ Cu 擴散風險上升。
+
+| 節點 | 結構性壓力 |
+|---|---|
+| **N7 / N5** | ALD-TaN 取代 PVD-TaN 提升 coverage；Co liner 開始在中段引入 |
+| **N3** | Barrier 進一步壓薄；hybrid metallization 引入新 barrier 介面（Cu / Co 之間）|
+| **N2** | 同 N3 + 部分 fab 探索 barrier-less Ru / Mo metallization；emerging |
+
+> 公開資料來源：IITC 2015–2024 barrier engineering；IEDM 2020–2024 Cu / Co / Ru interconnect。
 
 ---
 
@@ -561,6 +660,40 @@ X-SEM 看 MD / via 頂部凹陷或內部 void；TEM 看 W 局部缺失
 
 → 詳細 W fill / TiN barrier / silicide 三層介面見 [MOL Ch 3.5](../02-mol/03-silicide.md#35-先進製程ti-based-silicide-as-liner-)（silicide-as-liner 整合）與 [MOL Ch 4](../02-mol/04-mp-contact.md)（W fill）。
 
+### N5+ 節點視角
+
+> W-loss 在 N7 之前是 MOL 的 yield killer 主力之一；N7 起部分 fab 把底層金屬從 W 改用 Co/Ru，**W-loss 影響範圍縮小但仍存在於 W 還主導的層**。
+
+#### 節點演進帶來的新壓力
+
+| 節點 | 主要架構 | 對 W-loss 的結構性影響 | 公開資料來源 |
+|---|---|---|---|
+| **N7 / N5** | W 仍為 MD / MP / V0 主流（部分 fab 在 M0/M1 已改 Co）| TiN barrier 厚度壓薄到 < 2 nm；ALD-TiN 取代 PVD-TiN 提升 coverage 但仍是 F-attack 主要防線 | TSMC IEDM 2019；IITC 2018–2020 Co/W 整合 |
+| **N3 (FinFET)** | W 在中段 contact 仍存；底層 Co/Ru 比例上升 | W 還在的層次 W-loss 風險不變；新增 W↔Co 邊界化學相容性議題 | IITC 2022–2023 hybrid metallization |
+| **N3 / N2 (GAA)** | 整合更複雜：Cu / Co / Ru / W 混用 | W 在 GAA contact 結構中的角色重新評估；inner spacer 周邊化學環境改變對 W-loss 機制有間接影響 | IEDM 2022–2024 GAA contact integration |
+| **N2** | 部分 fab 進一步減 W 比例 | 仍存於 selective contact 層；BSPDN 引入後 backside 上若有 W，要重新驗證 | IEDM 2024 short courses |
+
+#### 三條跨節點的結構性壓力
+
+1. **TiN barrier 越薄、F-attack 越嚴重**：W fill 用 WF6（含氟）做 CVD，TiN 必須擋住 F 攻擊下方 silicide。Barrier 厚度跟著 contact pitch 縮，conformality 要求提升，ALD-TiN 成為標配。
+2. **Hybrid metallization 帶來新化學相容性問題**：W ↔ Co、W ↔ Ru 等不同金屬交界處在 wet clean / CMP 化學下的電化學行為不同，galvanic corrosion 是新風險。
+3. **W 是「殘存的成熟金屬」**：N5+ 業界趨勢是逐步減少 W 比例，但完全取代成本高、可靠度仍待驗證。W-loss 在「**還在用 W 的層**」依然是主要威脅。
+
+#### 鑑別線索的節點特異性
+
+| 鑑別線索 | N7 / N5 | N3 / N2 |
+|---|---|---|
+| **失效位置** | MD / V0（W 主場）| 視 fab 整合：W 仍在的層；部分 fab 已不在 MD 用 W |
+| **嫌疑機制比重** | F-attack 主導 | F-attack + galvanic corrosion（多金屬邊界）|
+| **X-SEM 重點** | W 內部 void、TiN coverage | + W/Co、W/Ru 邊界 |
+
+#### 公開資料來源
+
+- W CVD 與 TiN barrier 基礎：IITC / VMIC 2000–2015 系列
+- 5nm 平台：TSMC IEDM 2019
+- Co / W hybrid integration：IITC 2017–2023
+- W-loss 機制：許多 IRPS / IEDM short courses；具體論文需依 fab 查詢
+
 ---
 
 ## 6.11 Co-loss
@@ -605,6 +738,19 @@ X-SEM 看 Co 局部缺失
 > **Co-loss 比 W-loss 更難解**：Co 製程整體成熟度較低，業界仍在優化 slurry / wet 化學。
 
 → 詳細 Co fill 製程見 [MOL Ch 4.3](../02-mol/04-mp-contact.md)；BEOL Co liner / cap 見 [BEOL Ch 3.5](../03-beol/03-liner-barrier.md#35-替代方案co-liner)。
+
+### N5+ 節點演化趨勢
+
+> 隨 Co 比例上升（N7 起底層金屬、N3 中段金屬），Co-loss 從 "minor concern" 變成主要 reliability 戰場之一。
+
+| 節點 | 結構性壓力 |
+|---|---|
+| **N7** | Co 開始在底層金屬替代 W；CMP slurry / wet 化學仍在演進 |
+| **N5** | Co 在 MD/M0 已是主流；Co CMP slurry 配方相對成熟，但仍是 chamber-fingerprint 敏感站 |
+| **N3** | Hybrid metallization 中 Co 用量擴大；W↔Co 邊界引入新 galvanic 風險 |
+| **N2** | Co 與 Ru / Mo 並列在底層；BSPDN 上的 Co 是新領域；emerging |
+
+> 公開資料來源：IITC 2016–2024 Co integration 系列；TSMC / Samsung IEDM Co reliability。
 
 ---
 
@@ -690,6 +836,19 @@ BEOL Cu 線上方的 cap layer（SiCN / Co cap）有微小孔洞或不連續。
 
 → 詳細 BEOL cap 製程見 [BEOL Ch 3.6](../03-beol/03-liner-barrier.md#36-cap-layercu-上面也要有-barrier)。
 
+### N5+ 節點演化趨勢
+
+> Cu/cap 介面是 Cu 線 EM 與 TDDB 的主要路徑；cap 材料從 SiCN 演進到 Co cap / hybrid。
+
+| 節點 | 結構性壓力 |
+|---|---|
+| **N7** | Co cap selective dep 在 M0/M1 取代 SiCN；coverage / selectivity 是新 SPC 項目 |
+| **N5** | Co cap 在更多層應用；selective Co dep 的 selectivity 失效（落到 ILD 上）成為 chamber-fingerprint 議題 |
+| **N3** | 不同金屬（Cu / Co / Ru）配不同 cap 策略；複雜度上升 |
+| **N2** | 同 N3 + BSPDN 引入背面 cap 全新材料系統；emerging |
+
+> 公開資料來源：IITC 2014–2024 Co cap 系列；IRPS Cu EM with Co cap 多篇。
+
 ---
 
 # Reliability-related Defects（時間累積型 wear-out failures）
@@ -760,6 +919,43 @@ EM 是「累積結果」，但這幾站直接影響 EM 壽命：
 
 → 與 yield 的關係：**inline yield 通過 ≠ EM safe**。需要獨立的 reliability stress 監控。
 
+### N5+ 節點視角
+
+#### Cu 縮細與 cap 材料演進
+
+| 節點 | Mx 主流 | Cap 主流 | EM 結構性壓力 | 公開資料來源 |
+|---|---|---|---|---|
+| **N7 / N5** | Cu damascene 全部金屬層 | M0–M1: Co cap selective dep；中段：SiCN | Cu 線寬縮小到接近電子散射 mean-free-path → resistivity 急升、EM 餘裕急縮；Co cap 由 N7 引入成為標配 | TSMC IEDM 2019；IITC 2017–2020 Cu-Co integration 系列 |
+| **N3 (FinFET / GAA)** | 多重金屬選擇：Cu + Co lower layers | Co cap、ALD-Co selective | 部分 fab 在最底層金屬（M0）改用 Co fill；中段仍 Cu | IITC / VLSI 2022–2023 |
+| **N3 / N2** | **Hybrid metallization**：M0/M1 用 Co 或 Ru，中段 Cu | 配合不同金屬，cap 策略分層 | Ru / Mo 引入解決最底層金屬 EM；不同金屬與 silicide / via 介面是新 reliability frontier | IEDM 2022–2024；IRPS 2023–2024 |
+| **N2** | 同 N3 hybrid + **BSPDN** | Frontside cap 同前；backside 是全新 metallization | BSPDN 上的金屬與介電是新系統，EM 模型需重新驗證 | IEDM 2024；BSPDN 公司公告 |
+
+#### 三條跨節點的結構性壓力
+
+1. **Cu 縮細到 mean-free-path 以下**：N5 以下 Cu 線寬接近電子在 Cu 中的 mean free path（~40 nm at room temp），晶界與介面散射主導電阻 → resistivity 大幅上升，且 EM 因晶粒小、介面多而加速。這是業界轉向 Co / Ru / Mo 的核心驅動。
+2. **Hybrid metallization 帶來新介面**：N3 / N2 多金屬混用，**Cu-to-Co、Co-to-W、Ru-to-Cu** 等不同金屬交界處都成為新 EM 與 reliability 風險面。各家 fab 的整合策略不同。
+3. **BSPDN 是全新 reliability system**：N2 引入 backside power 後，backside 上的 Cu / Ru / barrier / cap 整合與 frontside 不同，EM / TDDB 模型需要從頭建立。N2 量產資料才開始累積。
+
+#### 鑑別線索的節點特異性
+
+| 鑑別線索 | N5 (Cu + Co cap) | N3 (Hybrid) | N2 (Hybrid + BSPDN) |
+|---|---|---|---|
+| **EM stress 條件** | 標準 J-T accelerated stress | 不同金屬層分別 stress；介面 EM 是新 mode | + Backside metallization 分開 stress |
+| **TEM 失效定位** | Cu/cap 介面、晶界 | + Cu-Co、Co-W 介面 | + Backside via / 介電介面 |
+| **EM β / activation energy** | Cu 標準參數 | 因金屬而異；需要重新校 Black's eqn | 同 N3，加 backside contribution |
+| **WLR Pareto 趨勢** | EM 集中在 cap 介面 | EM 從 cap 介面分散到多個金屬介面 | 加 backside contribution |
+
+#### 公開資料來源
+
+- EM 物理基礎：Black, J. R. (1969). *Electromigration—A Brief Survey and Some Recent Results*. IEEE Trans. Electron Devices, 16, 338–347.（Black's Equation 開創性論文）
+- Cu damascene 與 EM review：Tu, K. N. (2003). *Recent advances on electromigration in very-large-scale-integration of interconnects*. J. Appl. Phys., 94(9), 5451–5473.
+- Cu damascene 首次量產整合：Edelstein, D. et al. (1997). *Full copper wiring in a sub-0.25 μm CMOS ULSI technology*. IEDM.（IBM）
+- IBM Cu interconnect EM 系列：Hu, C.-K. et al. 2002–2012 多篇於 J. Appl. Phys. / Appl. Phys. Lett. / IITC（具體論文請於 IEEE Xplore / AIP 查詢）
+- Stress-induced voiding：Ogawa, E. T. et al. (2002). *Stress-induced voiding under vias connected to wide Cu metal leads*. IRPS.
+- Low-k integration & reliability：Hoofman, R. J. et al. (2005). *Challenges in the implementation of low-k dielectrics in the back-end of line*. Microelectronic Engineering, 80, 337–344.
+- 5nm Cu 平台：Yeap, G. et al. (2019) IEDM
+- 3nm / 2nm interconnect / BSPDN：IEDM / VLSI / IITC 2022–2024 多篇（含 TSMC、Samsung、Intel、imec），具體論文請於 IEEE Xplore 查詢
+
 ---
 
 ## 6.14 TDDB-induced Breakdown
@@ -818,6 +1014,18 @@ EM 是「累積結果」，但這幾站直接影響 EM 壽命：
 3. **Barrier 升級**（ALD-TaN，Co liner）
 4. 設計上：critical net 加大 spacing
 5. 對應 [BEOL Ch 7.7](../03-beol/07-reliability-tddb.md#77-tddb-的工程對策) 的多維對策
+
+### N5+ 節點演化趨勢
+
+> BEOL TDDB（Cu↔Cu through low-k）隨 pitch 縮小 + ULK 採用，margin 持續壓縮。
+
+| 節點 | 結構性壓力 |
+|---|---|
+| **N7 / N5** | Pitch ~30–40 nm（中段），porous ULK；TDDB Weibull 統計越來越靠 intrinsic limit |
+| **N3** | Pitch 更密；部分 fab 試 k < 2.4 進一步加壓 TDDB margin；hybrid metallization 不同金屬↔low-k 介面化學需重新校驗 |
+| **N2** | 同 N3 + BSPDN 上的 backside dielectric 是新 TDDB 系統；emerging |
+
+> 公開資料來源：IRPS / IEDM 2015–2024 BEOL TDDB 系列；low-k engineering：IITC annual。
 
 → TDDB 與 EM 是 BEOL 兩大 reliability 殺手；本章末段讓它們與 structural defects 整合在同一語言中討論。
 
