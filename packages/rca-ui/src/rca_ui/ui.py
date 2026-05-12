@@ -107,7 +107,7 @@ def _install_theme() -> None:
         ".rca-file-row .name{flex:1 1 auto;overflow:hidden;"
         " text-overflow:ellipsis;white-space:nowrap;}"
         # ─── editor area ───────────────────────────────────────────
-        ".rca-editor{display:flex;flex-direction:column;flex:1 1 auto;"
+        ".rca-editor{display:flex;flex-direction:column;width:100%;height:100%;"
         " min-width:0;background:#ffffff;}"
         ".rca-tabbar{display:flex;align-items:stretch;background:#ececec;"
         " border-bottom:1px solid #e5e5e5;min-height:35px;flex-shrink:0;"
@@ -142,24 +142,37 @@ def _install_theme() -> None:
         ".rca-statusbar .savebtn[disabled]{opacity:0.5;cursor:default;"
         " pointer-events:none;}"
         # ─── chat panel ────────────────────────────────────────────
-        ".rca-chat{width:380px;flex-shrink:0;display:flex;flex-direction:column;"
-        " background:#f8f8f8;border-left:1px solid #e5e5e5;}"
+        ".rca-chat{display:flex;flex-direction:column;width:100%;height:100%;"
+        " background:#f8f8f8;}"
         ".rca-chat-scroll{flex:1 1 auto;min-height:0;}"
         ".rca-chat-list{display:flex;flex-direction:column;gap:10px;"
         " padding:14px 14px 18px;}"
-        ".rca-bubble{border-radius:10px;padding:8px 12px;font-size:13.5px;"
-        " line-height:1.5;max-width:100%;box-shadow:0 1px 2px rgba(0,0,0,0.04);"
-        " word-wrap:break-word;}"
-        ".rca-bubble.user{background:#0078d4;color:#fff;align-self:flex-end;}"
-        ".rca-bubble.user *{color:#fff!important;}"
-        ".rca-bubble.assistant{background:#fff;border:1px solid #e5e5e5;"
-        " color:#1f1f1f;align-self:flex-start;}"
+        # q-chat-message bubble color trick: Quasar sets
+        # `.q-message-text { background: currentColor }`, then
+        # `.q-message-text--received` / `--sent` set `color: <bubble bg>`,
+        # then `.q-message-text-content--*` re-sets `color: <real text>`.
+        # We override both layers to drive VSCode Light bubbles.
+        ".rca-chat .q-message{font-size:13.5px;}"
+        ".rca-chat .q-message-text--received{color:#ffffff!important;}"
+        ".rca-chat .q-message-text-content--received{color:#1f1f1f!important;}"
+        ".rca-chat .q-message-text--sent{color:#0078d4!important;}"
+        ".rca-chat .q-message-text-content--sent{color:#ffffff!important;}"
+        ".rca-chat .q-message-text--received{border:1px solid #e5e5e5;}"
+        ".rca-chat .q-message-text-content{line-height:1.5;}"
+        ".rca-chat .q-message-name{font-size:11px;color:#666;}"
         ".rca-tool{align-self:flex-start;display:inline-flex;align-items:center;"
         " gap:6px;background:#e8e8e8;border-radius:6px;padding:3px 8px;"
         " color:#444;font:12px/1.5 ui-monospace,SFMono-Regular,monospace;"
-        " word-break:break-all;white-space:pre-wrap;max-width:100%;}"
+        " word-break:break-all;white-space:pre-wrap;max-width:100%;"
+        " margin:0 12px;}"
         ".rca-tool.output{background:transparent;color:#666;padding-left:24px;"
         " padding-right:0;}"
+        # ─── splitter (editor | chat) ──────────────────────────────
+        ".rca-split{flex:1 1 auto;min-width:0;height:100%;}"
+        ".rca-split .q-splitter__panel{height:100%;display:flex;}"
+        ".rca-split .q-splitter__separator{background:#e5e5e5;width:1px;}"
+        ".rca-split .q-splitter__separator-area{width:6px;left:-3px;}"
+        ".rca-split .q-splitter__separator-area:hover{background:rgba(0,120,212,0.18);}"
         ".rca-chat-typing{padding:0 14px 4px;font-size:11px;color:#888;}"
         ".rca-chat-input{display:flex;align-items:flex-end;gap:6px;"
         " padding:8px;background:#fff;border-top:1px solid #e5e5e5;}"
@@ -307,29 +320,30 @@ async def _render_case_chat(*, case_id: str, settings: UISettings) -> None:
                         ui.icon("refresh").style("font-size:16px;")
                 tree_container = ui.element("div").classes("rca-tree")
 
-            # CENTER: editor with tabs (populated after open_case)
-            editor_container = ui.element("div").classes("rca-editor")
-
-            # RIGHT: chat panel
-            with ui.element("div").classes("rca-chat"):
-                with ui.element("div").classes("rca-section-title"):
-                    ui.label("Chat")
-                chat_scroll = (
-                    ui.scroll_area()
-                    .classes("rca-chat-scroll")
-                )
-                with chat_scroll:
-                    chat_box = ui.element("div").classes("rca-chat-list")
-                typing_label = ui.label("").classes("rca-chat-typing")
-                with ui.element("div").classes("rca-chat-input"):
-                    input_field = (
-                        ui.textarea(placeholder="Ask the agent…")
-                        .props("autogrow rows=1 outlined dense borderless")
-                    )
-                    send_btn = (
-                        ui.button(icon="send")
-                        .props("color=primary unelevated dense round size=sm")
-                    )
+            # CENTER + RIGHT: resizable splitter (editor | chat)
+            with ui.splitter(value=68, limits=(35, 85)).classes("rca-split") as split:
+                with split.before:
+                    editor_container = ui.element("div").classes("rca-editor")
+                with split.after:
+                    with ui.element("div").classes("rca-chat"):
+                        with ui.element("div").classes("rca-section-title"):
+                            ui.label("Chat")
+                        chat_scroll = (
+                            ui.scroll_area()
+                            .classes("rca-chat-scroll")
+                        )
+                        with chat_scroll:
+                            chat_box = ui.element("div").classes("rca-chat-list")
+                        typing_label = ui.label("").classes("rca-chat-typing")
+                        with ui.element("div").classes("rca-chat-input"):
+                            input_field = (
+                                ui.textarea(placeholder="Ask the agent…")
+                                .props("autogrow rows=1 outlined dense borderless")
+                            )
+                            send_btn = (
+                                ui.button(icon="send")
+                                .props("color=primary unelevated dense round size=sm")
+                            )
 
     # ─── load case + activate session ────────────────────────────────
     try:
@@ -474,14 +488,11 @@ async def _render_case_chat(*, case_id: str, settings: UISettings) -> None:
 
 
 def _render_bubble(parent: Any, role: str, content: str) -> None:
-    align = "justify-end" if role == "user" else "justify-start"
-    style_cls = "rca-bubble " + ("user" if role == "user" else "assistant")
+    sent = role == "user"
+    name = "You" if sent else "Agent"
     with parent:
-        with ui.row().classes(f"w-full {align}"):
-            with ui.element("div").classes(style_cls).style(
-                "max-width: min(80%, 720px);"
-            ):
-                ui.markdown(content)
+        with ui.chat_message(name=name, sent=sent):
+            ui.markdown(content)
 
 
 class _AssistantStream:
@@ -510,7 +521,7 @@ class _AssistantStream:
     def add_text_delta(self, delta: str) -> None:
         if self._text_md is None:
             with self._parent:
-                with ui.element("div").classes("rca-bubble assistant"):
+                with ui.chat_message(name="Agent", sent=False):
                     self._text_md = ui.markdown("")
             self._text_buf = []
         self._text_buf.append(delta)
