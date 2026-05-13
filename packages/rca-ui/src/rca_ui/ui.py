@@ -27,6 +27,7 @@ from nicegui import app, ui
 from rca_ui.agent import (
     AgentRuntime,
     ProgressEvent,
+    ReasoningDeltaEvent,
     TextDeltaEvent,
     ToolCallEvent,
     ToolOutputEvent,
@@ -281,6 +282,19 @@ def _install_theme() -> None:
         " margin:0 12px;}"
         ".rca-tool.output{background:transparent;color:#666;padding-left:22px;"
         " padding-right:0;font-size:10.5px;}"
+        # ─── reasoning expander (Qwen / o1-class think-tokens) ────────
+        ".rca-reasoning{align-self:stretch;background:#fafafa;"
+        " border:1px solid #e5e5e5;border-radius:8px;margin:0;"
+        " font-size:12px;}"
+        ".rca-reasoning .q-expansion-item__container{background:transparent;}"
+        ".rca-reasoning .q-item{min-height:30px;padding:4px 10px;}"
+        ".rca-reasoning .q-item__section--main{color:#666;font-size:11px;"
+        " font-weight:500;letter-spacing:0.02em;}"
+        ".rca-reasoning .rca-reasoning-content{padding:0 10px 8px;"
+        " color:#555;font-style:italic;line-height:1.5;}"
+        ".rca-reasoning .rca-reasoning-content p{margin:0.25em 0;}"
+        ".rca-reasoning .rca-reasoning-content code{font-style:normal;"
+        " font-size:11.5px;background:#eee;padding:0 4px;border-radius:3px;}"
         # ─── splitter (editor | chat) ──────────────────────────────
         ".rca-split{flex:1 1 auto;min-width:0;height:100%;}"
         ".rca-split .q-splitter__panel{height:100%;display:flex;}"
@@ -560,6 +574,8 @@ async def _render_case_chat(*, case_id: str, settings: UISettings) -> None:
                 async for evt in runtime.run_user_turn_streamed(text):
                     if isinstance(evt, TextDeltaEvent):
                         view.add_text_delta(evt.delta)
+                    elif isinstance(evt, ReasoningDeltaEvent):
+                        view.add_reasoning_delta(evt.delta)
                     elif isinstance(evt, ToolCallEvent):
                         view.add_tool_call(evt.name, evt.arguments)
                     elif isinstance(evt, ProgressEvent):
@@ -716,12 +732,29 @@ class _AssistantStream:
         self._on_update = on_update
         self._text_md: Any = None
         self._text_buf: list[str] = []
+        # Reasoning block (`<think>` from Qwen / DeepSeek-R1 / o1-class).
+        # Held open as long as reasoning deltas keep arriving; a non-
+        # reasoning event (text / tool) closes it so the next reasoning
+        # run starts a fresh expander.
+        self._reasoning_md: Any = None
+        self._reasoning_buf: list[str] = []
         # Last-rendered tool chip — kept around so live ProgressEvents
         # can rewrite its label in place.
         self._current_tool_label: Any = None
         self._current_tool_head: str = ""
 
+    def _close_text_run(self) -> None:
+        self._text_md = None
+        self._text_buf = []
+
+    def _close_reasoning_run(self) -> None:
+        self._reasoning_md = None
+        self._reasoning_buf = []
+
     def add_text_delta(self, delta: str) -> None:
+        # First non-reasoning delta closes any open reasoning block so
+        # subsequent reasoning would open a new one below the answer.
+        self._close_reasoning_run()
         if self._text_md is None:
             with self._parent:
                 with ui.chat_message(name="Agent", sent=False):
@@ -732,9 +765,30 @@ class _AssistantStream:
         if self._on_update:
             self._on_update()
 
+    def add_reasoning_delta(self, delta: str) -> None:
+        # If a text bubble is currently being written into, close it —
+        # any further reasoning is a new run.
+        self._close_text_run()
+        if self._reasoning_md is None:
+            with self._parent:
+                exp = ui.expansion("💭 Thinking", value=True).classes(
+                    "rca-reasoning"
+                )
+                with exp:
+                    self._reasoning_md = ui.html("", sanitize=False).classes(
+                        "rca-reasoning-content"
+                    )
+            self._reasoning_buf = []
+        self._reasoning_buf.append(delta)
+        self._reasoning_md.set_content(
+            _render_md("".join(self._reasoning_buf))
+        )
+        if self._on_update:
+            self._on_update()
+
     def add_tool_call(self, name: str, arguments: str) -> None:
-        self._text_md = None
-        self._text_buf = []
+        self._close_text_run()
+        self._close_reasoning_run()
         args = _truncate(arguments, self._MAX_ARG_LEN)
         head = f"{name}({args})"
         with self._parent:

@@ -19,6 +19,7 @@ import logging
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from pathlib import Path
+from string import Template
 from typing import Any
 
 from agents import Agent, RunConfig, Runner
@@ -55,6 +56,17 @@ class ToolOutputEvent:
 
 
 @dataclass
+class ReasoningDeltaEvent:
+    """A chunk of model reasoning ("think") output, separate from the
+    user-visible answer.  Surfaced by Qwen / DeepSeek-R1 / o1-class models
+    via the `reasoning_content` field on chat-completion deltas; the
+    Agents SDK normalises these into `response.reasoning_text.delta` and
+    `response.reasoning_summary_text.delta` raw events."""
+
+    delta: str
+
+
+@dataclass
 class ProgressEvent:
     """A progress update from an in-flight MCP tool. Tools opt in by
     calling `ctx.report_progress(progress, total, message)` server-side.
@@ -76,6 +88,7 @@ class TurnDoneEvent:
 
 StreamEvent = (
     TextDeltaEvent
+    | ReasoningDeltaEvent
     | ToolCallEvent
     | ToolOutputEvent
     | ProgressEvent
@@ -83,79 +96,27 @@ StreamEvent = (
 )
 
 
-_RCA_SYSTEM_PROMPT = """\
-You are a senior semiconductor process integration engineer running a root-cause
-analysis (RCA) session with the user. Drive a structured 9-step interactive
-flow, leveraging:
+# ─── prompt loading ──────────────────────────────────────────────────────
+#
+# All instructions live under `prompts/` next to this module so they're
+# easy to audit / diff in one place.  Edits require a server restart —
+# loaded once at import.
 
-  - wafer-data-mcp — pull wafer process history + per-wafer defect counts
-  - stats-algo-mcp — run the in-house statistical scorer (over-generates
-                     false alarms by design)
-  - kb-mcp         — knowledge graph (cognee). 5 tools:
-                       remember(text, dataset_name, …)
-                       recall(query, datasets, top_k, session_id)
-                       search(query, query_type, datasets, top_k)
-                       improve(dataset, …)
-                       forget(data_id|dataset|everything)
-                     Trust tier is encoded in dataset_name:
-                       "rca_reports"      ← highest (manager-signed RCAs)
-                       "rca_conversations"← mid (digested RCA chats)
-                       "rca_literature"   ← baseline (textbooks/primers)
-  - filesystem     — read / write files in the case workspace dir
+_PROMPTS_DIR = Path(__file__).parent / "prompts"
 
-Your unique value is FILTERING: stats produces many high-scoring factors,
-most of which are spurious because of small wafer N and high factor
-dimensionality. You drop no-mechanism candidates using the KB and surface
-only those with a defensible physical pathway.
 
-# Workspace files (filesystem MCP, absolute paths only)
+def _read_prompt(name: str) -> str:
+    path = _PROMPTS_DIR / name
+    if not path.exists():
+        raise RuntimeError(
+            f"prompt file missing: {path} — check rca_ui/prompts/README.md"
+        )
+    return path.read_text(encoding="utf-8")
 
-  - CASE.md           — case metadata (read-only; auto-rendered)
-  - notes.md          — your scratchpad, append cumulative observations
-  - draft_report.md   — the report you and the user co-author
 
-Always read CASE.md first.
-
-# 9-step flow
-
-1. Get wafer + defect data (ask user OR wafer-data-mcp.list_lots).
-2. Characterize defect (defect_type, scan_stage). wafer-data-mcp.get_defect_summary if needed.
-3. Suspicious stage range from the user.
-4. Suspicious factor type (default: tool assignment).
-5. wafer-data-mcp.download_wafer_history with steps 1/3/4 inputs.
-6. Drop dummy/scribe steps (confirm with user).
-7. stats-algo-mcp.compute_factor_scores. Tell user: "These include false
-   alarms; we'll filter them with the KB."
-8. ★ For each top-K candidate:
-     - Formulate as a query.
-     - kb-mcp.recall(query=…, datasets=["rca_reports", "rca_literature"]).
-       The answer is plain text; YOU extract verdict (plausible / uncertain
-       / implausible) + cite the sources cognee returns.
-     - Pause and ask 「以上是 KB 過濾後的結果。哪些 verdict 跟你直覺不合?」
-     - F1-F4 grilling on user reactions; capture conditions/magnitude/mechanism.
-9. Co-author the final RCA report (zh-TW; technical terms in English):
-   defect_summary / root_cause / ruled_out / confounders / actions /
-   kb_gaps / kb_feedback / glossary.
-   Iterate; only save when user says "agreed / 同意 / OK 存吧". Then:
-     a. Save to <workspace>/reports/RCA-<case_id>-<YYYYMMDD>.md.
-     b. kb-mcp.remember(text=<full report>, dataset_name="rca_reports",
-                        self_improvement=True).
-     c. kb-mcp.remember(text=<transcript summary>,
-                        dataset_name="rca_conversations").
-   Confirm both to the user.
-
-# Behavior rules
-
-  - Never fabricate a mechanism. Empty / implausible recall → drop or flag.
-  - Always cite KB sources when presenting a mechanism.
-  - Distinguish "the KB said X" from "I think X".
-  - Ask, don't assume. Defaults are explicit; always confirm.
-  - Stay terse.
-  - Conversation language: 繁體中文 (Taiwan). Keep technical terms,
-    acronyms, tool/step IDs, materials in their original English.
-  - The RCA report is the canonical learning artifact. F1-F4 feedback
-    must reach Section 7. Never skip the dual-save (9b + 9c).
-"""
+_SYSTEM_PROMPT = _read_prompt("system.md")
+_SESSION_TEMPLATE = Template(_read_prompt("session.md.tpl"))
+_KB_DISABLED_NOTE = _read_prompt("kb_disabled.md")
 
 
 class AgentRuntime:
@@ -241,40 +202,24 @@ class AgentRuntime:
 
     def bind_case(self, *, case_id: str, workspace: Path) -> None:
         """Re-anchor the agent to a new case. Cheap — just rebuilds the
-        Agent object with a fresh system prompt; MCP servers stay put."""
+        Agent object with a fresh system prompt; MCP servers stay put.
+
+        Instructions are composed from `prompts/system.md` and
+        `prompts/session.md.tpl` (see `prompts/README.md`)."""
         self._case_id = case_id
         self._workspace = workspace
         self._history = []
         ws_abs = str(workspace.resolve())
         kb_enabled = any(s.name == "kb-mcp" for s in self._mcp_servers)
-        kb_note = (
-            ""
-            if kb_enabled
-            else (
-                "\nKB MODE: kb-mcp is DISABLED for this session. "
-                "Skip step 8 (KB recall filtering); after step 7 stats, "
-                "present the raw candidate list to the user with the caveat "
-                "that false alarms are not filtered. Skip step 9b/9c "
-                "(kb-mcp.remember dual-save) — save only the local report file.\n"
-            )
+        session_block = _SESSION_TEMPLATE.substitute(
+            case_id=case_id,
+            workspace_root=str(self._workspace_root),
+            ws_abs=ws_abs,
+            kb_note="" if kb_enabled else _KB_DISABLED_NOTE,
         )
         self._agent = Agent(
             name="rca-agent",
-            instructions=(
-                _RCA_SYSTEM_PROMPT
-                + "\n\n# This session\n"
-                f"\nCase ID: {case_id}\n"
-                f"\nFilesystem MCP is sandboxed to: {self._workspace_root}\n"
-                f"Your case workspace is: {ws_abs}\n"
-                + kb_note
-                + "\nALWAYS pass absolute paths to filesystem tools.\n"
-                "Examples for this session:\n"
-                f"  read_file path={ws_abs}/CASE.md\n"
-                f"  write_file path={ws_abs}/notes.md\n"
-                f"  edit_file path={ws_abs}/draft_report.md\n"
-                "Never use bare filenames or paths starting with `./` —\n"
-                "the filesystem MCP rejects them with 'not in allowed directories'.\n"
-            ),
+            instructions=_SYSTEM_PROMPT + "\n" + session_block,
             mcp_servers=self._mcp_servers,
             model=self._model,
         )
@@ -360,18 +305,45 @@ class AgentRuntime:
 # ─── helpers ──────────────────────────────────────────────────────────────
 
 
+# Raw event `.type` values we surface as deltas.  Both OpenAI's native
+# Responses API and the Agents SDK's chat-completions → Responses
+# adapter (used for LiteLLM / Qwen / DeepSeek / etc.) emit these.
+_TEXT_DELTA_TYPES = frozenset({"response.output_text.delta"})
+_REASONING_DELTA_TYPES = frozenset(
+    {
+        # Adapter for chat-completions models that expose `reasoning_content`
+        # on the delta (Qwen 3, DeepSeek-R1, o1-class via LiteLLM, …).
+        "response.reasoning_text.delta",
+        "response.reasoning_summary_text.delta",
+    }
+)
+
+
 def _translate_sdk_event(
     raw: Any, call_names: dict[str, str]
 ) -> StreamEvent | None:
     """Map one raw openai-agents stream event to our flat StreamEvent
-    types.  Returns None for events we don't surface (everything except
-    text deltas and tool start / output)."""
+    types.  Returns None for events we don't surface.
+
+    Covers both OpenAI Responses API events and the LiteLLM /
+    chat-completions adapter's normalised equivalents — they share
+    `response.*` event names but a LiteLLM-backed Qwen model also emits
+    `response.reasoning_text.delta` for `<think>` tokens, which the
+    native OpenAI path never produces.
+    """
     if raw.type == "raw_response_event":
         data = raw.data
-        if getattr(data, "type", "") == "response.output_text.delta":
+        et = getattr(data, "type", "")
+        if et in _TEXT_DELTA_TYPES:
             delta = getattr(data, "delta", "") or ""
             if delta:
                 return TextDeltaEvent(delta=delta)
+            return None
+        if et in _REASONING_DELTA_TYPES:
+            delta = getattr(data, "delta", "") or ""
+            if delta:
+                return ReasoningDeltaEvent(delta=delta)
+            return None
         return None
     if raw.type == "run_item_stream_event":
         if raw.name == "tool_called":
@@ -383,7 +355,38 @@ def _translate_sdk_event(
             call_id = _extract_call_id(raw.item.raw_item)
             name = call_names.get(call_id or "", "")
             return ToolOutputEvent(name=name, output=_stringify(raw.item.output))
+        if raw.name == "reasoning_item_created":
+            # Fallback for paths that emit a single finished item rather
+            # than streaming deltas — surface the assembled text in one
+            # ReasoningDeltaEvent so the bubble still gets filled.
+            text = _extract_reasoning_text(raw.item.raw_item)
+            if text:
+                return ReasoningDeltaEvent(delta=text)
+            return None
     return None
+
+
+def _extract_reasoning_text(raw_item: Any) -> str:
+    """Best-effort extract reasoning text from a ResponseReasoningItem-like
+    object.  Different SDK versions / adapters shape this slightly
+    differently; we probe a few shapes."""
+    if raw_item is None:
+        return ""
+    # ResponseReasoningItem: .summary is list of {text}; .content is list of {text}
+    parts: list[str] = []
+    for attr in ("summary", "content"):
+        seq = _attr(raw_item, attr, None)
+        if not seq:
+            continue
+        for entry in seq:
+            text = _attr(entry, "text", None)
+            if text:
+                parts.append(str(text))
+    if parts:
+        return "\n".join(parts)
+    # Some adapters stash it directly on `.text`
+    text = _attr(raw_item, "text", None)
+    return str(text) if text else ""
 
 
 def _extract_tool_call(raw_item: Any) -> tuple[str, str, str | None]:
