@@ -26,6 +26,7 @@ from nicegui import app, ui
 
 from rca_ui.agent import (
     AgentRuntime,
+    ProgressEvent,
     TextDeltaEvent,
     ToolCallEvent,
     ToolOutputEvent,
@@ -518,6 +519,7 @@ async def _render_case_chat(*, case_id: str, settings: UISettings) -> None:
                 workspace_root=session_root,
                 model=model,
                 npx_bin=settings.npx_bin,
+                mcp_tool_timeout=settings.mcp_tool_timeout,
             )
             status_label.set_text("booting agent (spawning MCP servers)…")
             await runtime.start()
@@ -560,6 +562,10 @@ async def _render_case_chat(*, case_id: str, settings: UISettings) -> None:
                         view.add_text_delta(evt.delta)
                     elif isinstance(evt, ToolCallEvent):
                         view.add_tool_call(evt.name, evt.arguments)
+                    elif isinstance(evt, ProgressEvent):
+                        view.update_tool_progress(
+                            evt.tool_name, evt.progress, evt.total, evt.message
+                        )
                     elif isinstance(evt, ToolOutputEvent):
                         view.add_tool_output(evt.name, evt.output)
                     elif isinstance(evt, TurnDoneEvent):
@@ -710,6 +716,10 @@ class _AssistantStream:
         self._on_update = on_update
         self._text_md: Any = None
         self._text_buf: list[str] = []
+        # Last-rendered tool chip — kept around so live ProgressEvents
+        # can rewrite its label in place.
+        self._current_tool_label: Any = None
+        self._current_tool_head: str = ""
 
     def add_text_delta(self, delta: str) -> None:
         if self._text_md is None:
@@ -726,10 +736,37 @@ class _AssistantStream:
         self._text_md = None
         self._text_buf = []
         args = _truncate(arguments, self._MAX_ARG_LEN)
+        head = f"{name}({args})"
         with self._parent:
             with ui.element("div").classes("rca-tool"):
                 ui.icon("build").style("font-size:12px;color:#666;")
-                ui.label(f"{name}({args})")
+                label = ui.label(head)
+        self._current_tool_label = label
+        self._current_tool_head = head
+        if self._on_update:
+            self._on_update()
+
+    def update_tool_progress(
+        self,
+        tool_name: str,
+        progress: float,
+        total: float | None,
+        message: str,
+    ) -> None:
+        """Live-update the last tool chip with a progress fraction
+        (`name(args) · 3/10 message`).  No-op if no tool is in flight —
+        progress arriving before the first tool_called shouldn't happen
+        but we guard anyway."""
+        if self._current_tool_label is None:
+            return
+        if total:
+            prog = f"{int(progress)}/{int(total)}"
+        else:
+            prog = f"{progress:g}"
+        text = f"{self._current_tool_head} · {prog}"
+        if message:
+            text += f" — {message}"
+        self._current_tool_label.set_text(text)
         if self._on_update:
             self._on_update()
 
@@ -738,6 +775,10 @@ class _AssistantStream:
         with self._parent:
             with ui.element("div").classes("rca-tool output"):
                 ui.label(prefix + _truncate(output, self._MAX_OUT_LEN))
+        # The chip is done; future ProgressEvents (e.g. a stale one
+        # straggling in) shouldn't rewrite a finished line.
+        self._current_tool_label = None
+        self._current_tool_head = ""
         if self._on_update:
             self._on_update()
 

@@ -55,6 +55,12 @@ class UISettings:
     # so each user keeps their own workspace dir across redeploys.
     storage_secret: str
 
+    # Per-tool-call timeout for the stdio MCP servers, in seconds.
+    # OpenAI Agents SDK ships a 5s default which is too short for fab
+    # data fetches that can run a minute or more — bump this when your
+    # tools genuinely take a while to return.
+    mcp_tool_timeout: float
+
     @property
     def llm_provider_model(self) -> str:
         """OpenAI Agents SDK accepts `<provider>/<model>` strings via the
@@ -110,4 +116,5 @@ def load_ui_settings() -> UISettings:
         ).resolve(),
         npx_bin=_env("NPX_BIN", "npx"),
         storage_secret=storage_secret,
+        mcp_tool_timeout=float(_env("RCA_UI_MCP_TIMEOUT_SECONDS", "300")),
     )

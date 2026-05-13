@@ -18,19 +18,27 @@ Run:
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
-from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp import Context, FastMCP
 
 logger = logging.getLogger(__name__)
 
 DATA_DIR = Path(os.getenv("MOCK_FAB_DATA_DIR", "./data/mock-fab-data")).resolve()
 WAFER_HISTORY_CSV = DATA_DIR / "wafer_history.csv"
 DEFECT_COUNTS_CSV = DATA_DIR / "defect_counts.csv"
+
+# Mock fab-data fetches are instant locally; we keep a small simulated
+# delay so progress reporting is observable in the UI.  Each tool sleeps
+# for `_SIM_TOTAL` seconds across `_SIM_STEPS` chunks, emitting a
+# progress notification per chunk.
+_SIM_TOTAL = float(os.getenv("WAFER_MCP_SIM_DELAY_SECONDS", "10"))
+_SIM_STEPS = 10
 
 mcp = FastMCP("wafer-data-mcp")
 
@@ -50,9 +58,30 @@ def _read_defects() -> pd.DataFrame:
     return pd.read_csv(DEFECT_COUNTS_CSV)
 
 
+async def _simulate_fetch(ctx: Context | None, label: str) -> None:
+    """Sleep for `_SIM_TOTAL`s in `_SIM_STEPS` chunks, emitting a
+    progress notification per chunk so the UI shows live progress.
+    `report_progress` is a no-op if the client didn't include a
+    progressToken, so this is safe even with progress-unaware clients."""
+    step = _SIM_TOTAL / _SIM_STEPS
+    for i in range(_SIM_STEPS):
+        if ctx is not None:
+            await ctx.report_progress(
+                progress=i,
+                total=_SIM_STEPS,
+                message=f"{label} ({i}/{_SIM_STEPS})",
+            )
+        await asyncio.sleep(step)
+    if ctx is not None:
+        await ctx.report_progress(
+            progress=_SIM_STEPS, total=_SIM_STEPS, message=f"{label} done"
+        )
+
+
 @mcp.tool()
-async def list_lots() -> dict[str, Any]:
+async def list_lots(ctx: Context | None = None) -> dict[str, Any]:
     """List the wafer IDs and lot IDs available in the mock fab data."""
+    await _simulate_fetch(ctx, "fetching wafer registry")
     h = _read_history()
     wafers = sorted(h["wafer_id"].unique().tolist())
     lots = sorted(h["lot_id"].unique().tolist()) if "lot_id" in h.columns else []
@@ -63,11 +92,13 @@ async def list_lots() -> dict[str, Any]:
 async def get_defect_summary(
     wafer_ids: list[str] | None = None,
     defect_type: str | None = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Return per-wafer defect counts. If wafer_ids is None, returns all wafers.
 
     Each row: {wafer_id, defect_type, defect_count, scan_stage}
     """
+    await _simulate_fetch(ctx, "scanning defect counts")
     df = _read_defects()
     if wafer_ids:
         df = df[df["wafer_id"].isin(wafer_ids)]
@@ -86,6 +117,7 @@ async def download_wafer_history(
     stage_name_substr: str | None = None,
     factor_types: list[str] | None = None,
     drop_dummy_steps: bool = False,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Return wafer process history.
 
@@ -98,6 +130,7 @@ async def download_wafer_history(
         drop_dummy_steps: if True, drops steps whose name contains "DUMMY"
             or "SCRIBE" or starts with "_".
     """
+    await _simulate_fetch(ctx, "downloading wafer history")
     df = _read_history()
     if wafer_ids:
         df = df[df["wafer_id"].isin(wafer_ids)]

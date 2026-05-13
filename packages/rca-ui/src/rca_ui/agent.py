@@ -13,6 +13,7 @@ Lifecycle:
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from collections.abc import AsyncIterator
@@ -54,13 +55,32 @@ class ToolOutputEvent:
 
 
 @dataclass
+class ProgressEvent:
+    """A progress update from an in-flight MCP tool. Tools opt in by
+    calling `ctx.report_progress(progress, total, message)` server-side.
+    UI can update the latest tool chip in place rather than wait for the
+    final ToolOutputEvent — useful when a fab data fetch takes minutes."""
+
+    tool_name: str
+    progress: float
+    total: float | None
+    message: str
+
+
+@dataclass
 class TurnDoneEvent:
     """Marks end of turn. Yielded once after history has been persisted."""
 
     final_output: str
 
 
-StreamEvent = TextDeltaEvent | ToolCallEvent | ToolOutputEvent | TurnDoneEvent
+StreamEvent = (
+    TextDeltaEvent
+    | ToolCallEvent
+    | ToolOutputEvent
+    | ProgressEvent
+    | TurnDoneEvent
+)
 
 
 _RCA_SYSTEM_PROMPT = """\
@@ -160,16 +180,52 @@ class AgentRuntime:
         workspace_root: Path,
         model: str,
         npx_bin: str = "npx",
+        mcp_tool_timeout: float = 300.0,
     ) -> None:
         self._workspace_root = workspace_root
         self._model = model
         self._npx_bin = npx_bin
-        self._mcp_servers = build_servers(workspace=workspace_root, npx_bin=npx_bin)
+        # Bound here so build_servers can pass it down to each MCPServerStdio.
+        # Fires for every progress notification the MCP servers send while a
+        # turn is in flight; the active run_user_turn_streamed coroutine
+        # consumes it via self._progress_queue.
+        self._mcp_servers = build_servers(
+            workspace=workspace_root,
+            npx_bin=npx_bin,
+            tool_timeout=mcp_tool_timeout,
+            on_progress=self._on_mcp_progress,
+        )
         self._agent: Agent | None = None
         self._case_id: str | None = None
         self._workspace: Path | None = None
         self._history: list = []  # list[TResponseInputItem]
         self._started = False
+        # Set for the duration of one run_user_turn_streamed turn; None
+        # otherwise.  Progress notifications outside a turn are dropped.
+        self._progress_queue: "asyncio.Queue[StreamEvent | object] | None" = None
+
+    async def _on_mcp_progress(
+        self,
+        server_name: str,
+        tool_name: str,
+        progress: float,
+        total: float | None,
+        message: str | None,
+    ) -> None:
+        """Called by every MCPServerStdio whenever a `notifications/progress`
+        arrives mid-tool-call.  We forward it into the current turn's
+        event queue so the UI sees it interleaved with other stream events."""
+        q = self._progress_queue
+        if q is None:
+            return
+        await q.put(
+            ProgressEvent(
+                tool_name=tool_name,
+                progress=progress,
+                total=total,
+                message=message or "",
+            )
+        )
 
     async def start(self) -> None:
         if self._started:
@@ -235,12 +291,18 @@ class AgentRuntime:
 
           TextDeltaEvent    — each assistant text chunk
           ToolCallEvent     — model invoked a tool (name, arguments JSON)
+          ProgressEvent    — MCP tool reported `ctx.report_progress(...)`
           ToolOutputEvent   — tool returned (name, stringified output)
           TurnDoneEvent     — final, exactly once; history is persisted by then
 
         Conversation memory is held in `self._history`; the entire list is
         passed in each call, and `result.to_input_list()` rebuilds it at
         end-of-turn so the agent retains tool-call context across turns.
+
+        SDK events and out-of-band MCP progress notifications are merged
+        through one asyncio.Queue: a pump task drains result.stream_events
+        into the queue, and `_on_mcp_progress` also writes to it, so the
+        consumer sees them in arrival order.
         """
         if self._agent is None:
             raise RuntimeError("AgentRuntime.start() not called")
@@ -256,28 +318,34 @@ class AgentRuntime:
         # tool_output run-item doesn't always echo the name; we read it from
         # the matching tool_called item we saw earlier.
         call_names: dict[str, str] = {}
+        queue: asyncio.Queue[StreamEvent | object] = asyncio.Queue()
+        DONE = object()  # sentinel pushed when SDK stream is exhausted
+        self._progress_queue = queue
 
-        async for raw in result.stream_events():
-            if raw.type == "raw_response_event":
-                data = raw.data
-                if getattr(data, "type", "") == "response.output_text.delta":
-                    delta = getattr(data, "delta", "") or ""
-                    if delta:
-                        yield TextDeltaEvent(delta=delta)
-                continue
+        async def pump_sdk() -> None:
+            try:
+                async for raw in result.stream_events():
+                    evt = _translate_sdk_event(raw, call_names)
+                    if evt is not None:
+                        await queue.put(evt)
+            finally:
+                await queue.put(DONE)
 
-            if raw.type == "run_item_stream_event":
-                if raw.name == "tool_called":
-                    name, args, call_id = _extract_tool_call(raw.item.raw_item)
-                    if call_id:
-                        call_names[call_id] = name
-                    yield ToolCallEvent(name=name, arguments=args)
-                elif raw.name == "tool_output":
-                    call_id = _extract_call_id(raw.item.raw_item)
-                    name = call_names.get(call_id or "", "")
-                    yield ToolOutputEvent(
-                        name=name, output=_stringify(raw.item.output)
-                    )
+        pump_task = asyncio.create_task(pump_sdk())
+        try:
+            while True:
+                item = await queue.get()
+                if item is DONE:
+                    break
+                yield item  # type: ignore[misc]
+        finally:
+            self._progress_queue = None
+            if not pump_task.done():
+                pump_task.cancel()
+                try:
+                    await pump_task
+                except (asyncio.CancelledError, Exception):  # noqa: BLE001
+                    pass
 
         self._history = result.to_input_list()
         yield TurnDoneEvent(final_output=result.final_output or "")
@@ -290,6 +358,32 @@ class AgentRuntime:
 
 
 # ─── helpers ──────────────────────────────────────────────────────────────
+
+
+def _translate_sdk_event(
+    raw: Any, call_names: dict[str, str]
+) -> StreamEvent | None:
+    """Map one raw openai-agents stream event to our flat StreamEvent
+    types.  Returns None for events we don't surface (everything except
+    text deltas and tool start / output)."""
+    if raw.type == "raw_response_event":
+        data = raw.data
+        if getattr(data, "type", "") == "response.output_text.delta":
+            delta = getattr(data, "delta", "") or ""
+            if delta:
+                return TextDeltaEvent(delta=delta)
+        return None
+    if raw.type == "run_item_stream_event":
+        if raw.name == "tool_called":
+            name, args, call_id = _extract_tool_call(raw.item.raw_item)
+            if call_id:
+                call_names[call_id] = name
+            return ToolCallEvent(name=name, arguments=args)
+        if raw.name == "tool_output":
+            call_id = _extract_call_id(raw.item.raw_item)
+            name = call_names.get(call_id or "", "")
+            return ToolOutputEvent(name=name, output=_stringify(raw.item.output))
+    return None
 
 
 def _extract_tool_call(raw_item: Any) -> tuple[str, str, str | None]:
