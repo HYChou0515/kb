@@ -7,11 +7,15 @@ single .env can still serve other processes in the repo.
 
 from __future__ import annotations
 
+import logging
 import os
+import secrets
 from dataclasses import dataclass
 from pathlib import Path
 
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 # In the workspace layout this file is at:
 #   <workspace>/packages/rca-ui/src/rca_ui/config.py
@@ -46,6 +50,11 @@ class UISettings:
     # Path to npx; null/missing means we rely on PATH lookup at spawn time.
     npx_bin: str
 
+    # Secret used by NiceGUI to sign per-browser `app.storage.browser`
+    # cookies.  Stable secret → session UUIDs survive server restarts,
+    # so each user keeps their own workspace dir across redeploys.
+    storage_secret: str
+
     @property
     def llm_provider_model(self) -> str:
         """OpenAI Agents SDK accepts `<provider>/<model>` strings via the
@@ -79,6 +88,16 @@ def load_ui_settings() -> UISettings:
             "RCA_UI_LLM_PROVIDER=anthropic but ANTHROPIC_API_KEY is not set."
         )
 
+    storage_secret = _env("RCA_UI_STORAGE_SECRET", "")
+    if not storage_secret:
+        storage_secret = secrets.token_urlsafe(32)
+        logger.warning(
+            "RCA_UI_STORAGE_SECRET not set; generated an ephemeral one. "
+            "Cookies (and per-session workspaces) will not survive a "
+            "server restart. Set RCA_UI_STORAGE_SECRET in .env for stable "
+            "multi-user deployments."
+        )
+
     return UISettings(
         ui_host=_env("RCA_UI_HOST", "127.0.0.1"),
         ui_port=int(_env("RCA_UI_PORT", "3001")),
@@ -90,4 +109,5 @@ def load_ui_settings() -> UISettings:
             _env("RCA_UI_WORKSPACE_ROOT", str(PROJECT_ROOT / "data" / "workspaces"))
         ).resolve(),
         npx_bin=_env("NPX_BIN", "npx"),
+        storage_secret=storage_secret,
     )

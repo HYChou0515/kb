@@ -33,6 +33,9 @@ def run() -> None:
         title="RCA Knowledge POC",
         reload=False,
         show=False,
+        # Needed by app.storage.browser — we use it to assign a stable
+        # per-browser session UUID that scopes each user's workspace dir.
+        storage_secret=settings.storage_secret,
     )
 
 

@@ -178,6 +178,11 @@ class AgentRuntime:
             await s.connect()
         self._started = True
 
+    @property
+    def case_id(self) -> str | None:
+        """Currently-bound case, or None before the first bind_case()."""
+        return self._case_id
+
     def bind_case(self, *, case_id: str, workspace: Path) -> None:
         """Re-anchor the agent to a new case. Cheap — just rebuilds the
         Agent object with a fresh system prompt; MCP servers stay put."""

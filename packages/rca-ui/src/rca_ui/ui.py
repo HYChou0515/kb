@@ -16,6 +16,7 @@ import html as html_lib
 import io
 import json
 import logging
+import uuid
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Literal
@@ -32,11 +33,8 @@ from rca_ui.agent import (
 )
 from rca_ui.config import UISettings
 from rca_ui.session_store import (
-    AnotherCaseActiveError,
-    acquire_active,
     append_transcript,
     read_transcript,
-    release_active,
 )
 from rca_ui.workspace import (
     CaseMeta,
@@ -46,6 +44,39 @@ from rca_ui.workspace import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+# ─── per-session isolation ───────────────────────────────────────────────
+#
+# Each browser gets a stable UUID via app.storage.browser (cookie-backed,
+# signed by RCA_UI_STORAGE_SECRET).  All workspace I/O — case dirs,
+# filesystem MCP root, AgentRuntime — is scoped under that UUID, so two
+# concurrent users on the same server never see each other's data.
+
+_SESSION_KEY = "session_id"
+
+# Process-wide registry of per-session runtimes.  AgentRuntime owns long-
+# lived MCP subprocesses, so we lazy-spawn it on the user's first message
+# and keep it warm for the rest of their session.  Keyed by session_id.
+_runtimes: dict[str, AgentRuntime] = {}
+
+
+def _session_id() -> str:
+    """Return this browser's session UUID.  Generates one on first call
+    and persists it to the signed browser-cookie storage."""
+    sid = app.storage.browser.get(_SESSION_KEY)
+    if not sid:
+        sid = uuid.uuid4().hex
+        app.storage.browser[_SESSION_KEY] = sid
+    return sid
+
+
+def _session_root(settings: UISettings) -> Path:
+    """Workspace root for the current browser session.  Cases live as
+    `<workspace_root>/<session_id>/<case_id>/`."""
+    root = settings.workspace_root / _session_id()
+    root.mkdir(parents=True, exist_ok=True)
+    return root
 
 
 def register_pages(settings: UISettings) -> None:
@@ -212,6 +243,10 @@ def _install_theme() -> None:
         # then `.q-message-text-content--*` re-sets `color: <real text>`.
         # We override both layers to drive VSCode Light bubbles.
         ".rca-chat .q-message{font-size:12px;margin-bottom:4px;}"
+        # Quasar reserves 48px on the last bubble of a message group to
+        # align with a 48px avatar.  We don't render avatars, so let the
+        # bubble shrink to its content.
+        ".rca-chat .q-message-text:last-child{min-height:0;}"
         ".rca-chat .q-message-text--received{color:#ffffff!important;}"
         ".rca-chat .q-message-text-content--received{color:#1f1f1f!important;}"
         ".rca-chat .q-message-text--sent{color:#0078d4!important;}"
@@ -313,7 +348,7 @@ async def _render_case_picker(settings: UISettings) -> None:
                         if t.strip()
                     ]
                     meta = create_case(
-                        settings.workspace_root,
+                        _session_root(settings),
                         title=title,
                         description=(desc_input.value or "").strip(),
                         owner=(owner_input.value or "unknown").strip(),
@@ -331,7 +366,7 @@ async def _render_case_picker(settings: UISettings) -> None:
 
         # ─── List existing ──────────────────────────────────────────
         ui.label("Cases").classes("text-sm font-semibold text-slate-500 uppercase tracking-wider")
-        cases = list_cases(settings.workspace_root)
+        cases = list_cases(_session_root(settings))
 
         if not cases:
             ui.label("No cases yet — use “New case” above to create one.").classes(
@@ -424,9 +459,10 @@ async def _render_case_chat(*, case_id: str, settings: UISettings) -> None:
                                 .props("color=primary unelevated dense round size=sm")
                             )
 
-    # ─── load case + activate session ────────────────────────────────
+    # ─── load case (scoped to this browser session) ──────────────────
+    session_root = _session_root(settings)
     try:
-        workspace, meta = open_case(settings.workspace_root, case_id)
+        workspace, meta = open_case(session_root, case_id)
     except FileNotFoundError as exc:
         title_label.set_text("not found")
         with chat_box:
@@ -434,14 +470,6 @@ async def _render_case_chat(*, case_id: str, settings: UISettings) -> None:
         return
 
     title_label.set_text(meta.title or case_id)
-
-    try:
-        active = await acquire_active(case_id, workspace)
-    except AnotherCaseActiveError as exc:
-        with chat_box:
-            ui.label(str(exc)).classes("text-red-500")
-        return
-
     status_label.set_text("ready (agent boots on first message)")
 
     # ─── editor + file tree wiring ───────────────────────────────────
@@ -474,25 +502,28 @@ async def _render_case_chat(*, case_id: str, settings: UISettings) -> None:
     # ─── send handler ────────────────────────────────────────────────
     sending_lock = asyncio.Lock()
 
+    sid = _session_id()
+
     async def _ensure_runtime() -> AgentRuntime:
-        runtime = getattr(app.state, "runtime", None)
+        runtime = _runtimes.get(sid)
         if runtime is None:
             model = (
                 settings.llm_model
                 if settings.llm_provider == "openai"
                 else settings.llm_provider_model
             )
+            # filesystem MCP is sandboxed to this session's directory —
+            # no other session's workspace is reachable from this agent.
             runtime = AgentRuntime(
-                workspace_root=settings.workspace_root,
+                workspace_root=session_root,
                 model=model,
                 npx_bin=settings.npx_bin,
             )
             status_label.set_text("booting agent (spawning MCP servers)…")
             await runtime.start()
-            app.state.runtime = runtime
-        if getattr(app.state, "runtime_case_id", None) != case_id:
+            _runtimes[sid] = runtime
+        if runtime.case_id != case_id:
             runtime.bind_case(case_id=case_id, workspace=workspace)
-            app.state.runtime_case_id = case_id
             prior = read_transcript(workspace)
             if prior:
                 history = [
@@ -519,7 +550,7 @@ async def _render_case_chat(*, case_id: str, settings: UISettings) -> None:
             typing_label.set_text("agent thinking…")
             _render_bubble(chat_box, "user", text)
             _scroll_bottom()
-            await append_transcript(active, {"role": "user", "content": text})
+            await append_transcript(workspace, {"role": "user", "content": text})
             view = _AssistantStream(chat_box, on_update=_scroll_bottom)
             final_output = ""
             try:
@@ -543,7 +574,7 @@ async def _render_case_chat(*, case_id: str, settings: UISettings) -> None:
             # calls kb-mcp.remember during the turn.
             if final_output:
                 await append_transcript(
-                    active, {"role": "assistant", "content": final_output}
+                    workspace, {"role": "assistant", "content": final_output}
                 )
             typing_label.set_text("")
             send_btn.enable()
@@ -559,11 +590,9 @@ async def _render_case_chat(*, case_id: str, settings: UISettings) -> None:
     )
 
     # ─── close button ────────────────────────────────────────────────
-    async def _close() -> None:
-        # Release the active-session lock; the runtime stays warm for the
-        # next case open (MCP startup is the slowest step).
-        await release_active(case_id, status="closed")
-        ui.notify("session closed")
+    # No process-wide lock to release any more; the per-session runtime
+    # stays warm for the next case open in this browser.
+    def _close() -> None:
         ui.navigate.to("/")
 
     close_btn.on_click(_close)
