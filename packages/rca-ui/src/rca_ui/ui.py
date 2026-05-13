@@ -246,8 +246,13 @@ def _install_theme() -> None:
         ".rca-chat{display:flex;flex-direction:column;width:100%;height:100%;"
         " background:#f8f8f8;}"
         ".rca-chat-scroll{flex:1 1 auto;min-height:0;}"
+        # `.q-scrollarea__content` has `align-items: flex-start`, which
+        # would let `.rca-chat-list` size to its widest child instead of
+        # filling the scroll area. With a short first message ("hi")
+        # that collapses the chat-list to ~2ch wide and every bubble
+        # ends up jammed left.  Force full width.
         ".rca-chat-list{display:flex;flex-direction:column;gap:10px;"
-        " padding:14px 14px 18px;}"
+        " padding:14px 14px 18px;width:100%;}"
         # q-chat-message bubble color trick: Quasar sets
         # `.q-message-text { background: currentColor }`, then
         # `.q-message-text--received` / `--sent` set `color: <bubble bg>`,
@@ -264,7 +269,20 @@ def _install_theme() -> None:
         ".rca-chat .q-message-text-content--sent{color:#ffffff!important;}"
         ".rca-chat .q-message-text--received{border:1px solid #e5e5e5;}"
         ".rca-chat .q-message-text{padding:6px 10px;}"
-        ".rca-chat .q-message-text-content{line-height:1.45;}"
+        # Bubble sizing.  Align the OUTER `.q-message` wrapper to its
+        # sender's side and cap at 88% of the chat list.  No
+        # `min-width: 0` — that, combined with Quasar's
+        # `word-break: break-word` on `.q-message-text`, lets a flex
+        # item shrink to single-character width and wrap mid-word
+        # ("h\ni" for a "hi" message).  Drop word-break to `normal`
+        # and use the milder `overflow-wrap: break-word` so words only
+        # break when they genuinely don't fit.
+        ".rca-chat .q-message{max-width:88%;}"
+        ".rca-chat .q-message-sent{align-self:flex-end;}"
+        ".rca-chat .q-message-received{align-self:flex-start;}"
+        ".rca-chat .q-message-text{max-width:100%;word-break:normal!important;}"
+        ".rca-chat .q-message-text-content{line-height:1.45;"
+        " overflow-wrap:break-word;}"
         ".rca-chat .q-message-name{font-size:10px;color:#666;}"
         # Markdown reset inside bubbles — kill heading h1/h2 bloat
         ".rca-chat .q-message-text-content p{margin:0 0 0.35em;}"
@@ -284,13 +302,16 @@ def _install_theme() -> None:
         ".rca-chat .q-message-text-content ul{list-style:disc outside;}"
         ".rca-chat .q-message-text-content ol{list-style:decimal outside;}"
         ".rca-chat .q-message-text-content li{margin:0.1em 0;}"
+        # Tool chips sit on the same vertical lane as the assistant
+        # bubble: flex-start aligned, capped at the same 88% so a long
+        # `download_wafer_history(...)` line wraps inside the chip
+        # rather than running across the whole panel.
         ".rca-tool{align-self:flex-start;display:inline-flex;align-items:center;"
         " gap:5px;background:#e8e8e8;border-radius:5px;padding:2px 7px;"
         " color:#444;font:11px/1.45 ui-monospace,SFMono-Regular,monospace;"
-        " word-break:break-all;white-space:pre-wrap;max-width:100%;"
-        " margin:0 12px;}"
+        " word-break:break-all;white-space:pre-wrap;max-width:88%;margin:0;}"
         ".rca-tool.output{background:transparent;color:#666;padding-left:22px;"
-        " padding-right:0;font-size:10.5px;}"
+        " padding-right:0;font-size:10.5px;max-width:88%;}"
         # ─── reasoning expander (Qwen / o1-class think-tokens) ────────
         ".rca-reasoning{align-self:stretch;background:#fafafa;"
         " border:1px solid #e5e5e5;border-radius:8px;margin:0;"
@@ -475,7 +496,9 @@ async def _render_case_chat(*, case_id: str, settings: UISettings) -> None:
                         typing_label = ui.label("").classes("rca-chat-typing")
                         with ui.element("div").classes("rca-chat-input"):
                             input_field = (
-                                ui.textarea(placeholder="Ask the agent…")
+                                ui.textarea(
+                                    placeholder="Ask the agent — Enter to send, Shift+Enter for newline",
+                                )
                                 .props("autogrow rows=1 outlined dense borderless")
                             )
                             send_btn = (
@@ -612,12 +635,23 @@ async def _render_case_chat(*, case_id: str, settings: UISettings) -> None:
             _scroll_bottom()
 
     send_btn.on_click(_send)
-    # Enter (no modifiers) → preventDefault stops the textarea's local
-    # newline insertion, then submit.  Shift+Enter falls through to the
-    # default behavior and inserts a newline as usual.
+    # Submit on Enter, but let Shift+Enter fall through to the textarea's
+    # default newline insertion.  We can't express "Enter without Shift"
+    # via NiceGUI's `.on()` modifier syntax — `.exact` isn't in its
+    # allowlist (only stop/prevent/self/ctrl/shift/alt/meta), so it gets
+    # swallowed and Shift+Enter still fires the handler.  Use a
+    # `js_handler` that inspects `shiftKey` client-side: skip when held,
+    # otherwise preventDefault + emit to the Python handler.
     input_field.on(
-        "keydown.enter.exact.prevent",
+        "keydown.enter",
         lambda _e: asyncio.create_task(_send()),
+        js_handler=(
+            "(event) => {"
+            " if (event.shiftKey) return;"
+            " event.preventDefault();"
+            " emit(event);"
+            "}"
+        ),
     )
 
     # ─── close button ────────────────────────────────────────────────
@@ -712,11 +746,18 @@ def _render_csv_table(text: str) -> str:
 
 
 def _render_bubble(parent: Any, role: str, content: str) -> None:
+    """User bubbles render as plain text with literal newlines preserved
+    (NiceGUI's text= path escapes HTML and turns `\\n` into `<br>`).
+    Assistant bubbles render the full mistune markdown pipeline so the
+    model can use bold / lists / tables / code fences."""
     sent = role == "user"
     name = "You" if sent else "Agent"
     with parent:
-        with ui.chat_message(name=name, sent=sent):
-            ui.html(_render_md(content), sanitize=False)
+        if sent:
+            ui.chat_message(text=content, name=name, sent=True)
+        else:
+            with ui.chat_message(name=name, sent=False):
+                ui.html(_render_md(content), sanitize=False)
 
 
 class _AssistantStream:
