@@ -10,6 +10,11 @@ dependencies = [
     "pydantic>=2.7",
     "python-dotenv>=1.0.1",
     "mcp>=1.2",
+    # mistune renders chat markdown server-side.  NiceGUI's bundled
+    # markdown2 parser fails CommonMark's right-flanking rule on
+    # `**CJK punct**letter` sequences (very common in Chinese);
+    # mistune handles CJK correctly out of the box.
+    "mistune>=3.0",
     # fab MCPs (only the agent uses them, but they ship with rca-ui)
     "pandas>=2.2",
     "numpy>=1.26",
