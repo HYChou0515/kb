@@ -134,8 +134,8 @@ def _install_theme() -> None:
         " padding:2px;border-radius:3px;display:inline-flex;}"
         ".rca-section-title .toolbtn:hover{background:#e0e0e0;}"
         ".rca-tree{flex:1 1 auto;overflow-y:auto;padding:2px 0;}"
-        ".rca-file-row{display:flex;align-items:center;gap:5px;"
-        " padding:1px 14px;cursor:pointer;user-select:none;color:#424242;"
+        ".rca-file-row{display:flex;align-items:center;gap:2px;"
+        " padding:1px 8px 1px 6px;cursor:pointer;user-select:none;color:#424242;"
         " font:12px 'Segoe UI',system-ui,sans-serif;line-height:1.7;}"
         ".rca-file-row:hover{background:#e8e8e8;}"
         ".rca-file-row.selected{background:#e4e6f1;color:#0078d4;}"
@@ -143,6 +143,15 @@ def _install_theme() -> None:
         ".rca-file-row.selected .row-icon{color:#0078d4;}"
         ".rca-file-row .name{flex:1 1 auto;overflow:hidden;"
         " text-overflow:ellipsis;white-space:nowrap;}"
+        ".rca-file-row .chevron{width:14px;flex-shrink:0;display:inline-flex;"
+        " align-items:center;justify-content:center;}"
+        ".rca-file-row .chevron .q-icon{font-size:14px;color:#6c6c6c;}"
+        ".rca-file-row .row-icon-slot{width:18px;flex-shrink:0;display:inline-flex;"
+        " align-items:center;justify-content:center;}"
+        # Dir-row marker — folders look the same as files but the icon
+        # comes from a fixed pair (folder / folder_open).
+        ".rca-dir-row .row-icon{color:#d8a73a;}"
+        ".rca-dir-row.selected .row-icon{color:#d8a73a;}"
         # ─── editor area ───────────────────────────────────────────
         ".rca-editor{display:flex;flex-direction:column;width:100%;height:100%;"
         " min-width:0;background:#ffffff;}"
@@ -875,37 +884,61 @@ _LANG_BY_SUFFIX: dict[str, str | None] = {
 }
 
 
-def _list_workspace_files(workspace: Path) -> list[Path]:
-    """Recursively enumerate files under `workspace`, sorted with known
-    case files (CASE.md / case.json / notes.md / …) first, then
-    alphabetical. Hides .git/ and __pycache__/ subtrees entirely."""
-    out: list[Path] = []
-    for p in workspace.rglob("*"):
-        if not p.is_file():
-            continue
-        rel = p.relative_to(workspace)
-        if any(part in _HIDDEN_PARTS for part in rel.parts):
-            continue
-        out.append(p)
-
-    def _key(p: Path) -> tuple[int, str]:
-        rel = str(p.relative_to(workspace))
-        try:
-            return (_PRIORITY_FILES.index(rel), rel)
-        except ValueError:
-            return (len(_PRIORITY_FILES), rel)
-
-    return sorted(out, key=_key)
-
-
 def _detect_lang(path: Path) -> str | None:
     return _LANG_BY_SUFFIX.get(path.suffix.lower())
 
 
+def _icon_for(p: Path) -> str:
+    suf = p.suffix.lower()
+    if suf in (".json", ".jsonl"):
+        return "data_object"
+    if suf == ".py":
+        return "code"
+    if suf in (".md", ".markdown"):
+        return "article"
+    return "insert_drive_file"
+
+
+def _dir_entries(dir_path: Path) -> list[Path]:
+    """Sorted children of `dir_path`: directories first (alphabetical),
+    then files (priority names first, then alphabetical).  Hidden
+    .git/ / __pycache__ are dropped.  Empty directories are kept so the
+    tree shows them as expandable but barren."""
+    children: list[Path] = []
+    try:
+        for child in dir_path.iterdir():
+            if child.name in _HIDDEN_PARTS:
+                continue
+            children.append(child)
+    except OSError:
+        return []
+
+    def _key(p: Path) -> tuple[int, int, str]:
+        if p.is_dir():
+            return (0, 0, p.name.lower())
+        try:
+            return (1, _PRIORITY_FILES.index(p.name), p.name.lower())
+        except ValueError:
+            return (1, len(_PRIORITY_FILES), p.name.lower())
+
+    return sorted(children, key=_key)
+
+
 class _FileTree:
-    """VSCode-style left sidebar: flat list of files under the workspace.
-    Click a row → `on_open(path)`. Active row (the one currently open in
-    the editor) gets the `selected` class."""
+    """VSCode-style explorer: recursive tree with click-to-toggle dirs.
+
+    State is just the set of resolved-absolute dir paths that should be
+    rendered expanded.  Files render at every depth; rows align via a
+    fixed chevron column so files (which have no chevron) line up with
+    folders.  Click a file → `on_open(path)`; click a dir row → toggle
+    expanded state and re-render the whole tree.
+
+    Defaults: top-level dirs are auto-expanded on first refresh so the
+    user sees their immediate contents without a click.  Deeper dirs
+    start collapsed.
+    """
+
+    _INDENT_PX = 12  # per-depth left padding
 
     def __init__(
         self,
@@ -919,29 +952,75 @@ class _FileTree:
         self._container = container
         self._on_open = on_open
         self._is_active = is_active
+        self._expanded: set[Path] = set()
+        # First-time refresh seeds `_expanded` with top-level dirs.  We
+        # don't re-seed on later refreshes — the user's manual toggles
+        # are sticky.
+        self._initial_done = False
 
     def refresh(self) -> None:
+        if not self._initial_done:
+            for child in _dir_entries(self._workspace):
+                if child.is_dir():
+                    self._expanded.add(child.resolve())
+            self._initial_done = True
         self._container.clear()
         with self._container:
-            for f in _list_workspace_files(self._workspace):
-                rel = str(f.relative_to(self._workspace))
-                cls = "rca-file-row" + (" selected" if self._is_active(f) else "")
-                row = ui.element("div").classes(cls)
-                with row:
-                    ui.icon(_icon_for(f)).classes("row-icon")
-                    ui.label(rel).classes("name")
-                row.on("click", lambda _e, p=f: self._on_open(p))
+            self._render_dir_contents(self._workspace, depth=0)
 
+    def _render_dir_contents(self, dir_path: Path, depth: int) -> None:
+        for entry in _dir_entries(dir_path):
+            if entry.is_dir():
+                expanded = entry.resolve() in self._expanded
+                self._render_dir_row(entry, depth, expanded)
+                if expanded:
+                    self._render_dir_contents(entry, depth + 1)
+            else:
+                self._render_file_row(entry, depth)
 
-def _icon_for(p: Path) -> str:
-    suf = p.suffix.lower()
-    if suf in (".json", ".jsonl"):
-        return "data_object"
-    if suf == ".py":
-        return "code"
-    if suf in (".md", ".markdown"):
-        return "article"
-    return "insert_drive_file"
+    def _render_dir_row(
+        self, path: Path, depth: int, expanded: bool
+    ) -> None:
+        row = ui.element("div").classes("rca-file-row rca-dir-row")
+        with row:
+            self._indent(depth)
+            with ui.element("div").classes("chevron"):
+                ui.icon("expand_more" if expanded else "chevron_right")
+            with ui.element("div").classes("row-icon-slot"):
+                ui.icon("folder_open" if expanded else "folder").classes(
+                    "row-icon"
+                )
+            ui.label(path.name).classes("name")
+        row.on("click", lambda _e, p=path: self._toggle(p))
+
+    def _render_file_row(self, path: Path, depth: int) -> None:
+        cls = "rca-file-row" + (
+            " selected" if self._is_active(path) else ""
+        )
+        row = ui.element("div").classes(cls)
+        with row:
+            self._indent(depth)
+            # Empty chevron column so file rows align with dir rows.
+            ui.element("div").classes("chevron")
+            with ui.element("div").classes("row-icon-slot"):
+                ui.icon(_icon_for(path)).classes("row-icon")
+            ui.label(path.name).classes("name")
+        row.on("click", lambda _e, p=path: self._on_open(p))
+
+    def _indent(self, depth: int) -> None:
+        if depth <= 0:
+            return
+        ui.element("div").style(
+            f"width:{depth * self._INDENT_PX}px;flex-shrink:0;"
+        )
+
+    def _toggle(self, path: Path) -> None:
+        key = path.resolve()
+        if key in self._expanded:
+            self._expanded.discard(key)
+        else:
+            self._expanded.add(key)
+        self.refresh()
 
 
 _PREVIEW_SUFFIXES = frozenset(
