@@ -101,6 +101,13 @@ class EditorView:
         self._workspace = workspace
         self._container = container
         self._on_active_changed = on_active_changed
+        # While True, `_on_cm_change` ignores incoming codemirror
+        # change events.  Set during every `_render()` so spurious
+        # `update:value` events that fire during Vue's
+        # mount/unmount transition (e.g. right after a split) don't
+        # poison the buffer's current_text.  Re-enabled by a short
+        # timer once the new DOM tree has settled.
+        self._rendering = True
 
         # Per-pane Vue element references — populated by _render(),
         # cleared on each re-render.  `tab_bar` is the row above the
@@ -180,18 +187,29 @@ class EditorView:
             else path
         )
         ui.notify(f"saved {rel}", type="positive")
-        self._render()
+        # No full re-render — that would destroy codemirror state and
+        # the user's cursor position.  Just flip the tab's dirty class.
+        self._refresh_dirty(path)
 
     # ─── render ──────────────────────────────────────────────────────
 
     def _render(self) -> None:
+        self._rendering = True
         self._container.clear()
         self._pane_widgets = {}
         blob = self._layout.to_dict()
         with self._container:
             self._render_node(blob["root"])
+        # Defer un-suppression so any post-mount `update:value`
+        # echoes from the new codemirror instances are dropped.
+        # 200ms is longer than typical Vue mount cycles; the
+        # focus-ready flag per codemirror catches anything later.
+        ui.timer(0.2, self._release_rendering_gate, once=True)
         if self._on_active_changed:
             self._on_active_changed()
+
+    def _release_rendering_gate(self) -> None:
+        self._rendering = False
 
     def _render_node(self, node: dict[str, Any]) -> None:
         if node["type"] == "leaf":
@@ -225,6 +243,16 @@ class EditorView:
             "rca-pane" + (" rca-pane-active" if is_active else "")
         )
         pane_div.on("click", lambda _e, pid=pane_id: self._activate(pid))
+        # Set up the widget map first so `_render_tabs` can write
+        # per-tab references into it as it iterates.  Overwriting the
+        # whole dict at the END would discard those refs.
+        self._pane_widgets[pane_id] = {
+            "pane_div": pane_div,
+            "tab_bar": None,
+            "host": None,
+            "codemirror": None,
+            "tabs": {},
+        }
         # Wire the pane as a drag-drop target: dragover shows the
         # prospective drop zone via a CSS overlay (set via data-attr);
         # drop emits to Python which performs the actual move / split /
@@ -322,29 +350,42 @@ class EditorView:
                     # Vue event name codemirror emits is internal and
                     # not bound by the Python wrapper — the only
                     # supported edit-hook is `on_change`.
+                    # `cm_state["ready"]` is False until the user
+                    # actually focuses this codemirror.  Until then we
+                    # drop every `on_change` emission — there's no
+                    # such thing as a user-driven edit before focus,
+                    # so anything that fires must be a Vue
+                    # render-transition artefact and must not be
+                    # written back to the buffer.
+                    cm_state = {"ready": False}
                     codemirror = ui.codemirror(
                         value=text,
                         line_wrapping=True,
                         theme="vscodeLight",
                         language=lang,  # type: ignore[arg-type]
                         on_change=(
-                            lambda e, p=pane.active_file: self._on_cm_change(
-                                p, e.value
+                            lambda e, p=pane.active_file, s=cm_state: (
+                                None
+                                if not s["ready"]
+                                else self._on_cm_change(p, e.value)
                             )
                         ),
                     ).style("font-size:12px;")
+                    codemirror.on(
+                        "focusin",
+                        lambda _e, s=cm_state: s.update(ready=True),
+                    )
             # Status bar is always rendered when there is an active
             # file; CSS hides it for inactive panes so click-to-focus
             # can swap which pane "owns" the status line via a CSS
             # class toggle, no re-render needed.
             if pane.active_file is not None:
                 self._render_statusbar(pane_id, pane.active_file)
-        self._pane_widgets[pane_id] = {
-            "pane_div": pane_div,
-            "tab_bar": tab_bar,
-            "host": host,
-            "codemirror": codemirror,
-        }
+        # Finalise the entry without clobbering `tabs` (which was
+        # populated by `_render_tabs`).
+        self._pane_widgets[pane_id].update(
+            tab_bar=tab_bar, host=host, codemirror=codemirror
+        )
 
     def _render_tabs(
         self,
@@ -353,6 +394,9 @@ class EditorView:
         open_files: tuple[Path, ...],
         active_file: Path | None,
     ) -> None:
+        # Reset the tab-ref cache for this pane; `_refresh_dirty` reads
+        # from here to flip class state without re-rendering.
+        self._pane_widgets.setdefault(pane_id, {})["tabs"] = {}
         with tab_bar:
             for path in open_files:
                 is_active = path == active_file
@@ -382,10 +426,14 @@ class EditorView:
                     ui.label(path.name).classes("tab-name")
                     close = ui.element("div").classes("close")
                     with close:
-                        # Dirty bubble vs × handled by CSS swap on hover.
-                        ui.icon(
-                            "fiber_manual_record" if dirty else "close"
-                        )
+                        # Render both icons; CSS shows ● when the
+                        # parent `.rca-tab` has `.dirty`, and × on
+                        # hover (or when clean).  This lets us flip
+                        # the dirty state purely by toggling a class
+                        # on the tab from `_refresh_dirty`, with no
+                        # need to re-render the icon DOM.
+                        ui.icon("fiber_manual_record").classes("dirty-icon")
+                        ui.icon("close").classes("close-icon")
                     # NiceGUI's modifier system on `.on()` is the
                     # supported way to add Vue's `.stop` modifier.
                     # `.props("@click.stop")` looks like a Vue
@@ -437,6 +485,22 @@ class EditorView:
                     "click",
                     lambda _e, pid=pane_id, p=path: self._activate_tab(pid, p),
                 )
+                self._pane_widgets[pane_id]["tabs"][path] = tab
+
+    def _refresh_dirty(self, path: Path) -> None:
+        """Update the `.dirty` class on every tab whose file is `path`.
+        Called whenever the buffer's clean/dirty state may have changed
+        (`set_text` broadcasts, save completes).  Avoids a full
+        re-render so codemirror keeps its cursor / scroll / focus."""
+        dirty = self._registry.is_dirty(path)
+        for widgets in self._pane_widgets.values():
+            tab = widgets.get("tabs", {}).get(path)
+            if tab is None:
+                continue
+            if dirty:
+                tab.classes(add="dirty")
+            else:
+                tab.classes(remove="dirty")
 
     def _render_statusbar(self, pane_id: str, path: Path) -> None:
         with ui.element("div").classes("rca-statusbar"):
@@ -728,8 +792,9 @@ class EditorView:
         ui.notify(
             f"saved {path.relative_to(self._workspace)}", type="positive"
         )
-        # Dirty marker changed → re-render tabs.
-        self._render()
+        # Only the dirty class needs to flip; avoid a full re-render
+        # to preserve codemirror state.
+        self._refresh_dirty(path)
 
     def _on_codemirror_change(
         self, pane_id: str, path: Path, args: Any
@@ -741,17 +806,24 @@ class EditorView:
         self._registry.set_text(path, new_text)
 
     def _on_cm_change(self, path: Path, new_value: str) -> None:
-        """Forward a codemirror text change to the buffer registry,
-        but filter out spurious empty-string emissions.
+        """Forward a codemirror text change to the buffer registry.
 
-        NiceGUI's codemirror Vue wrapper emits an `update:value` event
-        whose payload is reconstructed via `_apply_change_set`.  During
-        re-render transitions (e.g. immediately after a split, or when
-        a pane swaps its bound file via `_render`), that path can
-        produce an empty string while no real edit has occurred —
-        which would otherwise mark the buffer dirty.  Treat
-        `'' → non-empty buffer` as a render artefact rather than a
-        user clearing the document."""
+        Two guards keep stale / spurious change events from poisoning
+        the buffer:
+
+        1. `_rendering` gate — during a `_render()` cycle, codemirror's
+           old / new Vue instances briefly coexist and the JS-side
+           `update:value` channel can fire with intermediate state
+           (empty string from the empty-change-set decode path, etc.).
+           These all show up as "edits" the user never made and
+           would otherwise mark the buffer dirty.
+        2. Empty-buffer artefact — even outside `_render`, an
+           `update:value` carrying `""` when our buffer holds real
+           content is almost certainly a transition echo, not a user
+           clearing the doc.
+        """
+        if self._rendering:
+            return
         if new_value == "" and self._registry.text(path) != "":
             return
         self._registry.set_text(path, new_value)
@@ -759,7 +831,9 @@ class EditorView:
     def _on_buffer_change(self, path: Path) -> None:
         """Called by BufferRegistry whenever any pane edits `path`.
         Re-syncs all OTHER subscribers' codemirror values (the editor
-        that fired the change already shows the new text)."""
+        that fired the change already shows the new text) and
+        refreshes every affected tab's dirty class so the ● indicator
+        appears in real time, not only on the next full re-render."""
         new_text = self._registry.text(path)
         for pid, widgets in self._pane_widgets.items():
             pane = self._layout.pane(pid)
@@ -768,6 +842,7 @@ class EditorView:
                 continue
             if cm.value != new_text:
                 cm.value = new_text
+        self._refresh_dirty(path)
 
     # ─── persistence ─────────────────────────────────────────────────
 

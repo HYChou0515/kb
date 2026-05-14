@@ -173,9 +173,21 @@ def _install_theme() -> None:
         # two visible circles on every dirty tab.
         ".rca-tab .close{visibility:hidden;padding:2px;border-radius:3px;"
         " display:inline-flex;}"
-        ".rca-tab:hover .close,.rca-tab.active .close{visibility:visible;}"
+        ".rca-tab:hover .close,.rca-tab.active .close,.rca-tab.dirty .close"
+        "{visibility:visible;}"
         ".rca-tab .close:hover{background:#c8c8c8;}"
         ".rca-tab .close .q-icon{font-size:14px;color:#555;}"
+        # Dual-icon ●/× swap.  The close-rendering code emits BOTH
+        # icons (`.dirty-icon` = ●, `.close-icon` = ×); CSS picks one
+        # depending on `.rca-tab.dirty` class and hover state.  This
+        # lets `_refresh_dirty()` just toggle a class on the tab —
+        # no DOM mutation of the icon name needed.
+        ".rca-tab .close .dirty-icon{display:none;}"
+        ".rca-tab .close .close-icon{display:inline-flex;}"
+        ".rca-tab.dirty .close .dirty-icon{display:inline-flex;}"
+        ".rca-tab.dirty .close .close-icon{display:none;}"
+        ".rca-tab.dirty:hover .close .dirty-icon{display:none;}"
+        ".rca-tab.dirty:hover .close .close-icon{display:inline-flex;}"
         # ─── view toggle (Source / Preview) sits at right of tab bar ──
         ".rca-view-toggle{margin-left:auto;display:flex;align-items:center;"
         " gap:2px;padding:0 8px;flex-shrink:0;}"
