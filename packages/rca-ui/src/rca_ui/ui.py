@@ -34,6 +34,7 @@ from rca_ui.agent import (
     TurnDoneEvent,
 )
 from rca_ui.config import UISettings
+from rca_ui.editor_view import EditorView
 from rca_ui.session_store import (
     append_transcript,
     read_transcript,
@@ -331,6 +332,44 @@ def _install_theme() -> None:
         ".rca-split .q-splitter__separator{background:#e5e5e5;width:1px;}"
         ".rca-split .q-splitter__separator-area{width:6px;left:-3px;}"
         ".rca-split .q-splitter__separator-area:hover{background:rgba(0,120,212,0.18);}"
+        # ─── editor pane (multi-pane split editor area) ───────────────
+        # The outer `.rca-editor` is set up above.  Its direct child is
+        # either a single `.rca-pane` or a `.rca-editor-split` (Quasar
+        # splitter) that nests further panes / splits recursively.
+        ".rca-pane{display:flex;flex-direction:column;width:100%;height:100%;"
+        " background:#ffffff;position:relative;min-width:0;min-height:0;}"
+        ".rca-pane-active .rca-tabbar{box-shadow:inset 0 2px 0 #0078d4;}"
+        # ─── drag-and-drop overlay ───────────────────────────────────
+        # `_render_pane` writes `data-drop-zone` (center/left/right/top/
+        # bottom) and `data-drop-ctrl` (0/1) on `.rca-pane` from the JS
+        # dragover handler; we paint a translucent fill on the
+        # prospective drop area, green for Ctrl-drag (clone) and blue
+        # for plain (move).  No overlay when no data-attr is set.
+        ".rca-pane[data-drop-zone]::after{content:'';position:absolute;"
+        " pointer-events:none;z-index:50;"
+        " background:rgba(0,120,212,0.18);transition:background 0.1s;}"
+        ".rca-pane[data-drop-zone='center']::after{inset:0;}"
+        ".rca-pane[data-drop-zone='left']::after{top:0;bottom:0;left:0;width:50%;}"
+        ".rca-pane[data-drop-zone='right']::after{top:0;bottom:0;right:0;width:50%;}"
+        ".rca-pane[data-drop-zone='top']::after{left:0;right:0;top:0;height:50%;}"
+        ".rca-pane[data-drop-zone='bottom']::after{left:0;right:0;bottom:0;height:50%;}"
+        ".rca-pane[data-drop-ctrl='1']::after{background:rgba(28,138,58,0.22);}"
+        # Make tabs visually grabbable.
+        ".rca-tab{cursor:grab;}"
+        ".rca-tab:active{cursor:grabbing;}"
+        ".rca-editor-split{width:100%;height:100%;}"
+        ".rca-editor-split > .q-splitter__panel{height:100%;display:flex;"
+        " flex-direction:column;min-height:0;min-width:0;}"
+        ".rca-editor-split .q-splitter__separator{background:#e5e5e5;}"
+        ".rca-editor-split.q-splitter--horizontal > .q-splitter__separator{"
+        " width:1px;}"
+        ".rca-editor-split.q-splitter--vertical > .q-splitter__separator{"
+        " height:1px;}"
+        ".rca-editor-split .q-splitter__separator-area{width:6px;left:-3px;}"
+        ".rca-editor-split.q-splitter--vertical .q-splitter__separator-area{"
+        " width:auto;left:0;height:6px;top:-3px;}"
+        ".rca-editor-split .q-splitter__separator-area:hover{"
+        " background:rgba(0,120,212,0.18);}"
         ".rca-chat-typing{padding:0 12px 3px;font-size:10.5px;color:#888;}"
         ".rca-chat-input{display:flex;align-items:flex-end;gap:6px;"
         " padding:6px;background:#fff;border-top:1px solid #e5e5e5;}"
@@ -520,23 +559,61 @@ async def _render_case_chat(*, case_id: str, settings: UISettings) -> None:
     status_label.set_text("ready (agent boots on first message)")
 
     # ─── editor + file tree wiring ───────────────────────────────────
-    with editor_container:
-        editor = _EditorTabs(workspace)
+    # `EditorView` owns its EditorLayout + BufferRegistry, persists the
+    # split tree to `<workspace>/.editor-layout.json`, and auto-opens
+    # CASE.md on first run when no layout file exists yet.  See
+    # packages/rca-ui/src/rca_ui/editor_view.py.
+    #
+    # NOTE: build the editor BEFORE the tree (the editor's initial
+    # render needs `editor_container` ready), then build the tree, then
+    # wire the editor's `on_active_changed` to refresh the tree.  The
+    # editor's __init__ calls `_render()` which fires the callback —
+    # if we pass `lambda: tree.refresh()` in the ctor, `tree` is not
+    # yet bound and we get a NameError at first render.
+    editor = EditorView(
+        workspace=workspace,
+        container=editor_container,
+    )
 
     tree = _FileTree(
         workspace=workspace,
         container=tree_container,
-        on_open=editor.open_file,
+        on_open=editor.open_or_reveal,
         is_active=lambda p: editor.active_path() == p,
     )
     editor.set_on_active_changed(tree.refresh)
     tree.refresh()
     refresh_btn.on("click", lambda _e: tree.refresh())
 
-    # Auto-open CASE.md so the editor isn't empty
-    case_md = workspace / "CASE.md"
-    if case_md.exists():
-        editor.open_file(case_md)
+    # Ctrl+S / ⌘+S → save active pane's active file.  We pre-empt
+    # the browser's "Save Page" dialog via a window-level keydown
+    # listener that calls preventDefault before anything else; the
+    # actual Python save is wired through ui.keyboard.
+    ui.add_body_html(
+        "<script>"
+        "(function(){"
+        " if (window._rca_ctrl_s_installed) return;"
+        " window._rca_ctrl_s_installed = true;"
+        " document.addEventListener('keydown', function(e){"
+        "  if ((e.ctrlKey || e.metaKey) && e.key && e.key.toLowerCase() === 's') {"
+        "   e.preventDefault();"
+        "   e.stopPropagation();"
+        "  }"
+        " }, true);"
+        "})();"
+        "</script>"
+    )
+
+    def _on_key(e: Any) -> None:
+        if not e.action.keydown:
+            return
+        if not (e.modifiers.ctrl or e.modifiers.meta):
+            return
+        if e.key.code != "KeyS":
+            return
+        editor.save_active()
+
+    ui.keyboard(on_key=_on_key, repeating=False, ignore=[])
 
     # ─── replay transcript into chat box ─────────────────────────────
     for entry in read_transcript(workspace):
@@ -1064,248 +1141,3 @@ class _FileTree:
         self.refresh()
 
 
-_PREVIEW_SUFFIXES = frozenset(
-    {".md", ".markdown", ".json", ".jsonl", ".csv"}
-)
-
-
-class _EditorTabs:
-    """Center pane: VSCode-style tab bar over one codemirror, with an
-    optional read-only preview view for markdown / JSON / CSV files.
-
-    Each open file has an in-memory text buffer; switching tabs flushes
-    the editor's current value back into the active buffer and loads the
-    next buffer. Save writes the buffer to disk and clears the dirty mark.
-
-    Source / Preview is per-tab state. Toggle lives at the right of the
-    tab bar — same control regardless of file type, but the Preview
-    button is hidden for non-previewable suffixes.
-
-    Caller must be inside an `ui.element("div").classes("rca-editor")`
-    column that fills available height.
-    """
-
-    def __init__(self, workspace: Path) -> None:
-        self._workspace = workspace
-        self._open: list[Path] = []
-        self._active: Path | None = None
-        self._buffers: dict[Path, str] = {}
-        self._disk: dict[Path, str] = {}
-        self._modes: dict[Path, Literal["edit", "preview"]] = {}
-        self._on_active_changed: Callable[[], None] | None = None
-
-        # Tab bar (tabs + view toggle on right)
-        self._tab_bar = ui.element("div").classes("rca-tabbar")
-        # Editor host: codemirror OR preview box OR empty placeholder
-        self._host = ui.element("div").classes("rca-editor-host")
-        with self._host:
-            self._empty = ui.element("div").classes("rca-editor-empty")
-            with self._empty:
-                ui.label("Select a file from the Explorer.")
-            self._editor = (
-                ui.codemirror(value="", line_wrapping=True, theme="vscodeLight")
-                .style("font-size:12px;")
-            )
-            self._editor.visible = False
-            self._preview = ui.element("div").classes("rca-preview-box")
-            self._preview.visible = False
-        # Status bar
-        self._statusbar = ui.element("div").classes("rca-statusbar")
-        with self._statusbar:
-            self._path_label = ui.label("")
-            self._lang_label = ui.label("").style(
-                "margin-left:auto;color:rgba(255,255,255,0.85);"
-            )
-            self._save_link = ui.element("div").classes("savebtn")
-            with self._save_link:
-                ui.icon("save").style("font-size:14px;")
-                ui.label("Save")
-            self._save_link.on("click", lambda _e: self._save())
-        self._statusbar.visible = False
-
-    def set_on_active_changed(self, fn: Callable[[], None]) -> None:
-        self._on_active_changed = fn
-
-    def active_path(self) -> Path | None:
-        return self._active
-
-    def open_file(self, path: Path) -> None:
-        if path not in self._open:
-            try:
-                text = path.read_text(encoding="utf-8")
-                editable = True
-            except (UnicodeDecodeError, OSError) as exc:
-                text = f"(unreadable: {exc.__class__.__name__}: {exc})"
-                editable = False
-            self._buffers[path] = text
-            self._disk[path] = text if editable else "\0__binary__\0"  # never matches
-            self._open.append(path)
-        self._activate(path)
-
-    def _activate(self, path: Path) -> None:
-        # Flush previous tab's editor content into its buffer
-        if self._active is not None and self._active in self._buffers:
-            self._buffers[self._active] = self._editor.value
-        self._active = path
-        # Restore per-tab mode (default: edit)
-        mode = self._modes.setdefault(path, "edit")
-        self._empty.visible = False
-        self._statusbar.visible = True
-        self._editor.value = self._buffers[path]
-        lang = _detect_lang(path)
-        try:
-            self._editor.language = lang  # type: ignore[assignment]
-        except (AttributeError, ValueError):
-            pass
-        rel = path.relative_to(self._workspace)
-        self._path_label.set_text(str(rel))
-        self._lang_label.set_text(lang or "Plain Text")
-        self._apply_mode(mode)
-        self._refresh_tabs()
-        if self._on_active_changed:
-            self._on_active_changed()
-
-    def _apply_mode(self, mode: Literal["edit", "preview"]) -> None:
-        """Show editor or preview for the active tab. No-op if no tab."""
-        p = self._active
-        if p is None:
-            return
-        if mode == "preview" and p.suffix.lower() not in _PREVIEW_SUFFIXES:
-            mode = "edit"
-        self._modes[p] = mode
-        if mode == "preview":
-            self._editor.visible = False
-            self._preview.visible = True
-            self._render_preview(p)
-        else:
-            self._preview.visible = False
-            self._editor.visible = True
-
-    def _set_mode(self, mode: Literal["edit", "preview"]) -> None:
-        # Flush current editor content into buffer before switching out
-        if self._active is not None and self._modes.get(self._active) == "edit":
-            self._buffers[self._active] = self._editor.value
-        self._apply_mode(mode)
-        self._refresh_tabs()
-
-    def _render_preview(self, path: Path) -> None:
-        """Render the current buffer into self._preview based on suffix.
-        Read-only: source of truth is `self._buffers[path]`, not disk."""
-        suf = path.suffix.lower()
-        text = self._buffers.get(path, "")
-        self._preview.clear()
-        # Toggle json-mode class (json/jsonl get monospace, off-white bg)
-        if suf in (".json", ".jsonl"):
-            self._preview.classes(add="json-mode")
-        else:
-            self._preview.classes(remove="json-mode")
-        with self._preview:
-            if suf in (".md", ".markdown"):
-                ui.html(_render_md(text), sanitize=False)
-            elif suf == ".json":
-                ui.html(_render_json_pretty(text), sanitize=False)
-            elif suf == ".jsonl":
-                ui.html(_render_jsonl_pretty(text), sanitize=False)
-            elif suf == ".csv":
-                ui.html(_render_csv_table(text), sanitize=False)
-            else:
-                ui.label("(no preview available for this file type)").classes(
-                    "rca-preview-empty"
-                )
-
-    def _close(self, path: Path) -> None:
-        if path not in self._open:
-            return
-        idx = self._open.index(path)
-        self._open.remove(path)
-        self._buffers.pop(path, None)
-        self._disk.pop(path, None)
-        self._modes.pop(path, None)
-        if self._active == path:
-            if self._open:
-                self._activate(self._open[min(idx, len(self._open) - 1)])
-            else:
-                self._active = None
-                self._editor.visible = False
-                self._preview.visible = False
-                self._statusbar.visible = False
-                self._empty.visible = True
-                self._refresh_tabs()
-                if self._on_active_changed:
-                    self._on_active_changed()
-        else:
-            self._refresh_tabs()
-
-    def _save(self) -> None:
-        p = self._active
-        if p is None:
-            return
-        # Editor is the source of truth only when we're actually in edit
-        # mode; preview is read-only, buffer already holds the latest.
-        if self._modes.get(p, "edit") == "edit":
-            self._buffers[p] = self._editor.value
-        try:
-            p.write_text(self._buffers[p], encoding="utf-8")
-        except OSError as exc:
-            ui.notify(f"save failed: {exc}", type="negative")
-            return
-        self._disk[p] = self._buffers[p]
-        ui.notify(f"saved {p.relative_to(self._workspace)}", type="positive")
-        self._refresh_tabs()
-
-    def _is_dirty(self, p: Path) -> bool:
-        if p == self._active and self._modes.get(p, "edit") == "edit":
-            return self._editor.value != self._disk.get(p)
-        return self._buffers.get(p) != self._disk.get(p)
-
-    def _refresh_tabs(self) -> None:
-        self._tab_bar.clear()
-        with self._tab_bar:
-            for p in self._open:
-                is_active = p == self._active
-                cls = "rca-tab" + (" active" if is_active else "") + (
-                    " dirty" if self._is_dirty(p) else ""
-                )
-                tab = ui.element("div").classes(cls)
-                with tab:
-                    ui.icon(_icon_for(p)).classes("tab-icon")
-                    ui.label(p.name).classes("tab-name")
-                    close = ui.element("div").classes("close")
-                    with close:
-                        ui.icon("close")
-                    close.on(
-                        "click", lambda _e, x=p: self._close(x)
-                    ).props('@click.stop')
-                tab.on("click", lambda _e, x=p: self._activate(x))
-
-            # View toggle at the right of the tab bar.
-            if self._active is not None:
-                mode = self._modes.get(self._active, "edit")
-                supports_preview = (
-                    self._active.suffix.lower() in _PREVIEW_SUFFIXES
-                )
-                with ui.element("div").classes("rca-view-toggle"):
-                    edit_cls = "rca-view-btn" + (
-                        " active" if mode == "edit" else ""
-                    )
-                    edit_btn = ui.element("div").classes(edit_cls).tooltip(
-                        "Source (editable)"
-                    )
-                    with edit_btn:
-                        ui.icon("edit_note")
-                        ui.label("Source")
-                    edit_btn.on("click", lambda _e: self._set_mode("edit"))
-
-                    if supports_preview:
-                        prev_cls = "rca-view-btn" + (
-                            " active" if mode == "preview" else ""
-                        )
-                        prev_btn = ui.element("div").classes(prev_cls).tooltip(
-                            "Preview (read-only)"
-                        )
-                        with prev_btn:
-                            ui.icon("visibility")
-                            ui.label("Preview")
-                        prev_btn.on(
-                            "click", lambda _e: self._set_mode("preview")
-                        )
