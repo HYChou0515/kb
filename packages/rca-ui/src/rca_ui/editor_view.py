@@ -45,6 +45,7 @@ from nicegui import ui
 
 from rca_ui.buffer_registry import BufferRegistry
 from rca_ui.editor_layout import EditorLayout, affected_dirty_tabs
+from rca_ui.preview import is_previewable, render_for_path
 
 logger = logging.getLogger(__name__)
 
@@ -111,9 +112,14 @@ class EditorView:
 
         # Per-pane Vue element references — populated by _render(),
         # cleared on each re-render.  `tab_bar` is the row above the
-        # editor, `editor_host` holds the codemirror instance, and
-        # `codemirror` is the actual editor we bind to the buffer.
+        # editor, `host` holds codemirror + preview-box, and
+        # `codemirror` / `preview_box` are toggled by Source/Preview.
         self._pane_widgets: dict[str, dict[str, Any]] = {}
+        # Per-pane view mode (Source vs Preview).  Persisted across
+        # re-renders within the session so toggling Preview survives
+        # an `_activate_tab`-triggered re-render.  Reset to default
+        # ('edit') the first time a pane is rendered.
+        self._pane_modes: dict[str, str] = {}
 
         # Disk I/O is injected into BufferRegistry so tests don't need
         # a real workspace.  Here we use Path.read_text / write_text
@@ -251,6 +257,7 @@ class EditorView:
             "tab_bar": None,
             "host": None,
             "codemirror": None,
+            "preview_box": None,
             "tabs": {},
         }
         # Wire the pane as a drag-drop target: dragover shows the
@@ -338,6 +345,7 @@ class EditorView:
             self._render_tabs(tab_bar, pane_id, pane.open_files, pane.active_file)
             host = ui.element("div").classes("rca-editor-host")
             with host:
+                preview_box = None
                 if pane.active_file is None:
                     with ui.element("div").classes("rca-editor-empty"):
                         ui.label("Select a file from the Explorer.")
@@ -345,6 +353,12 @@ class EditorView:
                 else:
                     text = self._registry.text(pane.active_file)
                     lang = _detect_lang(pane.active_file)
+                    mode = self._pane_modes.setdefault(pane_id, "edit")
+                    # Force edit mode for files we don't have a
+                    # preview renderer for (e.g. .py / .txt).
+                    if mode == "preview" and not is_previewable(pane.active_file):
+                        mode = "edit"
+                        self._pane_modes[pane_id] = "edit"
                     # IMPORTANT: use NiceGUI's `on_change=` callback,
                     # not `.on('update:model-value', ...)`.  The raw
                     # Vue event name codemirror emits is internal and
@@ -375,6 +389,21 @@ class EditorView:
                         "focusin",
                         lambda _e, s=cm_state: s.update(ready=True),
                     )
+                    # Preview box sits alongside the codemirror in the
+                    # editor host; only one is visible at a time per
+                    # `_pane_modes`.
+                    preview_box = ui.element("div").classes("rca-preview-box")
+                    if is_previewable(pane.active_file):
+                        suf = pane.active_file.suffix.lower()
+                        if suf in (".json", ".jsonl"):
+                            preview_box.classes(add="json-mode")
+                    with preview_box:
+                        ui.html(
+                            render_for_path(pane.active_file, text),
+                            sanitize=False,
+                        )
+                    codemirror.visible = mode == "edit"
+                    preview_box.visible = mode == "preview"
             # Status bar is always rendered when there is an active
             # file; CSS hides it for inactive panes so click-to-focus
             # can swap which pane "owns" the status line via a CSS
@@ -384,7 +413,10 @@ class EditorView:
         # Finalise the entry without clobbering `tabs` (which was
         # populated by `_render_tabs`).
         self._pane_widgets[pane_id].update(
-            tab_bar=tab_bar, host=host, codemirror=codemirror
+            tab_bar=tab_bar,
+            host=host,
+            codemirror=codemirror,
+            preview_box=preview_box,
         )
 
     def _render_tabs(
@@ -486,6 +518,77 @@ class EditorView:
                     lambda _e, pid=pane_id, p=path: self._activate_tab(pid, p),
                 )
                 self._pane_widgets[pane_id]["tabs"][path] = tab
+            # Source / Preview view toggle at the right end of the
+            # tab bar.  Preview button is hidden for file types that
+            # have no read-only preview renderer.
+            if active_file is not None:
+                self._render_view_toggle(pane_id, active_file)
+
+    def _render_view_toggle(self, pane_id: str, active_file: Path) -> None:
+        mode = self._pane_modes.get(pane_id, "edit")
+        supports_preview = is_previewable(active_file)
+        with ui.element("div").classes("rca-view-toggle"):
+            edit_cls = "rca-view-btn" + (" active" if mode == "edit" else "")
+            edit_btn = (
+                ui.element("div").classes(edit_cls).tooltip("Source (editable)")
+            )
+            with edit_btn:
+                ui.icon("edit_note")
+                ui.label("Source")
+            edit_btn.on(
+                "click.stop",
+                lambda _e, pid=pane_id: self._set_mode(pid, "edit"),
+            )
+            if supports_preview:
+                prev_cls = "rca-view-btn" + (
+                    " active" if mode == "preview" else ""
+                )
+                prev_btn = (
+                    ui.element("div")
+                    .classes(prev_cls)
+                    .tooltip("Preview (read-only)")
+                )
+                with prev_btn:
+                    ui.icon("visibility")
+                    ui.label("Preview")
+                prev_btn.on(
+                    "click.stop",
+                    lambda _e, pid=pane_id: self._set_mode(pid, "preview"),
+                )
+
+    def _set_mode(self, pane_id: str, mode: str) -> None:
+        """Toggle a pane between Source (codemirror) and Preview
+        (read-only render).  Updates DOM in place — no `_render()` —
+        so codemirror state is preserved across mode flips."""
+        pane = self._layout.pane(pane_id)
+        if pane.active_file is None:
+            return
+        if mode == "preview" and not is_previewable(pane.active_file):
+            return
+        self._pane_modes[pane_id] = mode
+        widgets = self._pane_widgets.get(pane_id, {})
+        cm = widgets.get("codemirror")
+        preview_box = widgets.get("preview_box")
+        if cm is not None:
+            cm.visible = mode == "edit"
+        if preview_box is not None:
+            preview_box.visible = mode == "preview"
+            if mode == "preview":
+                text = self._registry.text(pane.active_file)
+                preview_box.clear()
+                with preview_box:
+                    ui.html(
+                        render_for_path(pane.active_file, text),
+                        sanitize=False,
+                    )
+        # Re-render just the tab bar to refresh the active class on
+        # the toggle buttons.
+        tab_bar = widgets.get("tab_bar")
+        if tab_bar is not None:
+            tab_bar.clear()
+            self._render_tabs(
+                tab_bar, pane_id, pane.open_files, pane.active_file
+            )
 
     def _refresh_dirty(self, path: Path) -> None:
         """Update the `.dirty` class on every tab whose file is `path`.
@@ -830,18 +933,25 @@ class EditorView:
 
     def _on_buffer_change(self, path: Path) -> None:
         """Called by BufferRegistry whenever any pane edits `path`.
-        Re-syncs all OTHER subscribers' codemirror values (the editor
-        that fired the change already shows the new text) and
-        refreshes every affected tab's dirty class so the ● indicator
-        appears in real time, not only on the next full re-render."""
+        Re-syncs subscribers' codemirror values, refreshes their tab
+        dirty class, and re-renders any preview-mode panes currently
+        showing `path` so the read-only view tracks live edits."""
         new_text = self._registry.text(path)
         for pid, widgets in self._pane_widgets.items():
             pane = self._layout.pane(pid)
-            cm = widgets.get("codemirror")
-            if cm is None or pane.active_file != path:
+            if pane.active_file != path:
                 continue
-            if cm.value != new_text:
+            cm = widgets.get("codemirror")
+            if cm is not None and cm.value != new_text:
                 cm.value = new_text
+            if self._pane_modes.get(pid) == "preview":
+                preview_box = widgets.get("preview_box")
+                if preview_box is not None:
+                    preview_box.clear()
+                    with preview_box:
+                        ui.html(
+                            render_for_path(path, new_text), sanitize=False
+                        )
         self._refresh_dirty(path)
 
     # ─── persistence ─────────────────────────────────────────────────

@@ -12,16 +12,12 @@ HTTP calls to any KB.
 from __future__ import annotations
 
 import asyncio
-import html as html_lib
-import io
-import json
 import logging
 import uuid
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Literal
 
-import mistune
 from nicegui import app, ui
 
 from rca_ui.agent import (
@@ -762,86 +758,10 @@ async def _render_case_chat(*, case_id: str, settings: UISettings) -> None:
     close_btn.on_click(_close)
 
 
-# mistune renders chat markdown server-side.  Plugins:
-#   table         — GitHub-style tables
-#   strikethrough — ~~strike~~
-#   url           — auto-link bare URLs
-# CommonMark's right-flanking rule fails on `**lot：**把` (closing **
-# between CJK punctuation and CJK letter); mistune is CJK-tolerant
-# and renders the <strong> correctly.  Agent output is trusted, so we
-# bypass the client-side sanitizer (sanitize=False on ui.html).
-_md_render = mistune.create_markdown(plugins=["table", "strikethrough", "url"])
-
-
-def _render_md(text: str) -> str:
-    return _md_render(text or "")
-
-
-def _render_json_pretty(text: str) -> str:
-    """Pretty-print a JSON document as a <pre> block. On parse failure
-    returns a short error notice instead of raising."""
-    if not (text or "").strip():
-        return '<div class="rca-preview-empty">(empty file)</div>'
-    try:
-        parsed = json.loads(text)
-        pretty = json.dumps(parsed, indent=2, ensure_ascii=False)
-    except (json.JSONDecodeError, ValueError) as exc:
-        return (
-            '<div class="rca-preview-empty">parse failed: '
-            f"{html_lib.escape(str(exc))}</div>"
-        )
-    return f"<pre>{html_lib.escape(pretty)}</pre>"
-
-
-def _render_jsonl_pretty(text: str) -> str:
-    """One pretty-printed block per non-empty JSONL line. Each block is
-    prefixed with its 1-based line number; malformed lines are flagged
-    inline rather than aborting the whole render."""
-    parts: list[str] = []
-    for idx, raw in enumerate(text.splitlines(), 1):
-        line = raw.strip()
-        if not line:
-            continue
-        try:
-            pretty = json.dumps(json.loads(line), indent=2, ensure_ascii=False)
-        except (json.JSONDecodeError, ValueError) as exc:
-            pretty = f"(line {idx} parse failed: {exc})"
-        parts.append(
-            f'<div style="margin-bottom:0.7em;">'
-            f'<div style="font:10.5px ui-monospace,monospace;color:#999;'
-            f'margin-bottom:2px;">#{idx}</div>'
-            f"<pre>{html_lib.escape(pretty)}</pre></div>"
-        )
-    if not parts:
-        return '<div class="rca-preview-empty">(empty file)</div>'
-    return "\n".join(parts)
-
-
-def _render_csv_table(text: str) -> str:
-    """Render CSV as an HTML table via pandas. Truncates to 1000 rows
-    so a giant CSV doesn't freeze the UI. On parse failure: error notice."""
-    if not (text or "").strip():
-        return '<div class="rca-preview-empty">(empty file)</div>'
-    try:
-        import pandas as pd
-        df = pd.read_csv(io.StringIO(text))
-    except Exception as exc:  # noqa: BLE001 — pandas raises many types
-        return (
-            '<div class="rca-preview-empty">parse failed: '
-            f"{html_lib.escape(str(exc))}</div>"
-        )
-    total = len(df)
-    truncated = ""
-    if total > 1000:
-        df = df.head(1000)
-        truncated = (
-            f'<div class="rca-preview-empty">'
-            f"showing first 1000 of {total} rows</div>"
-        )
-    table = df.to_html(
-        index=False, classes="rca-csv-table", border=0, escape=True
-    )
-    return truncated + table
+# Preview / markdown helpers live in `rca_ui.preview` so both the
+# chat bubbles (here) and the editor's Preview view toggle can share
+# the same implementation.  See packages/rca-ui/src/rca_ui/preview.py.
+from rca_ui.preview import render_md as _render_md  # noqa: E402
 
 
 def _render_bubble(parent: Any, role: str, content: str) -> None:
