@@ -44,8 +44,8 @@ from typing import Any
 from nicegui import ui
 
 from rca_ui.buffer_registry import BufferRegistry
-from rca_ui.editor_layout import EditorLayout, affected_dirty_tabs
-from rca_ui.preview import is_previewable, render_for_path
+from rca_ui.editor_layout import EditorLayout
+from rca_ui.ui.preview import is_previewable, render_for_path
 
 logger = logging.getLogger(__name__)
 
@@ -144,19 +144,60 @@ class EditorView:
 
     # ─── public API the rest of ui.py calls ──────────────────────────
 
-    def open_or_reveal(self, path: Path) -> None:
+    def open_or_reveal(self, path: Path, preview: bool = False) -> None:
         """Explorer-click entry point — jump to existing tab or open
-        in the active pane."""
-        before_panes = {
-            pid: set(self._layout.pane(pid).open_files)
+        in the active pane.
+
+        `preview=True` (single-click from the file tree) makes the
+        opened tab the pane's preview slot: a subsequent single-click
+        on another file replaces this tab in place rather than
+        stacking a new one.  `preview=False` (double-click, agent
+        autoreveal, Enter key) is the normal persistent open.
+
+        Layout-side semantics live in `EditorLayout.open_or_reveal`;
+        this wrapper just subscribes new files and triggers a render.
+        """
+        is_new = not any(
+            path in self._layout.pane(pid).open_files
             for pid in self._all_pane_ids()
-        }
-        pid = self._layout.open_or_reveal(path)
-        # Subscribe newly-opened file in the destination pane.
-        if path not in before_panes.get(pid, set()):
+        )
+        pid = self._layout.open_or_reveal(path, preview=preview)
+        if is_new:
             self._registry.subscribe(path, pid)
         self._persist()
         self._render()
+
+    def patch_buffer_path(self, old: Path, new: Path | None) -> None:
+        """File-tree hook: a file on disk has been renamed / moved /
+        deleted.  Reconcile open tabs:
+
+        - `new` is None → file gone → mark buffer deleted, keep tab as
+          strike-through orphan.
+        - `new` is given → rename the path in both EditorLayout
+          (rewrite every pane's tab list) and BufferRegistry (move
+          buffer state under the new key).
+        """
+        if new is None:
+            self._registry.mark_deleted(old)
+            self._render()
+            return
+        self._layout.rename_path(old, new)
+        self._registry.rename_path(old, new)
+        self._persist()
+        self._render()
+
+    def is_dirty(self, path: Path) -> bool:
+        """Exposed so the file tree can warn before destructive ops."""
+        return self._registry.is_dirty(path)
+
+    def post_agent_turn(self) -> None:
+        """Re-read disk for every subscribed buffer.  Clean buffers
+        adopt new disk content; dirty buffers keep the user's edits
+        but pick up the new `disk_text` (so `is_dirty` reflects the
+        diff against the latest disk state); missing files flip to
+        deleted."""
+        for path in self._registry.subscribed_paths():
+            self._registry.reload_disk_text(path)
 
     def set_on_active_changed(
         self, callback: Callable[[], None] | None
@@ -204,15 +245,22 @@ class EditorView:
         self._container.clear()
         self._pane_widgets = {}
         blob = self._layout.to_dict()
+        # Everything below — including the on_active_changed callback —
+        # MUST run inside `with self._container:` so the NiceGUI slot
+        # context is alive.  When `_render` runs from a click handler
+        # (e.g. `_activate_tab` or a tab close), the current slot is
+        # the clicked element's slot, and `self._container.clear()`
+        # just destroyed it.  Anything that touches the slot (e.g.
+        # `ui.timer`, or the file tree's `ui.run_javascript` inside
+        # its `reveal`) blows up with "parent slot has been deleted",
+        # aborting the render and swallowing the callback.
+        # Re-opening `with self._container` establishes a live slot
+        # (the container itself is preserved across clear()).
         with self._container:
             self._render_node(blob["root"])
-        # Defer un-suppression so any post-mount `update:value`
-        # echoes from the new codemirror instances are dropped.
-        # 200ms is longer than typical Vue mount cycles; the
-        # focus-ready flag per codemirror catches anything later.
-        ui.timer(0.2, self._release_rendering_gate, once=True)
-        if self._on_active_changed:
-            self._on_active_changed()
+            ui.timer(0.2, self._release_rendering_gate, once=True)
+            if self._on_active_changed:
+                self._on_active_changed()
 
     def _release_rendering_gate(self) -> None:
         self._rendering = False
@@ -332,6 +380,7 @@ class EditorView:
                 ' else if (y < 0.1) zone = "top";'
                 ' else if (y > 0.9) zone = "bottom";'
                 " emit({"
+                "  type: data.type || null,"
                 "  source_pane: data.pane,"
                 "  source_path: data.path,"
                 "  zone: zone,"
@@ -429,15 +478,24 @@ class EditorView:
         # Reset the tab-ref cache for this pane; `_refresh_dirty` reads
         # from here to flip class state without re-rendering.
         self._pane_widgets.setdefault(pane_id, {})["tabs"] = {}
+        # The pane's preview slot — at most one path per pane.  We
+        # fetch it once outside the loop to avoid a pane() call per tab.
+        pane_view = self._layout.pane(pane_id)
+        preview_file = pane_view.preview_file
         with tab_bar:
             for path in open_files:
                 is_active = path == active_file
                 dirty = self._registry.is_dirty(path)
+                deleted = self._registry.is_deleted(path)
                 cls = "rca-tab"
                 if is_active:
                     cls += " active"
                 if dirty:
                     cls += " dirty"
+                if deleted:
+                    cls += " deleted"
+                if preview_file is not None and path == preview_file:
+                    cls += " preview"
                 tab = ui.element("div").classes(cls)
                 tab.props("draggable=true")
                 tab.on(
@@ -723,6 +781,27 @@ class EditorView:
             args = args[0]
         if not isinstance(args, dict):
             return
+        if target_pane_id not in self._panes_dict():
+            return
+        # File-tree → editor: just open the file in the target pane
+        # (persistent — explicit drag is a stronger signal than a
+        # single click, so no preview).  No split, no clone.
+        if args.get("type") == "tree-row":
+            source_path_str = args.get("source_path")
+            if not source_path_str:
+                return
+            source_path = Path(source_path_str)
+            before = source_path in self._layout.pane(
+                target_pane_id
+            ).open_files
+            self._layout.open_file(
+                target_pane_id, source_path, preview=False
+            )
+            if not before:
+                self._registry.subscribe(source_path, target_pane_id)
+            self._persist()
+            self._render()
+            return
         source_pane = args.get("source_pane")
         source_path_str = args.get("source_path")
         zone = args.get("zone")
@@ -730,8 +809,6 @@ class EditorView:
         if not (source_pane and source_path_str and zone):
             return
         if source_pane not in self._panes_dict():
-            return
-        if target_pane_id not in self._panes_dict():
             return
         source_path = Path(source_path_str)
 
@@ -929,6 +1006,18 @@ class EditorView:
             return
         if new_value == "" and self._registry.text(path) != "":
             return
+        # A real edit on a previewed tab promotes it — the tab stops
+        # being replaced by the next single-click in the file tree.
+        active_pid = self._layout.active_pane_id
+        if active_pid in self._panes_dict():
+            pv = self._layout.pane(active_pid)
+            if pv.preview_file == path:
+                self._layout.make_persistent(active_pid, path)
+                tab = self._pane_widgets.get(active_pid, {}).get(
+                    "tabs", {}
+                ).get(path)
+                if tab is not None:
+                    tab.classes(remove="preview")
         self._registry.set_text(path, new_value)
 
     def _on_buffer_change(self, path: Path) -> None:

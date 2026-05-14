@@ -500,3 +500,220 @@ def test_close_last_tab_in_root_pane_leaves_pane_empty() -> None:
     pane = layout.pane(pane_id)  # still queryable → not removed
     assert pane.open_files == ()
     assert pane.active_file is None
+
+
+# ─── preview tab semantics (VSCode-style) ──────────────────────────────
+
+
+def test_open_file_preview_marks_pane_preview() -> None:
+    """open_file(preview=True) tracks the path as the pane's
+    preview slot.  Tab list and active_file update normally; the
+    preview slot is queried via PaneView.preview_file."""
+    layout = EditorLayout()
+    pane_id = layout.active_pane_id
+
+    layout.open_file(pane_id, Path("/A.md"), preview=True)
+
+    pane = layout.pane(pane_id)
+    assert list(pane.open_files) == [Path("/A.md")]
+    assert pane.active_file == Path("/A.md")
+    assert pane.preview_file == Path("/A.md")
+
+
+def test_open_file_preview_replaces_existing_preview_in_same_pane() -> None:
+    """Single-click on another file while a preview exists swaps
+    the previewed file: the old preview tab is closed, the new one
+    takes its place."""
+    layout = EditorLayout()
+    pane_id = layout.active_pane_id
+    layout.open_file(pane_id, Path("/A.md"), preview=True)
+
+    layout.open_file(pane_id, Path("/B.md"), preview=True)
+
+    pane = layout.pane(pane_id)
+    # A is gone (preview replaced), only B remains.
+    assert list(pane.open_files) == [Path("/B.md")]
+    assert pane.active_file == Path("/B.md")
+    assert pane.preview_file == Path("/B.md")
+
+
+def test_open_file_preview_keeps_persistent_tabs() -> None:
+    """Persistent tabs are NOT touched when a new preview opens —
+    only the previous preview tab is replaced."""
+    layout = EditorLayout()
+    pane_id = layout.active_pane_id
+    layout.open_file(pane_id, Path("/A.md"))            # persistent
+    layout.open_file(pane_id, Path("/B.md"), preview=True)  # preview
+
+    layout.open_file(pane_id, Path("/C.md"), preview=True)
+
+    pane = layout.pane(pane_id)
+    # B (the previous preview) is replaced; A stays.
+    assert list(pane.open_files) == [Path("/A.md"), Path("/C.md")]
+    assert pane.active_file == Path("/C.md")
+    assert pane.preview_file == Path("/C.md")
+
+
+def test_open_file_persistent_after_preview_promotes_in_place() -> None:
+    """Opening the same path as persistent while it's the preview
+    promotes it: tab stays, preview_file clears, no duplicate."""
+    layout = EditorLayout()
+    pane_id = layout.active_pane_id
+    layout.open_file(pane_id, Path("/A.md"), preview=True)
+
+    layout.open_file(pane_id, Path("/A.md"), preview=False)
+
+    pane = layout.pane(pane_id)
+    assert list(pane.open_files) == [Path("/A.md")]
+    assert pane.active_file == Path("/A.md")
+    assert pane.preview_file is None
+
+
+def test_make_persistent_promotes_preview_tab() -> None:
+    """Called when codemirror detects a real user edit: the
+    preview slot clears so the tab keeps its position rather than
+    being replaced by the next single-click."""
+    layout = EditorLayout()
+    pane_id = layout.active_pane_id
+    layout.open_file(pane_id, Path("/A.md"), preview=True)
+
+    layout.make_persistent(pane_id, Path("/A.md"))
+
+    pane = layout.pane(pane_id)
+    assert list(pane.open_files) == [Path("/A.md")]
+    assert pane.preview_file is None
+
+
+def test_make_persistent_is_noop_for_non_preview_paths() -> None:
+    """No-op when the path isn't the pane's current preview —
+    e.g. when an edit fires on a tab that was always persistent."""
+    layout = EditorLayout()
+    pane_id = layout.active_pane_id
+    layout.open_file(pane_id, Path("/A.md"))
+    layout.open_file(pane_id, Path("/B.md"), preview=True)
+    # preview = B; calling make_persistent(A) must not clear it
+    layout.make_persistent(pane_id, Path("/A.md"))
+
+    assert layout.pane(pane_id).preview_file == Path("/B.md")
+
+
+def test_close_preview_tab_clears_preview_slot() -> None:
+    """If the preview tab is closed, the slot is cleared."""
+    layout = EditorLayout()
+    pane_id = layout.active_pane_id
+    layout.open_file(pane_id, Path("/A.md"), preview=True)
+
+    layout.close_tab(pane_id, Path("/A.md"))
+
+    pane = layout.pane(pane_id)
+    assert pane.preview_file is None
+
+
+# ─── rename_path: file-tree → layout sync ──────────────────────────────
+
+
+def test_rename_path_rewrites_open_files_and_active_in_a_pane() -> None:
+    """File-tree renames `A.md` → `A2.md`.  Every pane with `A.md` in
+    its tab list must now show `A2.md` instead, in the same slot.  If
+    the renamed file was active, it stays active under its new name."""
+    layout = EditorLayout()
+    pane_id = layout.active_pane_id
+    layout.open_file(pane_id, Path("/A.md"))
+    layout.open_file(pane_id, Path("/B.md"))
+    layout.open_file(pane_id, Path("/A.md"))  # re-focus A.md
+
+    layout.rename_path(Path("/A.md"), Path("/A2.md"))
+
+    pane = layout.pane(pane_id)
+    assert list(pane.open_files) == [Path("/A2.md"), Path("/B.md")]
+    assert pane.active_file == Path("/A2.md")
+
+
+def test_rename_path_rewrites_preview_slot() -> None:
+    """If the renamed file is also the pane's preview slot,
+    `preview_file` follows the rename so the italic-tab tracking
+    survives."""
+    layout = EditorLayout()
+    pane_id = layout.active_pane_id
+    layout.open_file(pane_id, Path("/A.md"), preview=True)
+
+    layout.rename_path(Path("/A.md"), Path("/A2.md"))
+
+    pane = layout.pane(pane_id)
+    assert pane.preview_file == Path("/A2.md")
+    assert list(pane.open_files) == [Path("/A2.md")]
+
+
+def test_rename_path_rewrites_every_pane_holding_the_file() -> None:
+    """Cloned splits leave the same path tracked in multiple panes.
+    Every one of them must rewrite — otherwise stale references
+    survive in non-active panes."""
+    layout = EditorLayout()
+    a = layout.active_pane_id
+    layout.open_file(a, Path("/A.md"))
+    # Clone-split (Ctrl+drag) keeps A in both panes.
+    b = layout.split(a, "right", file=Path("/A.md"), ctrl=True)
+
+    layout.rename_path(Path("/A.md"), Path("/A2.md"))
+
+    assert list(layout.pane(a).open_files) == [Path("/A2.md")]
+    assert list(layout.pane(b).open_files) == [Path("/A2.md")]
+
+
+def test_rename_path_no_op_when_path_not_open_anywhere() -> None:
+    """A rename of a file that no pane has open is a silent no-op
+    (the layout simply has nothing to rewrite)."""
+    layout = EditorLayout()
+    layout.open_file(layout.active_pane_id, Path("/A.md"))
+
+    layout.rename_path(Path("/Z.md"), Path("/Z2.md"))
+
+    assert list(layout.pane(layout.active_pane_id).open_files) == [
+        Path("/A.md")
+    ]
+
+
+# ─── open_or_reveal preview semantics ──────────────────────────────────
+
+
+def test_open_or_reveal_preview_opens_in_active_pane() -> None:
+    """File-tree single-click on a fresh file → opened with
+    `preview=True` in the active pane, marked as preview slot."""
+    layout = EditorLayout()
+    a = layout.active_pane_id
+
+    layout.open_or_reveal(Path("/A.md"), preview=True)
+
+    pane = layout.pane(a)
+    assert list(pane.open_files) == [Path("/A.md")]
+    assert pane.preview_file == Path("/A.md")
+
+
+def test_open_or_reveal_persistent_promotes_existing_preview() -> None:
+    """Re-opening the current preview persistently (double-click,
+    F2/Enter, or agent reveal) promotes the tab in place — same
+    tab, no preview slot."""
+    layout = EditorLayout()
+    a = layout.active_pane_id
+    layout.open_or_reveal(Path("/A.md"), preview=True)
+
+    layout.open_or_reveal(Path("/A.md"), preview=False)
+
+    pane = layout.pane(a)
+    assert list(pane.open_files) == [Path("/A.md")]
+    assert pane.preview_file is None
+
+
+def test_open_or_reveal_across_panes_promotes_when_persistent() -> None:
+    """If `A.md` is the preview tab in pane B and the user does a
+    persistent open of it from elsewhere, pane B's slot clears
+    (active pane jumps to B)."""
+    layout = EditorLayout()
+    a = layout.active_pane_id
+    b = layout.split(a, "right")
+    layout.open_or_reveal(Path("/A.md"), preview=True)  # opens in b (active)
+    assert layout.pane(b).preview_file == Path("/A.md")
+    # Switch active to a, then persistent open from there.
+    layout.open_or_reveal(Path("/A.md"))  # default preview=False
+    assert layout.active_pane_id == b
+    assert layout.pane(b).preview_file is None

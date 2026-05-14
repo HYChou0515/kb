@@ -42,6 +42,12 @@ class _Pane:
     id: str
     open_files: list[Path] = field(default_factory=list)
     active_file: Path | None = None
+    # VSCode-style preview tab: at most one path per pane is rendered
+    # in italic; a fresh single-click on another file replaces it
+    # rather than stacking a new tab.  Cleared by `make_persistent`
+    # (called when codemirror sees a real user edit) or when the
+    # preview tab is closed.
+    preview_file: Path | None = None
 
 
 @dataclass
@@ -71,6 +77,7 @@ class PaneView:
     id: str
     open_files: tuple[Path, ...]
     active_file: Path | None
+    preview_file: Path | None = None
 
 
 class EditorLayout:
@@ -93,29 +100,92 @@ class EditorLayout:
             id=p.id,
             open_files=tuple(p.open_files),
             active_file=p.active_file,
+            preview_file=p.preview_file,
         )
 
-    def open_file(self, pane_id: str, path: Path) -> None:
+    def open_file(
+        self, pane_id: str, path: Path, *, preview: bool = False
+    ) -> None:
         """Add `path` to `pane_id`'s tabs (if not already present),
         focus it as the pane's active tab, and make `pane_id` the
-        active pane."""
+        active pane.
+
+        VSCode preview semantics — when `preview=True` (single-click
+        from the explorer):
+
+        - If a different preview tab is already open in this pane, it
+          is replaced in place (old tab closes, new tab inherits its
+          spot in the bar).
+        - The newly-opened path becomes the pane's `preview_file`.
+
+        When `preview=False` and `path` is the current preview, the
+        slot is cleared (promoted to a regular tab).
+        """
         p = self._panes[pane_id]
-        if path not in p.open_files:
-            p.open_files.append(path)
+        if preview:
+            # Replace any prior preview slot — but only if it's a
+            # different path; otherwise this is just a re-focus.
+            if (
+                p.preview_file is not None
+                and p.preview_file != path
+                and p.preview_file in p.open_files
+            ):
+                old_idx = p.open_files.index(p.preview_file)
+                p.open_files[old_idx] = path
+            elif path not in p.open_files:
+                p.open_files.append(path)
+            p.preview_file = path
+        else:
+            if path not in p.open_files:
+                p.open_files.append(path)
+            # Persistent open on the current preview promotes it.
+            if p.preview_file == path:
+                p.preview_file = None
         p.active_file = path
         self._active_pane_id = pane_id
 
-    def open_or_reveal(self, path: Path) -> str:
+    def rename_path(self, old: Path, new: Path) -> None:
+        """Rewrite `old` → `new` in every pane's tab list and focus
+        state.  Called by the host after a successful disk rename so
+        open tabs stay open under the new name."""
+        for p in self._panes.values():
+            for i, path in enumerate(p.open_files):
+                if path == old:
+                    p.open_files[i] = new
+            if p.active_file == old:
+                p.active_file = new
+            if p.preview_file == old:
+                p.preview_file = new
+
+    def make_persistent(self, pane_id: str, path: Path) -> None:
+        """Clear the preview slot iff `path` is the pane's current
+        preview.  Called by the UI when codemirror detects a real
+        edit on the previewed file — the tab should stop being
+        replaced by the next single-click."""
+        p = self._panes.get(pane_id)
+        if p is None:
+            return
+        if p.preview_file == path:
+            p.preview_file = None
+
+    def open_or_reveal(self, path: Path, *, preview: bool = False) -> str:
         """Explorer-click entry point.  If `path` is already open in
         any pane, jump focus to the first such pane (and focus the
         tab); otherwise open the file in the currently-active pane.
-        Returns the pane id that ended up holding the file."""
+        Returns the pane id that ended up holding the file.
+
+        `preview=True` (single-click) marks newly-opened files as the
+        pane's preview slot.  `preview=False` (double-click / Enter /
+        explicit reveal) promotes the file out of the preview slot if
+        it was previewed."""
         for pane in self._panes.values():
             if path in pane.open_files:
                 pane.active_file = path
                 self._active_pane_id = pane.id
+                if not preview and pane.preview_file == path:
+                    pane.preview_file = None
                 return pane.id
-        self.open_file(self._active_pane_id, path)
+        self.open_file(self._active_pane_id, path, preview=preview)
         return self._active_pane_id
 
     def split(
@@ -364,6 +434,8 @@ class EditorLayout:
         idx = p.open_files.index(path)
         was_active = p.active_file == path
         p.open_files.remove(path)
+        if p.preview_file == path:
+            p.preview_file = None
         if was_active:
             if p.open_files:
                 next_idx = (
