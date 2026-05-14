@@ -717,3 +717,52 @@ def test_open_or_reveal_across_panes_promotes_when_persistent() -> None:
     layout.open_or_reveal(Path("/A.md"))  # default preview=False
     assert layout.active_pane_id == b
     assert layout.pane(b).preview_file is None
+
+
+# ─── public surface for view-layer integration ─────────────────────────
+
+
+def test_has_pane_reports_membership_without_touching_internals() -> None:
+    """Replacement for `pane_id in _panes_dict()`.  Caller is the
+    view layer (EditorView) which used to reach into the private
+    `_panes` dict to validate ids before mutating them."""
+    layout = EditorLayout()
+    pane_id = layout.active_pane_id
+
+    assert layout.has_pane(pane_id) is True
+    assert layout.has_pane("does-not-exist") is False
+
+
+def test_set_active_pane_switches_focus_when_pane_exists() -> None:
+    """Click-to-focus path: view layer used to write directly to
+    `_active_pane_id`.  Public setter must reject unknown ids
+    silently (don't blow up on a stale click after a pane closed)."""
+    layout = EditorLayout()
+    a = layout.active_pane_id
+    b = layout.split(a, "right")
+    assert layout.active_pane_id == b  # split makes new pane active
+
+    layout.set_active_pane(a)
+    assert layout.active_pane_id == a
+
+    # Unknown pane id is a no-op, no exception.
+    layout.set_active_pane("ghost")
+    assert layout.active_pane_id == a
+
+
+def test_iter_panes_yields_every_pane_view() -> None:
+    """View layer iterates panes to subscribe buffers / drop handlers.
+    Must return immutable snapshots (PaneView) so callers can't
+    accidentally mutate internal state."""
+    layout = EditorLayout()
+    a = layout.active_pane_id
+    layout.open_file(a, Path("/A.md"))
+    b = layout.split(a, "right", file=Path("/B.md"))
+
+    panes = list(layout.iter_panes())
+
+    ids = {p.id for p in panes}
+    assert ids == {a, b}
+    # Read-only snapshots.
+    sample = next(p for p in panes if p.id == a)
+    assert list(sample.open_files) == [Path("/A.md")]

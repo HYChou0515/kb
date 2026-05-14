@@ -30,6 +30,8 @@ from typing import Any, Literal
 
 from nicegui import ui
 
+from rca_ui.ui._drag_payload import parse_drop_payload
+
 logger = logging.getLogger(__name__)
 
 _PRIORITY_FILES = (
@@ -961,20 +963,11 @@ class FileTree:
     def _handle_tree_drop(
         self, target: Path, target_is_dir: bool, args: Any
     ) -> None:
-        if isinstance(args, list) and len(args) == 1:
-            args = args[0]
-        if not isinstance(args, dict):
+        payload = parse_drop_payload(args)
+        if payload is None or payload.kind != "tree-row":
+            # tab-into-tree isn't a supported use case yet.
             return
-        if args.get("type") != "tree-row":
-            # Could be an editor tab being dragged in — not a use case
-            # we support yet.
-            return
-        raw_paths = args.get("paths") or []
-        if not raw_paths:
-            single = args.get("path")
-            if single:
-                raw_paths = [single]
-        sources = [Path(p) for p in raw_paths if p]
+        sources = [p for p in payload.source_paths if p.exists()]
         if not sources:
             return
         target_dir = target if target_is_dir else target.parent

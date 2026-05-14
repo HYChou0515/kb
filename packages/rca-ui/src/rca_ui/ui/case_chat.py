@@ -17,15 +17,7 @@ from typing import Any
 
 from nicegui import ui
 
-from rca_ui.agent import (
-    AgentRuntime,
-    ProgressEvent,
-    ReasoningDeltaEvent,
-    TextDeltaEvent,
-    ToolCallEvent,
-    ToolOutputEvent,
-    TurnDoneEvent,
-)
+from rca_ui.agent import AgentRuntime
 from rca_ui.config import UISettings
 from rca_ui.session_store import append_transcript, read_transcript
 from rca_ui.ui.chat import AssistantStream, render_bubble
@@ -250,23 +242,9 @@ async def render_case_chat(*, case_id: str, settings: UISettings) -> None:
             try:
                 runtime = await _ensure_runtime()
                 async for evt in runtime.run_user_turn_streamed(text):
-                    if isinstance(evt, TextDeltaEvent):
-                        view.add_text_delta(evt.delta)
-                    elif isinstance(evt, ReasoningDeltaEvent):
-                        view.add_reasoning_delta(evt.delta)
-                    elif isinstance(evt, ToolCallEvent):
-                        view.add_tool_call(evt.name, evt.arguments)
-                    elif isinstance(evt, ProgressEvent):
-                        view.update_tool_progress(
-                            evt.tool_name,
-                            evt.progress,
-                            evt.total,
-                            evt.message,
-                        )
-                    elif isinstance(evt, ToolOutputEvent):
-                        view.add_tool_output(evt.name, evt.output)
-                    elif isinstance(evt, TurnDoneEvent):
-                        final_output = evt.final_output
+                    result = view.handle(evt)
+                    if result is not None:
+                        final_output = result
             except Exception as exc:  # noqa: BLE001
                 logger.exception("agent turn failed")
                 final_output = (

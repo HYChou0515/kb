@@ -19,6 +19,14 @@ from typing import Any
 
 from nicegui import ui
 
+from rca_ui.agent import (
+    ProgressEvent,
+    ReasoningDeltaEvent,
+    TextDeltaEvent,
+    ToolCallEvent,
+    ToolOutputEvent,
+    TurnDoneEvent,
+)
 from rca_ui.ui.preview import render_md
 
 
@@ -170,3 +178,30 @@ class AssistantStream:
         self._current_tool_head = ""
         if self._on_update:
             self._on_update()
+
+    def handle(self, evt: Any) -> str | None:
+        """Single entry point for the streaming loop — dispatches each
+        event variant to the right bubble mutation.  Returns the
+        `TurnDoneEvent.final_output` (the only event whose payload
+        the caller cares about); returns None for every other event.
+
+        Replaces the isinstance chain that used to live in
+        `case_chat._send`.  New event types are added in one place
+        here, not three (agent.py / case_chat / AssistantStream).
+        """
+        match evt:
+            case TextDeltaEvent(delta=d):
+                self.add_text_delta(d)
+            case ReasoningDeltaEvent(delta=d):
+                self.add_reasoning_delta(d)
+            case ToolCallEvent(name=n, arguments=a):
+                self.add_tool_call(n, a)
+            case ProgressEvent(
+                tool_name=tn, progress=p, total=t, message=m
+            ):
+                self.update_tool_progress(tn, p, t, m)
+            case ToolOutputEvent(name=n, output=o):
+                self.add_tool_output(n, o)
+            case TurnDoneEvent(final_output=fo):
+                return fo
+        return None

@@ -94,6 +94,25 @@ class EditorLayout:
     def active_pane_id(self) -> str:
         return self._active_pane_id
 
+    def has_pane(self, pane_id: str) -> bool:
+        """Whether `pane_id` refers to a currently-existing pane.
+        Used by view code to validate a (possibly stale) click target
+        before mutating anything."""
+        return pane_id in self._panes
+
+    def set_active_pane(self, pane_id: str) -> None:
+        """Move focus to `pane_id`.  No-op when the id is unknown —
+        e.g. a stale click on a pane that was just closed."""
+        if pane_id in self._panes:
+            self._active_pane_id = pane_id
+
+    def iter_panes(self) -> tuple[PaneView, ...]:
+        """Snapshot every pane as a read-only `PaneView`.  View code
+        iterates this to subscribe buffers or wire drop handlers;
+        the tuple form is stable across mutations the caller might
+        trigger during iteration."""
+        return tuple(self.pane(pid) for pid in self._panes)
+
     def pane(self, pane_id: str) -> PaneView:
         p = self._panes[pane_id]
         return PaneView(

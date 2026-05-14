@@ -45,6 +45,8 @@ from nicegui import ui
 
 from rca_ui.buffer_registry import BufferRegistry
 from rca_ui.editor_layout import EditorLayout
+from rca_ui.ui._drag_payload import parse_drop_payload
+from rca_ui.ui._drop_coordinator import apply_drop
 from rca_ui.ui.preview import is_previewable, render_for_path
 
 logger = logging.getLogger(__name__)
@@ -209,7 +211,7 @@ class EditorView:
 
     def active_path(self) -> Path | None:
         pid = self._layout.active_pane_id
-        if pid not in self._panes_dict():
+        if not self._layout.has_pane(pid):
             return None
         return self._layout.pane(pid).active_file
 
@@ -218,7 +220,7 @@ class EditorView:
         empty or there's no readable file in focus.  Bound to Ctrl+S
         from `ui.py`."""
         pid = self._layout.active_pane_id
-        if pid not in self._panes_dict():
+        if not self._layout.has_pane(pid):
             return
         path = self._layout.pane(pid).active_file
         if path is None:
@@ -379,10 +381,15 @@ class EditorView:
                 ' else if (x > 0.9) zone = "right";'
                 ' else if (y < 0.1) zone = "top";'
                 ' else if (y > 0.9) zone = "bottom";'
+                # Pass payload through; parse_drop_payload accepts
+                # both `source_path` (editor tab schema) and `path`
+                # (tree-row schema) as the path key, so the JS layer
+                # doesn't need to renormalise.
                 " emit({"
                 "  type: data.type || null,"
-                "  source_pane: data.pane,"
-                "  source_path: data.path,"
+                "  source_pane: data.source_pane || data.pane,"
+                "  source_path: data.source_path || data.path,"
+                "  paths: data.paths,"
                 "  zone: zone,"
                 "  ctrl: ctrlAttr || event.altKey || event.ctrlKey || event.metaKey"
                 " });"
@@ -501,11 +508,15 @@ class EditorView:
                 tab.on(
                     "dragstart",
                     None,
+                    # Payload schema lives in `rca_ui.ui._drag_payload`.
+                    # `type: "tab"` distinguishes editor tabs from
+                    # tree rows (which use `type: "tree-row"`).
                     js_handler=(
                         "(event) => {"
                         ' event.dataTransfer.setData("text/plain", JSON.stringify({'
-                        f"  pane: {json.dumps(pane_id)},"
-                        f"  path: {json.dumps(str(path))}"
+                        '  type: "tab",'
+                        f"  source_pane: {json.dumps(pane_id)},"
+                        f"  source_path: {json.dumps(str(path))}"
                         " }));"
                         ' event.dataTransfer.effectAllowed = "copyMove";'
                         "}"
@@ -691,10 +702,10 @@ class EditorView:
         the status bar visibility follows via CSS."""
         if pane_id == self._layout.active_pane_id:
             return
-        if pane_id not in self._panes_dict():
+        if not self._layout.has_pane(pane_id):
             return
         old_pid = self._layout.active_pane_id
-        self._layout._active_pane_id = pane_id  # type: ignore[attr-defined]
+        self._layout.set_active_pane(pane_id)
         old_widgets = self._pane_widgets.get(old_pid)
         if old_widgets is not None:
             old_widgets["pane_div"].classes(remove="rca-pane-active")
@@ -768,112 +779,23 @@ class EditorView:
         )
         # Best-effort unsubscribe: remove this pane from every buffer
         # subscriber set; idempotent for buffers that survive.
-        for path in list(self._panes_dict().keys()):
+        for path in self._all_pane_ids():
             self._registry.unsubscribe(path, pane_id)
         self._persist()
         self._render()
 
     def _handle_drop(self, target_pane_id: str, args: Any) -> None:
-        """Server-side drop handler.  `args` is the dict emitted by the
-        JS drop handler attached in `_render_pane` — NiceGUI may wrap a
-        single-arg emit() in a one-element list."""
-        if isinstance(args, list) and len(args) == 1:
-            args = args[0]
-        if not isinstance(args, dict):
+        """Server-side drop handler — schema parsing in `_drag_payload`,
+        layout/registry mutation in `_drop_coordinator.apply_drop`."""
+        payload = parse_drop_payload(args)
+        if payload is None:
             return
-        if target_pane_id not in self._panes_dict():
-            return
-        # File-tree → editor: just open the file in the target pane
-        # (persistent — explicit drag is a stronger signal than a
-        # single click, so no preview).  No split, no clone.
-        if args.get("type") == "tree-row":
-            source_path_str = args.get("source_path")
-            if not source_path_str:
-                return
-            source_path = Path(source_path_str)
-            before = source_path in self._layout.pane(
-                target_pane_id
-            ).open_files
-            self._layout.open_file(
-                target_pane_id, source_path, preview=False
-            )
-            if not before:
-                self._registry.subscribe(source_path, target_pane_id)
+        changed = apply_drop(
+            self._layout, self._registry, target_pane_id, payload
+        )
+        if changed:
             self._persist()
             self._render()
-            return
-        source_pane = args.get("source_pane")
-        source_path_str = args.get("source_path")
-        zone = args.get("zone")
-        clone = bool(args.get("ctrl", False))
-        if not (source_pane and source_path_str and zone):
-            return
-        if source_pane not in self._panes_dict():
-            return
-        source_path = Path(source_path_str)
-
-        if zone == "center":
-            self._drop_at_center(target_pane_id, source_pane, source_path, clone)
-        elif zone in ("left", "right", "top", "bottom"):
-            self._drop_at_edge(target_pane_id, source_pane, source_path, zone, clone)
-        self._persist()
-        self._render()
-
-    def _drop_at_center(
-        self,
-        target_pid: str,
-        source_pid: str,
-        path: Path,
-        clone: bool,
-    ) -> None:
-        if target_pid == source_pid:
-            # Drop on own pane → no-op (or focus the tab; layout's
-            # open_file is idempotent for same-pane + same-path).
-            self._layout.open_file(target_pid, path)
-            return
-        # Move the file out of source first when not cloning.
-        if not clone:
-            self._layout.close_tab(source_pid, path)
-            self._registry.unsubscribe(path, source_pid)
-        # Add to target if not already there, focus regardless.
-        before = path in self._layout.pane(target_pid).open_files
-        self._layout.open_file(target_pid, path)
-        if not before:
-            self._registry.subscribe(path, target_pid)
-
-    def _drop_at_edge(
-        self,
-        target_pid: str,
-        source_pid: str,
-        path: Path,
-        side: str,
-        clone: bool,
-    ) -> None:
-        # Same-pane edge drop where `path` is the pane's only tab:
-        # moving it out empties the pane, which would auto-collapse —
-        # and then the split has no anchor.  Treat as no-op.
-        if source_pid == target_pid and not clone:
-            src_files = self._layout.pane(source_pid).open_files
-            if len(src_files) == 1 and src_files[0] == path:
-                return
-        # Always use clone-style split (ctrl=True) so layout.split
-        # doesn't touch the source pane; we manage source-side state
-        # here for both move and clone cases.
-        if not clone and source_pid != target_pid:
-            self._layout.close_tab(source_pid, path)
-            self._registry.unsubscribe(path, source_pid)
-        if not clone and source_pid == target_pid:
-            # Same-pane move: use split's built-in close_tab.
-            new_pid = self._layout.split(
-                source_pid, side=side, file=path, ctrl=False  # type: ignore[arg-type]
-            )
-            self._registry.unsubscribe(path, source_pid)
-            self._registry.subscribe(path, new_pid)
-            return
-        new_pid = self._layout.split(
-            target_pid, side=side, file=path, ctrl=True  # type: ignore[arg-type]
-        )
-        self._registry.subscribe(path, new_pid)
 
     def _do_close_tab(self, pane_id: str, path: Path) -> None:
         self._layout.close_tab(pane_id, path)
@@ -1009,7 +931,7 @@ class EditorView:
         # A real edit on a previewed tab promotes it — the tab stops
         # being replaced by the next single-click in the file tree.
         active_pid = self._layout.active_pane_id
-        if active_pid in self._panes_dict():
+        if self._layout.has_pane(active_pid):
             pv = self._layout.pane(active_pid)
             if pv.preview_file == path:
                 self._layout.make_persistent(active_pid, path)
@@ -1094,11 +1016,4 @@ class EditorView:
     # ─── small helpers ───────────────────────────────────────────────
 
     def _all_pane_ids(self) -> list[str]:
-        return list(self._panes_dict().keys())
-
-    def _panes_dict(self) -> dict[str, Any]:
-        # Access EditorLayout's internal pane map — we don't expose a
-        # public iterator on EditorLayout (the tree itself is the
-        # public surface).  This is fine for the view since the view
-        # and the model live in the same package.
-        return self._layout._panes  # type: ignore[attr-defined]
+        return [p.id for p in self._layout.iter_panes()]
