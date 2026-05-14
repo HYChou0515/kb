@@ -168,7 +168,9 @@ def _install_theme() -> None:
         ".rca-tab .tab-name{white-space:nowrap;}"
         ".rca-tab.active{background:#ffffff;color:#333;"
         " border-top:1px solid #0078d4;border-bottom-color:transparent;}"
-        ".rca-tab.dirty .tab-name::before{content:'● ';color:#888;}"
+        # Dirty indicator is the icon in `.close` (swapped to ●);
+        # do NOT also prepend a ● to the tab name — that produced
+        # two visible circles on every dirty tab.
         ".rca-tab .close{visibility:hidden;padding:2px;border-radius:3px;"
         " display:inline-flex;}"
         ".rca-tab:hover .close,.rca-tab.active .close{visibility:visible;}"
@@ -339,6 +341,10 @@ def _install_theme() -> None:
         ".rca-pane{display:flex;flex-direction:column;width:100%;height:100%;"
         " background:#ffffff;position:relative;min-width:0;min-height:0;}"
         ".rca-pane-active .rca-tabbar{box-shadow:inset 0 2px 0 #0078d4;}"
+        # Status bar is always rendered for any pane with an open
+        # file; CSS hides it for inactive panes so click-to-focus is
+        # a pure class toggle (no re-render of codemirror).
+        ".rca-pane:not(.rca-pane-active) .rca-statusbar{display:none;}"
         # ─── drag-and-drop overlay ───────────────────────────────────
         # `_render_pane` writes `data-drop-zone` (center/left/right/top/
         # bottom) and `data-drop-ctrl` (0/1) on `.rca-pane` from the JS
@@ -589,6 +595,11 @@ async def _render_case_chat(*, case_id: str, settings: UISettings) -> None:
     # the browser's "Save Page" dialog via a window-level keydown
     # listener that calls preventDefault before anything else; the
     # actual Python save is wired through ui.keyboard.
+    # NOTE: only preventDefault, NOT stopPropagation.  Capture-phase
+    # stopPropagation would stop the event from reaching NiceGUI's
+    # `ui.keyboard` listener (registered in bubble phase) — Python
+    # save handler would never fire.  We just want to suppress the
+    # browser's "save page" dialog, not block anyone else.
     ui.add_body_html(
         "<script>"
         "(function(){"
@@ -597,7 +608,6 @@ async def _render_case_chat(*, case_id: str, settings: UISettings) -> None:
         " document.addEventListener('keydown', function(e){"
         "  if ((e.ctrlKey || e.metaKey) && e.key && e.key.toLowerCase() === 's') {"
         "   e.preventDefault();"
-        "   e.stopPropagation();"
         "  }"
         " }, true);"
         "})();"

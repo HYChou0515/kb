@@ -317,23 +317,27 @@ class EditorView:
                 else:
                     text = self._registry.text(pane.active_file)
                     lang = _detect_lang(pane.active_file)
-                    codemirror = (
-                        ui.codemirror(
-                            value=text,
-                            line_wrapping=True,
-                            theme="vscodeLight",
-                            language=lang,  # type: ignore[arg-type]
-                        )
-                        .style("font-size:12px;")
-                    )
-                    codemirror.on(
-                        "update:model-value",
-                        lambda e, pid=pane_id, p=pane.active_file: (
-                            self._on_codemirror_change(pid, p, e.args)
+                    # IMPORTANT: use NiceGUI's `on_change=` callback,
+                    # not `.on('update:model-value', ...)`.  The raw
+                    # Vue event name codemirror emits is internal and
+                    # not bound by the Python wrapper — the only
+                    # supported edit-hook is `on_change`.
+                    codemirror = ui.codemirror(
+                        value=text,
+                        line_wrapping=True,
+                        theme="vscodeLight",
+                        language=lang,  # type: ignore[arg-type]
+                        on_change=(
+                            lambda e, p=pane.active_file: self._on_cm_change(
+                                p, e.value
+                            )
                         ),
-                    )
-            # status bar (only active pane shows it for tighter UX)
-            if is_active and pane.active_file is not None:
+                    ).style("font-size:12px;")
+            # Status bar is always rendered when there is an active
+            # file; CSS hides it for inactive panes so click-to-focus
+            # can swap which pane "owns" the status line via a CSS
+            # class toggle, no re-render needed.
+            if pane.active_file is not None:
                 self._render_statusbar(pane_id, pane.active_file)
         self._pane_widgets[pane_id] = {
             "pane_div": pane_div,
@@ -382,10 +386,18 @@ class EditorView:
                         ui.icon(
                             "fiber_manual_record" if dirty else "close"
                         )
+                    # NiceGUI's modifier system on `.on()` is the
+                    # supported way to add Vue's `.stop` modifier.
+                    # `.props("@click.stop")` looks like a Vue
+                    # template binding but it's actually parsed as a
+                    # plain HTML attribute (`stop="true"` shows up in
+                    # the DOM) — propagation isn't stopped, the click
+                    # bubbles to the tab and re-activates it,
+                    # erasing the close + modal.
                     close.on(
-                        "click",
+                        "click.stop",
                         lambda _e, pid=pane_id, p=path: self._close_tab(pid, p),
-                    ).props("@click.stop")
+                    )
                     # Right-click context menu — same 6 entries as VSCode.
                     with ui.context_menu():
                         ui.menu_item(
@@ -447,16 +459,26 @@ class EditorView:
     # ─── event handlers ─────────────────────────────────────────────
 
     def _activate(self, pane_id: str) -> None:
+        """Click-to-focus.  We must NOT trigger a full re-render here
+        — every codemirror would be destroyed and any pending edits
+        (still in flight from the client) would be lost.  Just toggle
+        the `.rca-pane-active` CSS class on the two affected panes;
+        the status bar visibility follows via CSS."""
         if pane_id == self._layout.active_pane_id:
             return
-        # Pane object isn't directly settable, but the focus changes
-        # via opening any of its files.  Simpler: write through the
-        # `_active_pane_id` field directly (private API but we own
-        # the model).
-        if pane_id in self._panes_dict():
-            self._layout._active_pane_id = pane_id  # type: ignore[attr-defined]
-            self._persist()
-            self._render()
+        if pane_id not in self._panes_dict():
+            return
+        old_pid = self._layout.active_pane_id
+        self._layout._active_pane_id = pane_id  # type: ignore[attr-defined]
+        old_widgets = self._pane_widgets.get(old_pid)
+        if old_widgets is not None:
+            old_widgets["pane_div"].classes(remove="rca-pane-active")
+        new_widgets = self._pane_widgets.get(pane_id)
+        if new_widgets is not None:
+            new_widgets["pane_div"].classes(add="rca-pane-active")
+        self._persist()
+        if self._on_active_changed:
+            self._on_active_changed()
 
     def _activate_tab(self, pane_id: str, path: Path) -> None:
         # Reuse open_file semantics — re-focuses if already open.
@@ -717,6 +739,22 @@ class EditorView:
         # buffer; broadcast is handled by BufferRegistry.on_change.
         new_text = args if isinstance(args, str) else ""
         self._registry.set_text(path, new_text)
+
+    def _on_cm_change(self, path: Path, new_value: str) -> None:
+        """Forward a codemirror text change to the buffer registry,
+        but filter out spurious empty-string emissions.
+
+        NiceGUI's codemirror Vue wrapper emits an `update:value` event
+        whose payload is reconstructed via `_apply_change_set`.  During
+        re-render transitions (e.g. immediately after a split, or when
+        a pane swaps its bound file via `_render`), that path can
+        produce an empty string while no real edit has occurred —
+        which would otherwise mark the buffer dirty.  Treat
+        `'' → non-empty buffer` as a render artefact rather than a
+        user clearing the document."""
+        if new_value == "" and self._registry.text(path) != "":
+            return
+        self._registry.set_text(path, new_value)
 
     def _on_buffer_change(self, path: Path) -> None:
         """Called by BufferRegistry whenever any pane edits `path`.
